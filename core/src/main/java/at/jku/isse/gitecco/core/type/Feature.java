@@ -1,5 +1,6 @@
 package at.jku.isse.gitecco.core.type;
 
+
 import at.jku.isse.gitecco.core.tree.nodes.DefineNode;
 import org.anarres.cpp.featureExpr.*;
 
