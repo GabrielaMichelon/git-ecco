@@ -9,6 +9,9 @@ import at.jku.isse.gitecco.core.solver.ExpressionSolver;
 import at.jku.isse.gitecco.core.tree.nodes.*;
 import at.jku.isse.gitecco.core.type.Feature;
 import at.jku.isse.gitecco.translation.constraintcomputation.util.GetNodesForChangeVisitor;
+import org.chocosolver.solver.Model;
+import org.chocosolver.solver.Solution;
+import org.chocosolver.solver.variables.BoolVar;
 import org.eclipse.cdt.core.dom.ast.*;
 import org.eclipse.core.runtime.CoreException;
 
@@ -18,10 +21,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+
+import static org.chocosolver.solver.constraints.nary.cnf.LogOp.ifThenElse;
+import static org.chocosolver.solver.constraints.nary.cnf.LogOp.implies;
 
 public class App {
 
@@ -48,6 +51,7 @@ public class App {
 
             //retrieve changed nodes
             for (FileNode child : gc.getTree().getChildren()) {
+                System.out.println((gc.getTree().getChildren().indexOf(child)));
                 if (child instanceof SourceFileNode && changedFiles.contains(child.getFilePath().replace("/", "\\"))) {
                     Change[] changes = null;
                     try {
@@ -56,15 +60,79 @@ public class App {
                         System.err.println("error while executing the file diff: " + child.getFilePath());
                         e.printStackTrace();
                     }
-
                     for (Change change : changes) {
                         visitor.setChange(change);
                         child.accept(visitor);
                         changedNodes.addAll(visitor.getchangedNodes());
+                        Change allClass = new Change(0,change.getTo());
+                        visitor.setChange(allClass);
+                        child.accept(visitor);
+                        ArrayList<ConditionalNode> classNodes = new ArrayList<>();
+                        classNodes.addAll(visitor.getchangedNodes());
+                        if(classNodes.get(0) instanceof  IFCondition){
+                            System.out.println("sim");
+                        }
+                        Model model = new Model("test1");
+
                         for (ConditionalNode changedNode : changedNodes) {
+                            String expression="";
+                            for(int i =0; i<classNodes.size(); i++){
+
+                                if(classNodes.get(i).equals(changedNode)){
+                                    System.out.println("$$$" + classNodes.get(i).getCondition());
+                                    System.out.println("---- "+changedNode.getCondition());
+                                    //expression +=  classNodes.get(i).getCondition();
+
+                                }
+                                if(classNodes.get(i) instanceof  IFCondition){
+                                    String auxConstraint = classNodes.get(i).getCondition();
+                                    BoolVar a = model.boolVar(auxConstraint);
+                                    model.addClauses(implies(a,a));
+                                    model.post(a.extension());
+                                }else{
+                                    if(classNodes.get(i) instanceof  IFDEFCondition){
+
+                                    }else {
+                                        if(classNodes.get(i) instanceof  ELSECondition){
+
+                                        }else{
+                                            if(classNodes.get(i) instanceof  IFNDEFCondition){
+
+                                            }
+                                        }
+                                    }
+                                }
+
+                                //expression +=  classNodes.get(i).getCondition();
+                            }
+
+
+
+
+
+                            Solution s = model.getSolver().findSolution();
+                            System.out.println(s);
+                            if(s != null) {
+                                List<BoolVar> booleanVars = s.retrieveBoolVars();
+                                System.out.println("Config: " + booleanVars.toString());
+                                for (BoolVar boolvar : booleanVars) {
+                                    if (boolvar.equals(true)) {
+                                        System.out.println("Config: " + boolvar);
+                                    }
+                                }
+                            }
+                            ExpressionSolver solver = new ExpressionSolver();
+                            PreprocessorHelper pph = new PreprocessorHelper();
+                            final File gitFolder = new File(gitHelper.getPath());
+                            final File eccoFolder = new File(gitFolder.getParent(), "ecco");
+                            //solver.setExpr(expression);
+                            //Map<Feature, Integer> result = solver.solve();
+                            //solver.reset();
+                            //pph.generateVariants(result, gitFolder, eccoFolder);
+                            //System.out.println("CONFIG FOR PREPROCESSING:");
+                            //result.entrySet().forEach(x -> System.out.print(x.getKey() + " = " + x.getValue() + "; "));
                             int init = changedNode.getLineFrom();
                             int end = changedNode.getLineTo();
-
                             String fileContent = null;
                             Path path = Paths.get(gitHelper.getPath() + File.separator + child.getFilePath());
                             try {
@@ -72,7 +140,7 @@ public class App {
                             } catch (IOException e) {
                                 e.printStackTrace();
                             }
-
+                            System.out.println(changedNode.getCondition().toString());
                             String[] lines = fileContent.split("\\r?\\n");
                             String code="";
                             if (init == 0) {
@@ -96,15 +164,21 @@ public class App {
                                 if( ppstatementsInsideFeature instanceof IASTPreprocessorMacroDefinition){
                                     Define defineNodeInsideFeature = new Define(((IASTPreprocessorMacroDefinition) ppstatementsInsideFeature).getName().toString(), ((IASTPreprocessorMacroDefinition) ppstatementsInsideFeature).getExpansion().toString(),1);
                                     changedNode.addDefineNode(defineNodeInsideFeature);
+
+                                }else if(ppstatementsInsideFeature instanceof IASTPreprocessorUndefStatement){
+                                    Undef undefNodeInsideFeature = new Undef(((IASTPreprocessorUndefStatement) ppstatementsInsideFeature).getMacroName().toString(),1);
+                                    System.out.println(undefNodeInsideFeature.getMacroName());
                                 }
                             }
-
-                            System.out.println(ppstatements.toString());
                         }
+
+
+
                     }
                 }
-            }
 
+            }
+/*
             //compute assignment for preprocessing and generate variants
             ExpressionSolver solver = new ExpressionSolver();
             PreprocessorHelper pph = new PreprocessorHelper();
@@ -119,6 +193,8 @@ public class App {
                 //same for the affected blocks --> tree might need additional methods
                 //for retrieving conjunctive conditions that are affected by a changed block.
 
+
+
                 solver.setExpr(changedNode.getCondition());
                 Map<Feature, Integer> result = solver.solve();
                 solver.reset();
@@ -127,7 +203,7 @@ public class App {
                 result.entrySet().forEach(x -> System.out.print(x.getKey() + " = " + x.getValue() + "; "));
 
                 //TODO: ecco commit with solution + marked as changed
-            }
+            }*/
 
         });
 

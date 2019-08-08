@@ -13,7 +13,7 @@ import java.util.List;
  */
 public final class RootNode extends Node implements Visitable {
     private final String path;
-    private final List<FileNode> children;
+    private final ArrayList<FileNode> children;
 
     /**
      * Creates a new root node. The path is the path of the repository.
@@ -62,8 +62,8 @@ public final class RootNode extends Node implements Visitable {
         }
     }
 
-    public List<FileNode> getChildren() {
-        return Collections.unmodifiableList(children);
+    public ArrayList<FileNode> getChildren() {
+        return children;
     }
 
     /**
