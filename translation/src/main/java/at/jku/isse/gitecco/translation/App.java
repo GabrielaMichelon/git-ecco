@@ -8,12 +8,15 @@ import at.jku.isse.gitecco.core.preprocessor.PreprocessorHelper;
 import at.jku.isse.gitecco.core.solver.ExpressionSolver;
 import at.jku.isse.gitecco.core.tree.nodes.*;
 import at.jku.isse.gitecco.core.type.Feature;
+import at.jku.isse.gitecco.core.type.FeatureImplication;
 import at.jku.isse.gitecco.translation.constraintcomputation.util.GetNodesForChangeVisitor;
 import org.chocosolver.solver.Model;
 import org.chocosolver.solver.Solution;
 import org.chocosolver.solver.variables.BoolVar;
+import org.chocosolver.solver.variables.IntVar;
 import org.eclipse.cdt.core.dom.ast.*;
 import org.eclipse.core.runtime.CoreException;
+import scala.util.parsing.combinator.testing.Str;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,13 +31,14 @@ import static org.chocosolver.solver.constraints.nary.cnf.LogOp.implies;
 
 public class App {
 
+
     public static void main(String... args) throws Exception {
         final boolean debug = true;
         //TODO: planned arguments: DEBUG, dispose tree, max commits, repo path, csv path(feature id), outpath for ecco
         //maybe even start commit and/or end commit (hashes or numbers)
         //String repoPath = "C:\\obermanndavid\\git-ecco-test\\appimpleTest\\marlin\\Marlin";
         //String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\Marlin\\Marlin";
-        String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\test-featureid";
+        String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\test4";
         //String repoPath = "C:\\Users\\gabil\\Desktop\\Test";
         final GitHelper gitHelper = new GitHelper(repoPath);
         final GitCommitList commitList = new GitCommitList(repoPath);
@@ -51,7 +55,7 @@ public class App {
 
             //retrieve changed nodes
             for (FileNode child : gc.getTree().getChildren()) {
-                System.out.println((gc.getTree().getChildren().indexOf(child)));
+                //System.out.println((gc.getTree().getChildren().indexOf(child)));
                 if (child instanceof SourceFileNode && changedFiles.contains(child.getFilePath().replace("/", "\\"))) {
                     Change[] changes = null;
                     try {
@@ -60,97 +64,28 @@ public class App {
                         System.err.println("error while executing the file diff: " + child.getFilePath());
                         e.printStackTrace();
                     }
+                    String fileContent = null;
+                    Path path = Paths.get(gitHelper.getPath() + File.separator + child.getFilePath());
+                    try {
+                        fileContent = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
                     for (Change change : changes) {
                         visitor.setChange(change);
                         child.accept(visitor);
                         changedNodes.addAll(visitor.getchangedNodes());
-                        Change allClass = new Change(0,change.getTo());
-                        visitor.setChange(allClass);
-                        child.accept(visitor);
-                        ArrayList<ConditionalNode> classNodes = new ArrayList<>();
-                        classNodes.addAll(visitor.getchangedNodes());
-                        if(classNodes.get(0) instanceof  IFCondition){
-                            System.out.println("sim");
-                        }
-                        Model model = new Model("test1");
 
                         for (ConditionalNode changedNode : changedNodes) {
-                            String expression="";
-                            for(int i =0; i<classNodes.size(); i++){
-
-                                if(classNodes.get(i).equals(changedNode)){
-                                    System.out.println("$$$" + classNodes.get(i).getCondition());
-                                    System.out.println("---- "+changedNode.getCondition());
-                                    //expression +=  classNodes.get(i).getCondition();
-
-                                }
-                                if(classNodes.get(i) instanceof  IFCondition){
-                                    String auxConstraint = classNodes.get(i).getCondition();
-                                    BoolVar a = model.boolVar(auxConstraint);
-                                    model.addClauses(implies(a,a));
-                                    model.post(a.extension());
-                                }else{
-                                    if(classNodes.get(i) instanceof  IFDEFCondition){
-
-                                    }else {
-                                        if(classNodes.get(i) instanceof  ELSECondition){
-
-                                        }else{
-                                            if(classNodes.get(i) instanceof  IFNDEFCondition){
-
-                                            }
-                                        }
-                                    }
-                                }
-
-                                //expression +=  classNodes.get(i).getCondition();
-                            }
-
-
-
-
-
-                            Solution s = model.getSolver().findSolution();
-                            System.out.println(s);
-                            if(s != null) {
-                                List<BoolVar> booleanVars = s.retrieveBoolVars();
-                                System.out.println("Config: " + booleanVars.toString());
-                                for (BoolVar boolvar : booleanVars) {
-                                    if (boolvar.equals(true)) {
-                                        System.out.println("Config: " + boolvar);
-                                    }
-                                }
-                            }
-                            ExpressionSolver solver = new ExpressionSolver();
-                            PreprocessorHelper pph = new PreprocessorHelper();
-                            final File gitFolder = new File(gitHelper.getPath());
-                            final File eccoFolder = new File(gitFolder.getParent(), "ecco");
-                            //solver.setExpr(expression);
-                            //Map<Feature, Integer> result = solver.solve();
-                            //solver.reset();
-                            //pph.generateVariants(result, gitFolder, eccoFolder);
-                            //System.out.println("CONFIG FOR PREPROCESSING:");
-                            //result.entrySet().forEach(x -> System.out.print(x.getKey() + " = " + x.getValue() + "; "));
                             int init = changedNode.getLineFrom();
                             int end = changedNode.getLineTo();
-                            String fileContent = null;
-                            Path path = Paths.get(gitHelper.getPath() + File.separator + child.getFilePath());
-                            try {
-                                fileContent = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                            System.out.println(changedNode.getCondition().toString());
+
                             String[] lines = fileContent.split("\\r?\\n");
-                            String code="";
-                            if (init == 0) {
-                                for (int i = init; i < end; i++) {
-                                    //System.out.println("Line " + i + ": " + lines[i]);
-                                }
-                            } else {
-                                for (int i = init+1; i < end; i++) {
-                                    code+=lines[i-1]+"\n";
-                                 //   System.out.println("Line " + i + ": " + lines[i-1]);
+                            String code = "";
+                            if (init != 0) {
+                                for (int i = init + 1; i < end; i++) {
+                                    code += lines[i - 1] + "\n";
                                 }
                             }
                             IASTTranslationUnit translationUnit = null;
@@ -160,18 +95,28 @@ public class App {
                                 e.printStackTrace();
                             }
                             final IASTPreprocessorStatement[] ppstatements = translationUnit.getAllPreprocessorStatements();
+                            ArrayList<DefineNode> definedNodes = new ArrayList<>();
                             for (IASTPreprocessorStatement ppstatementsInsideFeature : ppstatements) {
-                                if( ppstatementsInsideFeature instanceof IASTPreprocessorMacroDefinition){
-                                    Define defineNodeInsideFeature = new Define(((IASTPreprocessorMacroDefinition) ppstatementsInsideFeature).getName().toString(), ((IASTPreprocessorMacroDefinition) ppstatementsInsideFeature).getExpansion().toString(),1);
+                                if (ppstatementsInsideFeature instanceof IASTPreprocessorMacroDefinition) {
+                                    Define defineNodeInsideFeature = new Define(((IASTPreprocessorMacroDefinition) ppstatementsInsideFeature).getName().toString(), ((IASTPreprocessorMacroDefinition) ppstatementsInsideFeature).getExpansion().toString(), 1);
                                     changedNode.addDefineNode(defineNodeInsideFeature);
-
-                                }else if(ppstatementsInsideFeature instanceof IASTPreprocessorUndefStatement){
-                                    Undef undefNodeInsideFeature = new Undef(((IASTPreprocessorUndefStatement) ppstatementsInsideFeature).getMacroName().toString(),1);
-                                    System.out.println(undefNodeInsideFeature.getMacroName());
+                                    definedNodes.add(defineNodeInsideFeature);
+                                } else if (ppstatementsInsideFeature instanceof IASTPreprocessorUndefStatement) {
+                                    Undef undefNodeInsideFeature = new Undef(((IASTPreprocessorUndefStatement) ppstatementsInsideFeature).getMacroName().toString(), 1);
+                                    changedNode.addDefineNode(undefNodeInsideFeature);
+                                    definedNodes.add(undefNodeInsideFeature);
                                 }
                             }
                         }
 
+                        Change allClass = new Change(0, change.getTo());
+                        visitor.setChange(allClass);
+                        child.accept(visitor);
+                        ArrayList<ConditionalNode> classNodes = new ArrayList<>();
+
+                        classNodes.addAll(visitor.getchangedNodes());
+
+                        constructConstraintPerFeature(classNodes, changedNodes, gitHelper, change, visitor, child);
 
 
                     }
@@ -208,6 +153,79 @@ public class App {
         });
 
         gitHelper.getAllCommits(commitList);
+
+    }
+
+    public static void constructConstraintPerFeature(ArrayList<ConditionalNode> classUntilChange, Set<ConditionalNode> changedNodes, GitHelper gitHelper, Change change, GetNodesForChangeVisitor visitor, FileNode child) {
+        Feature feature = null;
+        ExpressionSolver solver = new ExpressionSolver();
+        PreprocessorHelper pph = new PreprocessorHelper();
+        final File gitFolder = new File(gitHelper.getPath());
+        final File eccoFolder = new File(gitFolder.getParent(), "ecco");
+        Queue<FeatureImplication> featureImplications = null;
+        for (ConditionalNode changedNode : changedNodes) {
+            if (changedNode.getCondition() != "BASE") {
+                Change allClass = new Change(0, changedNode.getLineTo());
+                visitor.setChange(allClass);
+                child.accept(visitor);
+                ArrayList<ConditionalNode> classNodes = new ArrayList<>();
+                classNodes.addAll(visitor.getchangedNodes());
+                if (changedNode.getCondition().contains("!")) {
+                    solver.setExpr(changedNode.getCondition()+" && BASE");
+                } else {
+                    solver.setExpr(changedNode.getCondition()+" && BASE");
+                }
+                for (int i = classNodes.size() - 1; i >= 0; i--) {
+                    if (classNodes.get(i).getLineFrom() > changedNode.getLineTo()) {
+                        i--;
+                    } else {
+                        featureImplications = new LinkedList<FeatureImplication>();
+                        FeatureImplication featureImplication;
+
+                        if (classNodes.get(i).getDefineNodes().size() > 0) {
+                            for (int k = 0; k < classNodes.get(i).getDefineNodes().size(); k++) {
+                                if (classNodes.get(i).getDefineNodes().get(k) instanceof Undef) {
+                                    featureImplication = new FeatureImplication("BASE && "+classNodes.get(i).getCondition(), "!"+classNodes.get(i).getDefineNodes().get(k).getMacroName());
+                                    featureImplications.add(featureImplication);
+                                } else {
+                                    featureImplication = new FeatureImplication("BASE && "+classNodes.get(i).getCondition(), classNodes.get(i).getDefineNodes().get(k).getMacroName());
+                                    featureImplications.add(featureImplication);
+                                }
+                                feature = new Feature(classNodes.get(i).getCondition());
+                                solver.addClause(feature, featureImplications);
+                            }
+                        }
+
+
+                    }
+                }
+
+
+                Map<Feature, Integer> result = solver.solve();
+                solver.reset();
+                pph.generateVariants(result, gitFolder, eccoFolder);
+                System.out.println("\nCONFIG FOR PREPROCESSING CHANGEDNODE: " + changedNode.getCondition());
+                result.entrySet().forEach(x -> System.out.print(x.getKey() + " = " + x.getValue() + "; "));
+            }
+        }
+       /*
+        featureImplications = new LinkedList<FeatureImplication>();
+        FeatureImplication featureImplication;
+        solver.setExpr("A");
+        featureImplication = new FeatureImplication("A", "B");
+        featureImplications.add(featureImplication);
+        feature = new Feature("A");
+        solver.addClause(feature, featureImplications);
+       -----------
+       Model model = new Model("test1");
+        BoolVar a = model.boolVar("A");
+        BoolVar b = model.boolVar("B");
+        model.addClauses(implies(a,b));
+        model.post(b.extension());
+
+        Solution s = model.getSolver().findSolution();
+        System.out.println(s);
+        */
 
     }
 

@@ -123,7 +123,6 @@ public class ExpressionSolver {
                 elsePart = LogOp.ifThenElse(ifPart, thenPart, elsePart);
             }
         }
-
         model.addClauses(elsePart);
     }
 
@@ -141,8 +140,9 @@ public class ExpressionSolver {
 	    Variable var = stack.pop();
 
 	    if(var instanceof IntVar) {
-            if(var.asIntVar().getValue() > 0) return model.boolVar(true);
-            else return model.boolVar(false);
+            if(var.asIntVar().getValue() > 0)
+            	return model.boolVar(true);
+            else return model.boolVar(true);
 	    }
 
 	    return var.asBoolVar();

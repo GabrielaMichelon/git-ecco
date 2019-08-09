@@ -4,12 +4,14 @@ import at.jku.isse.gitecco.core.preprocessor.PreprocessorHelper;
 import at.jku.isse.gitecco.core.solver.ExpressionSolver;
 import org.chocosolver.solver.Model;
 import org.chocosolver.solver.Solution;
+import org.chocosolver.solver.constraints.Constraint;
 import org.chocosolver.solver.variables.BoolVar;
 import org.chocosolver.solver.variables.IntVar;
 import org.chocosolver.solver.variables.Variable;
 import org.junit.Assert;
 import org.junit.Test;
 
+import javax.swing.text.StyledEditorKit;
 import java.io.File;
 
 import static org.chocosolver.solver.constraints.nary.cnf.LogOp.*;
@@ -94,6 +96,20 @@ public class TranslationTest {
 
         model.getSolver().findAllSolutions().forEach(System.out::println);
     }
+
+    @Test
+    public void chocoExperimentGabi() {
+        Model model = new Model("test3");
+
+        BoolVar a = model.boolVar("A");
+        BoolVar b = model.boolVar("B");
+        BoolVar c = model.boolVar("C");
+        BoolVar y = model.boolVar("Y");
+        model.addClauses(ifThenElse(a,b, implies(c.not(),b.not())));
+        model.addClauses(implies(b,y));
+        System.out.println(model.getSolver().findSolution());
+    }
+
 
     @Test
     public void pptest() {
