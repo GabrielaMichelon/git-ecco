@@ -14,7 +14,7 @@ public final class ELIFCondition extends ConditionalNode {
     @Override
     public String getCondition() {
         StringBuilder ret = new StringBuilder();
-        ret.append("!" + getParent().getIfBlock() + " && ");
+        ret.append("!" + getParent().getIfBlock().getCondition() + " && ");
         for (ELIFCondition elseIfBlock : getParent().getElseIfBlocks()) {
             if(this.equals(elseIfBlock)) {
                 break;

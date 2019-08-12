@@ -39,7 +39,7 @@ public class App {
         //maybe even start commit and/or end commit (hashes or numbers)
         //String repoPath = "C:\\obermanndavid\\git-ecco-test\\appimpleTest\\marlin\\Marlin";
         //String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\Marlin\\Marlin";
-        String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\test-featureid";
+        String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\test4";
         //String repoPath = "C:\\Users\\gabil\\Desktop\\Test";
         final GitHelper gitHelper = new GitHelper(repoPath);
         final GitCommitList commitList = new GitCommitList(repoPath);
@@ -78,8 +78,10 @@ public class App {
                         child.accept(visitor);
                         changedNodes.addAll(visitor.getchangedNodes());
 
-                         /*for (ConditionalNode changedNode : changedNodes) {
-                           int init = changedNode.getLineFrom();
+
+                        //due to problems in receiving all the ppstatements (some times de defines comes and undefs never comes)
+                        /*for (ConditionalNode changedNode : changedNodes) {
+                            int init = changedNode.getLineFrom();
                             int end = changedNode.getLineTo();
 
                             String[] lines = fileContent.split("\\r?\\n");
@@ -95,17 +97,49 @@ public class App {
                             } catch (CoreException e) {
                                 e.printStackTrace();
                             }
+
+
                             final IASTPreprocessorStatement[] ppstatements = translationUnit.getAllPreprocessorStatements();
                             ArrayList<DefineNode> definedNodes = new ArrayList<>();
                             for (IASTPreprocessorStatement ppstatementsInsideFeature : ppstatements) {
                                 if (ppstatementsInsideFeature instanceof IASTPreprocessorMacroDefinition) {
                                     Define defineNodeInsideFeature = new Define(((IASTPreprocessorMacroDefinition) ppstatementsInsideFeature).getName().toString(), ((IASTPreprocessorMacroDefinition) ppstatementsInsideFeature).getExpansion().toString(), 1);
-                                    changedNode.addDefineNode(defineNodeInsideFeature);
-                                    definedNodes.add(defineNodeInsideFeature);
+                                    Boolean alreadyExists = false;
+                                    for (DefineNode defineNode:changedNode.getDefineNodes()) {
+                                        if (defineNode.getLineInfo() == defineNodeInsideFeature.getLineInfo()){
+                                            alreadyExists = true;
+                                        }
+                                    }
+                                    if(!alreadyExists){
+                                        changedNode.addDefineNode(defineNodeInsideFeature);
+                                        definedNodes.add(defineNodeInsideFeature);
+                                    }
                                 } else if (ppstatementsInsideFeature instanceof IASTPreprocessorUndefStatement) {
                                     Undef undefNodeInsideFeature = new Undef(((IASTPreprocessorUndefStatement) ppstatementsInsideFeature).getMacroName().toString(), 1);
-                                    changedNode.addDefineNode(undefNodeInsideFeature);
-                                    definedNodes.add(undefNodeInsideFeature);
+                                    Boolean alreadyExists = false;
+                                    for (DefineNode defineNode:changedNode.getDefineNodes()) {
+                                        if (defineNode.getLineInfo() == undefNodeInsideFeature.getLineInfo()){
+                                            alreadyExists = true;
+                                        }
+                                    }
+                                    if(!alreadyExists){
+                                        changedNode.addDefineNode(undefNodeInsideFeature);
+                                        definedNodes.add(undefNodeInsideFeature);
+                                    }
+                                }
+                            }
+                            if(changedNode.getChildren().size() > 0){
+                                for (ConditionBlockNode changeChild:changedNode.getChildren()) {
+                                    if(changeChild.getIfBlock().getDefineNodes().size()>0){
+                                        for (DefineNode defineAux:changeChild.getIfBlock().getDefineNodes() ) {
+                                            for (DefineNode defineAux2 :changedNode.getDefineNodes()) {
+                                                if(defineAux.getLineInfo()==defineAux2.getLineInfo()){
+                                                    changedNode.deleteDefineNode(defineAux2);
+                                                }
+                                            }
+
+                                        }
+                                    }
                                 }
                             }
                         }*/
@@ -167,39 +201,93 @@ public class App {
         Queue<FeatureImplication> featureImplicationsAux = new LinkedList<>();
         FeatureImplication featureImplication;
         for (ConditionalNode changedNode : changedNodes) {
-            if (changedNode.getCondition() != "BASE") {
+            if (!changedNode.getCondition().contains("BASE")) {
                 IFCondition changedNodeParent = (IFCondition) changedNode.getParent().getIfBlock().getParent().getParent();
-                for (ConditionBlockNode children : changedNodeParent.getChildren()) {
-                    if (children.getIfBlock().getDefineNodes().size() > 0) {
-                            for (DefineNode definedNode : children.getIfBlock().getDefineNodes()) {
-                                if (definedNode instanceof Define && definedNode.getLineInfo()<changedNode.getLineFrom()) {
-                                    featureImplication = new FeatureImplication("BASE && " + children.getIfBlock().getCondition(), definedNode.getMacroName());
-                                    featureImplications.add(featureImplication);
-                                    feature = new Feature(definedNode.getMacroName()); //feature is the variable of the define or undef
-                                    solver.addClause(feature, featureImplications);
-                                } else if(definedNode instanceof Undef && definedNode.getLineInfo()<changedNode.getLineFrom()){ //undef
-                                    featureImplication = new FeatureImplication("BASE && " + children.getIfBlock().getCondition(), "!" + definedNode.getMacroName());
-                                    featureImplications.add(featureImplication);
-                                    feature = new Feature(definedNode.getMacroName()); //feature is the variable of the define or undef
-                                    solver.addClause(feature, featureImplications);
-                                }
 
-                            }
+                //adding the expression of the changedNode that solver will use to give a solution
+                if (!changedNode.getParent().getIfBlock().getParent().getParent().getCondition().contains("BASE")) {
+                    solver.setExpr(changedNode.getCondition() + " && " + changedNode.getParent().getIfBlock().getParent().getParent().getCondition() + " && " + changedNodeParent.getCondition());
+                    //System.out.println(changedNode.getCondition()+ " && " +changedNode.getParent().getIfBlock().getParent().getParent().getCondition()+ " && BASE");
+                } else {
+                    solver.setExpr(changedNode.getCondition() + " && " + changedNodeParent.getCondition());
+                }
+
+                //adding clauses first for definedNodes children of the changed node
+                for (DefineNode definedNode : changedNode.getDefineNodes()) {
+                    if (definedNode instanceof Define) {
+                        if (!changedNode.getParent().getParent().getCondition().contains("BASE"))
+                            featureImplication = new FeatureImplication(changedNodeParent.getParent().getParent().getCondition() + " && " + changedNodeParent.getCondition() + " && " + changedNode.getCondition(), definedNode.getMacroName() + " " + ((Define) definedNode).getMacroExpansion());
+                        else
+                            featureImplication = new FeatureImplication(changedNodeParent.getCondition() + " && " + changedNode.getCondition(), definedNode.getMacroName() + " " + ((Define) definedNode).getMacroExpansion());
+                        featureImplications.add(featureImplication);
+
+                    } else { //undef
+                        if (!changedNode.getParent().getParent().getCondition().contains("BASE"))
+                            featureImplication = new FeatureImplication(changedNodeParent.getParent().getParent().getCondition() + " && " + changedNodeParent.getCondition() + " && " + changedNode.getCondition(), "!" + definedNode.getMacroName());
+                        else
+                            featureImplication = new FeatureImplication(changedNodeParent.getCondition() + " && " + changedNode.getCondition(), "!" + definedNode.getMacroName());
+                        featureImplications.add(featureImplication);
                     }
-                    if (children.getIfBlock().getLineTo() < changedNode.getLineFrom()) {
-                        searchingDefineNodes(children, solver, featureImplications);
+                    feature = new Feature(definedNode.getMacroName()); //feature is the variable of the define or undef
+                    solver.addClause(feature, featureImplications);
+                }
+
+                //adding clauses to the defines children of BASE
+                for (DefineNode defineNode : changedNodeParent.getDefineNodes()) {
+                    if (defineNode instanceof Define && defineNode.getLineInfo() < changedNode.getLineFrom()) {
+                        if (((Define) defineNode).getMacroExpansion() != null) {
+                            featureImplication = new FeatureImplication(changedNodeParent.getCondition(), defineNode.getMacroName() + " " + ((Define) defineNode).getMacroExpansion());
+                        } else {
+                            featureImplication = new FeatureImplication(changedNodeParent.getCondition(), defineNode.getMacroName());
+                        }
+                        featureImplications.add(featureImplication);
+                        feature = new Feature(defineNode.getMacroName()); //feature is the variable of the define or undef
+                        solver.addClause(feature, featureImplications);
+                    } else if (defineNode instanceof Undef && defineNode.getLineInfo() < changedNode.getLineFrom()) { //undef
+                        featureImplication = new FeatureImplication("BASE", "!" + defineNode.getMacroName());
+                        featureImplications.add(featureImplication);
+                        feature = new Feature(defineNode.getMacroName()); //feature is the variable of the define or undef
+                        solver.addClause(feature, featureImplications);
                     }
                 }
-                if(solver.getVars().size() > 0) {
-                    solver.setExpr(changedNode.getCondition() + " && BASE");
+
+                //adding clauses for each BASE children Nodes that has defines below the changedNode
+                for (ConditionBlockNode children : changedNodeParent.getChildren()) {
+                    if (children.getIfBlock().getDefineNodes().size() > 0) {
+                        for (DefineNode definedNode : children.getIfBlock().getDefineNodes()) {
+                            if (definedNode instanceof Define && definedNode.getLineInfo() < changedNode.getLineFrom()) {
+                                if (((Define) definedNode).getMacroExpansion() != null) {
+                                    featureImplication = new FeatureImplication(changedNodeParent.getCondition() + " && " + children.getIfBlock().getCondition(), definedNode.getMacroName() + " " + ((Define) definedNode).getMacroExpansion());
+                                } else {
+                                    featureImplication = new FeatureImplication(changedNodeParent.getCondition() + " && " + children.getIfBlock().getCondition(), definedNode.getMacroName());
+                                }
+                                featureImplications.add(featureImplication);
+                                feature = new Feature(definedNode.getMacroName()); //feature is the variable of the define or undef
+                                solver.addClause(feature, featureImplications);
+                            } else if (definedNode instanceof Undef && definedNode.getLineInfo() < changedNode.getLineFrom()) { //undef
+                                featureImplication = new FeatureImplication(changedNodeParent.getCondition() + " && " + children.getIfBlock().getCondition(), "!" + definedNode.getMacroName());
+                                featureImplications.add(featureImplication);
+                                feature = new Feature(definedNode.getMacroName()); //feature is the variable of the define or undef
+                                solver.addClause(feature, featureImplications);
+                            }
+
+                        }
+                    }
+                    if (children.getIfBlock().getLineTo() < changedNode.getLineFrom()) {
+                        searchingDefineNodes(children, solver, featureImplications, changedNodeParent.getCondition());
+                    }
+                }
+
+                //after added all clauses the solver returns a solution
+                if (solver.getVars().size() > 0) {
                     Map<Feature, Integer> result = solver.solve();
                     solver.reset();
                     pph.generateVariants(result, gitFolder, eccoFolder);
-                    System.out.println("\nCONFIG FOR PREPROCESSING CHANGEDNODE: " + changedNode.getCondition());
+                    System.out.println("\nBlock: " + changedNode.getCondition() + " has change!");
                     result.entrySet().forEach(x -> System.out.print(x.getKey() + " = " + x.getValue() + "; "));
                     System.out.println("\n");
-                }else{
-                    System.out.println("\nThe Feature "+changedNode.getCondition()+" has no implications in its change!");
+                } else {
+                    System.out.println("\nBlock " + changedNode.getCondition() + " has change!");
                 }
             }
 
@@ -253,43 +341,32 @@ public class App {
                 }*/
 
         }
-       /*
-        featureImplications = new LinkedList<FeatureImplication>();
-        FeatureImplication featureImplication;
-        solver.setExpr("A");
-        featureImplication = new FeatureImplication("A", "B");
-        featureImplications.add(featureImplication);
-        feature = new Feature("A");
-        solver.addClause(feature, featureImplications);
-       -----------
-       Model model = new Model("test1");
-        BoolVar a = model.boolVar("A");
-        BoolVar b = model.boolVar("B");
-        model.addClauses(implies(a,b));
-        model.post(b.extension());
-
-        Solution s = model.getSolver().findSolution();
-        System.out.println(s);
-        */
-
     }
 
-    public void searchingDefineNodes(ConditionBlockNode children, ExpressionSolver solver, Queue<FeatureImplication> featureImplications) {
+
+    public void searchingDefineNodes(ConditionBlockNode children, ExpressionSolver solver, Queue<FeatureImplication> featureImplications, String changedNodeParent) {
         FeatureImplication featureImplication;
         Feature feature = null;
 
         if (children.getIfBlock().getChildren().size() > 0) {
             for (ConditionBlockNode childrenChildren : children.getIfBlock().getChildren()) {
-                searchingDefineNodes(childrenChildren, solver, featureImplications);
+                searchingDefineNodes(childrenChildren, solver, featureImplications, changedNodeParent);
             }
         } else {
             if (children.getIfBlock().getDefineNodes().size() > 0) {
                 for (DefineNode definedNode : children.getIfBlock().getDefineNodes()) {
                     if (definedNode instanceof Define) {
-                        featureImplication = new FeatureImplication("BASE && " + children.getIfBlock().getCondition(), definedNode.getMacroName()+" "+((Define) definedNode).getMacroExpansion());
+                        if (!children.getIfBlock().getParent().getParent().getCondition().contains("BASE"))
+                            featureImplication = new FeatureImplication(changedNodeParent + " && " + children.getIfBlock().getParent().getParent().getCondition() + " && " + children.getIfBlock().getCondition(), definedNode.getMacroName() + " " + ((Define) definedNode).getMacroExpansion());
+                        else
+                            featureImplication = new FeatureImplication(changedNodeParent + " && " + children.getIfBlock().getCondition(), definedNode.getMacroName() + " " + ((Define) definedNode).getMacroExpansion());
                         featureImplications.add(featureImplication);
+
                     } else { //undef
-                        featureImplication = new FeatureImplication("BASE && " + children.getIfBlock().getCondition(), "!" + definedNode.getMacroName());
+                        if (!children.getIfBlock().getParent().getParent().getCondition().contains("BASE"))
+                            featureImplication = new FeatureImplication(changedNodeParent + " && " + children.getIfBlock().getParent().getParent().getCondition() + " && " + children.getIfBlock().getCondition(), "!" + definedNode.getMacroName());
+                        else
+                            featureImplication = new FeatureImplication(changedNodeParent + " && " + children.getIfBlock().getCondition(), "!" + definedNode.getMacroName());
                         featureImplications.add(featureImplication);
                     }
                     feature = new Feature(definedNode.getMacroName()); //feature is the variable of the define or undef

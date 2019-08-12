@@ -19,7 +19,7 @@ public final class ELSECondition extends ConditionalNode implements Visitable {
     @Override
     public String getCondition() {
         StringBuilder ret = new StringBuilder();
-        ret.append("!" + getParent().getIfBlock() + " && ");
+        ret.append("!" + getParent().getIfBlock().getCondition() );
         for (ELIFCondition elseIfBlock : getParent().getElseIfBlocks()) {
             ret.append("!" + elseIfBlock.getCondition() + " && ");
         }

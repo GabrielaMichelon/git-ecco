@@ -15,7 +15,7 @@ public abstract class ConditionalNode extends ConditionNode {
     private int lineTo = -1;
     private final List<ConditionBlockNode> children;
     private final ConditionBlockNode parent;
-    private final List<DefineNode> defineNodes = new ArrayList();
+    private List<DefineNode> defineNodes = new ArrayList();
     private final List<IncludeNode> includeNodes = new ArrayList<>();
 
     public ConditionalNode(ConditionBlockNode parent) {
@@ -45,6 +45,10 @@ public abstract class ConditionalNode extends ConditionNode {
      */
     public void addDefineNode(DefineNode d) {
         this.defineNodes.add(d);
+    }
+
+    public void deleteDefineNode(DefineNode d){
+        this.defineNodes.remove(d);
     }
 
     /**
