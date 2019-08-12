@@ -20,4 +20,8 @@ public class PrefixExpr extends UnaryExpr {
     public String toString() {
         return "" + getOperator() + getExpr();
     }
+
+    public PrefixExpr clone() {
+        return new PrefixExpr(getOperator().clone(), getExpr().clone());
+    }
 }

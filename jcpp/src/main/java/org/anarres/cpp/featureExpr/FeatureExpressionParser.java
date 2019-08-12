@@ -262,11 +262,11 @@ public class FeatureExpressionParser {
             } else if(la.getType() == Token.INC){
                 SingleTokenExpr op = new SingleTokenExpr(la);
                 scan();
-                lastExpr = new PostExpr(lastExpr, op);
+                lastExpr = new PostfixExpr(lastExpr, op);
             } else if(la.getType() == Token.DEC){
                 SingleTokenExpr op = new SingleTokenExpr(la);
                 scan();
-                lastExpr = new PostExpr(lastExpr, op);
+                lastExpr = new PostfixExpr(lastExpr, op);
             } else {
                 System.err.println("ERROR");
             }

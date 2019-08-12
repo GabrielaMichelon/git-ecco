@@ -7,4 +7,8 @@ public class NumberLiteral extends SingleTokenExpr {
     public NumberLiteral(Token token) {
         super(token);
     }
+
+    public NumberLiteral clone() {
+        return new NumberLiteral(getToken());
+    }
 }

@@ -1,8 +1,25 @@
 package org.anarres.cpp.featureExpr;
 
-public interface FeatureExpressionTraversal {
+import java.util.HashSet;
+import java.util.Set;
 
-    void preVisit(FeatureExpression expr);
+public abstract class FeatureExpressionTraversal {
 
-    void postVisit(FeatureExpression expr);
+    private Set<FeatureExpression> skipChildren;
+
+    public FeatureExpressionTraversal() {
+        this.skipChildren = new HashSet<FeatureExpression>();
+    }
+
+    protected void skipChildren(FeatureExpression expr){
+        this.skipChildren.add(expr);
+    }
+
+    protected boolean doSkipChildren(FeatureExpression expr){
+        return this.skipChildren.contains(expr);
+    }
+
+    public abstract void preVisit(FeatureExpression expr);
+
+    public abstract void postVisit(FeatureExpression expr);
 }

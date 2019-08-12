@@ -16,12 +16,13 @@
  */
 package org.anarres.cpp;
 
-import javax.annotation.Nonnull;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.Reader;
-
-import static org.anarres.cpp.Token.*;
+import javax.annotation.Nonnull;
+import static org.anarres.cpp.Token.CCOMMENT;
+import static org.anarres.cpp.Token.CPPCOMMENT;
+import static org.anarres.cpp.Token.EOF;
 
 /**
  * A Reader wrapper around the Preprocessor.

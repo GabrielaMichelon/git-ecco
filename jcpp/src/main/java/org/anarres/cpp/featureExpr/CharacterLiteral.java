@@ -7,4 +7,8 @@ public class CharacterLiteral extends SingleTokenExpr {
     public CharacterLiteral(Token token) {
         super(token);
     }
+
+    public CharacterLiteral clone() {
+        return new CharacterLiteral(getToken());
+    }
 }

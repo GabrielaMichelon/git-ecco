@@ -1,9 +1,6 @@
 package org.anarres.cpp;
 
-import org.anarres.cpp.featureExpr.FeatureExpression;
-import org.anarres.cpp.featureExpr.FeatureExpressionParser;
-import org.anarres.cpp.featureExpr.MacroCall;
-import org.anarres.cpp.featureExpr.PostOrderTraversal;
+import org.anarres.cpp.featureExpr.*;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -54,7 +51,7 @@ public class OnlyExpandMacrosInIfsController extends PreprocessorControlListener
         return null;
     }
 
-    private class ExpandTraversal extends  PostOrderTraversal{
+    private class ExpandTraversal extends PostOrderTraversal{
 
         private FeatureExpression root;
 

@@ -32,7 +32,7 @@ public class Macro {
     private Source source;
     private String name;
     /* It's an explicit decision to keep these around here. We don't
-     * need to; the argument token types is M_ARG and the value
+     * need to; the argument token type is M_ARG and the value
      * is the index. The strings themselves are only used in
      * stringification of the macro, for debugging. */
     private List<String> args;

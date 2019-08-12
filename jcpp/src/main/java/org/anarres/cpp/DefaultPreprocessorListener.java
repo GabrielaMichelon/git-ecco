@@ -16,12 +16,10 @@ package org.anarres.cpp;
  * or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A handler for preprocessor events, primarily errors and warnings.
@@ -97,5 +95,8 @@ public class DefaultPreprocessorListener implements PreprocessorListener {
     }
 
     public void handleDefine(Macro m, Source source) {
+    }
+
+    public void handleUndefine(Macro m, Source source) {
     }
 }

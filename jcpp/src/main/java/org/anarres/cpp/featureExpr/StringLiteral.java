@@ -7,4 +7,8 @@ public class StringLiteral extends SingleTokenExpr {
     public StringLiteral(Token token) {
         super(token);
     }
+
+    public StringLiteral clone() {
+        return new StringLiteral(getToken());
+    }
 }

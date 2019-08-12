@@ -24,12 +24,26 @@ public class ParenthesizedExpr extends FeatureExpression {
     }
 
     public FeatureExpression getExpr() {
-        return this.expr;
+        return expr;
     }
 
     @Override
     public String toString() {
         return "(" + expr + ")";
+    }
+
+    public boolean equals(FeatureExpression other) {
+        if(other == this){
+            return true;
+        }
+        if(!(other instanceof ParenthesizedExpr)){
+            return false;
+        }
+        return this.expr.equals(((ParenthesizedExpr)other).expr);
+    }
+
+    public ParenthesizedExpr clone() {
+        return new ParenthesizedExpr(expr.clone());
     }
 
     public boolean replace(FeatureExpression child, FeatureExpression newChild) {

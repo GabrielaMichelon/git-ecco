@@ -26,6 +26,20 @@ public class SingleTokenExpr extends FeatureExpression {
         return token.getText();
     }
 
+    public boolean equals(FeatureExpression other) {
+        if(other == this){
+            return true;
+        }
+        if(!(other instanceof SingleTokenExpr)){
+            return false;
+        }
+        return this.token.getText().equals(((SingleTokenExpr)other).token.getText());
+    }
+
+    public SingleTokenExpr clone() {
+        return new SingleTokenExpr(token);
+    }
+
     public boolean replace(FeatureExpression child, FeatureExpression newChild) {
         return false;
     }

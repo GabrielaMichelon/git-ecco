@@ -16,6 +16,9 @@
  */
 package org.anarres.cpp;
 
+import java.util.LinkedList;
+import java.util.List;
+
 /* pp */ class State {
 
     boolean parent;
@@ -24,6 +27,8 @@ package org.anarres.cpp;
 
     boolean processed;
 
+    List<List<Token>> tokens;
+
     /* pp */ State() {
         this.parent = true;
         this.active = true;
@@ -31,11 +36,13 @@ package org.anarres.cpp;
         this.processed = true;
     }
 
-    /* pp */ State(State parent) {
+    /* pp */ State(State parent, List<Token> tokens) {
         this.parent = parent.isParentActive() && parent.isActive();
         this.active = true;
         this.sawElse = false;
         this.processed = true;
+        this.tokens = new LinkedList<List<Token>>();
+        this.tokens.add(tokens);
     }
 
     /* Required for #elif */
@@ -69,6 +76,18 @@ package org.anarres.cpp;
 
     /* pp */ boolean isProcessed() {
         return processed;
+    }
+
+    public List<List<Token>> getTokens() {
+        return tokens;
+    }
+
+    protected void setTokens(List<Token> tokens) {
+        this.tokens.add(tokens);
+    }
+
+    protected void removeLastTokens() {
+        this.tokens.remove(this.tokens.size() - 1);
     }
 
     @Override

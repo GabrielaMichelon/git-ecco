@@ -27,7 +27,7 @@ public enum Feature {
     TRIGRAPHS,
     /** Outputs linemarker tokens. */
     LINEMARKERS,
-    /** Reports tokens of types INVALID as errors. */
+    /** Reports tokens of type INVALID as errors. */
     CSYNTAX,
     /** Preserves comments in the lexed output. Like cpp -C */
     KEEPCOMMENTS,

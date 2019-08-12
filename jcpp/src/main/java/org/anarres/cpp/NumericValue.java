@@ -16,12 +16,12 @@
  */
 package org.anarres.cpp;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import javax.annotation.CheckForNull;
 import javax.annotation.CheckForSigned;
 import javax.annotation.Nonnegative;
 import javax.annotation.Nonnull;
-import java.math.BigDecimal;
-import java.math.BigInteger;
 
 public class NumericValue extends Number {
 

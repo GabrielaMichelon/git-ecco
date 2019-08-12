@@ -7,4 +7,8 @@ public class Name extends SingleTokenExpr {
     public Name(Token token) {
         super(token);
     }
+
+    public Name clone() {
+        return new Name(getToken());
+    }
 }

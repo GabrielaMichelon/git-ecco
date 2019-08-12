@@ -20,10 +20,16 @@ public abstract class FeatureExpression {
 
     public abstract boolean replace(FeatureExpression child, FeatureExpression newChild);
 
+    public abstract boolean equals(FeatureExpression other);
+
+    public abstract FeatureExpression clone();
+
     public void traverse(FeatureExpressionTraversal traversal){
         traversal.preVisit(this);
-        for(FeatureExpression child : getChildren()){
-            child.traverse(traversal);
+        if(!traversal.doSkipChildren(this)) {
+            for (FeatureExpression child : getChildren()) {
+                child.traverse(traversal);
+            }
         }
         traversal.postVisit(this);
     }

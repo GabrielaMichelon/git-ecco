@@ -138,10 +138,10 @@ public class ExpressionSolver {
     private BoolVar getBoolVarFromExpr (String expr) {
 	    traverse(new FeatureExpressionParser(expr).parse());
 	    Variable var = stack.pop();
-	    if(var instanceof IntVar) {
+	    if(!(var instanceof BoolVar) && var instanceof IntVar) {
             if(var.asIntVar().getValue() > 0)
             	return model.boolVar(true);
-            else return model.boolVar(true);
+            else return model.boolVar(false);
 	    }
 
 	    return var.asBoolVar();

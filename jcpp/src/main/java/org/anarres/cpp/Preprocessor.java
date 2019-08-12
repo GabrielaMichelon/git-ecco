@@ -501,10 +501,14 @@ public class Preprocessor implements Closeable {
         return includes;
     }
 
+    public Stack<State> getStates(){
+        return states;
+    }
+
     /* States */
-    private void push_state() {
+    private void push_state(List<Token> tokens) {
         State top = states.peek();
-        states.push(new State(top));
+        states.push(new State(top, tokens));
     }
 
     private void pop_state()
@@ -850,10 +854,10 @@ public class Preprocessor implements Closeable {
 
         if (m == __LINE__) {
             push_source(new FixedTokenSource(
-                    new Token[]{new Token(NUMBER,
+                    new Token(NUMBER,
                             orig.getLine(), orig.getColumn(),
                             Integer.toString(orig.getLine()),
-                            new NumericValue(10, Integer.toString(orig.getLine())))}
+                            new NumericValue(10, Integer.toString(orig.getLine())))
             ), true);
         } else if (m == __FILE__) {
             StringBuilder buf = new StringBuilder("\"");
@@ -877,19 +881,19 @@ public class Preprocessor implements Closeable {
             buf.append("\"");
             String text = buf.toString();
             push_source(new FixedTokenSource(
-                    new Token[]{new Token(STRING,
+                    new Token(STRING,
                             orig.getLine(), orig.getColumn(),
-                            text, text)}
+                            text, text)
             ), true);
         } else if (m == __COUNTER__) {
             /* This could equivalently have been done by adding
              * a special Macro subclass which overrides getTokens(). */
             int value = this.counter++;
             push_source(new FixedTokenSource(
-                    new Token[]{new Token(NUMBER,
+                    new Token(NUMBER,
                             orig.getLine(), orig.getColumn(),
                             Integer.toString(value),
-                            new NumericValue(10, Integer.toString(value)))}
+                            new NumericValue(10, Integer.toString(value)))
             ), true);
         } else {
             push_source(new MacroTokenSource(m, args), true);
@@ -907,6 +911,25 @@ public class Preprocessor implements Closeable {
             tok = source.token();
         }
         return expand(toks);
+    }
+
+    public List<Token> expand(Macro m, @Nonnull String macroCall) throws IOException, LexerException {
+        Macro before = getMacro(m.getName());
+        addMacro(m);
+        StringLexerSource source = new StringLexerSource(macroCall);
+        List<Token> toks = new LinkedList<Token>();
+        Token tok = source.token();
+        while (tok != null && tok.getType() != Token.EOF) {
+            toks.add(tok);
+            tok = source.token();
+        }
+        List<Token> expanded = expand(toks);
+        if(before != null){
+            addMacro(before);
+        } else {
+            macros.remove(m.getName());
+        }
+        return expanded;
     }
 
     /**
@@ -1145,7 +1168,17 @@ public class Preprocessor implements Closeable {
             if (m != null) {
                 /* XXX error if predefined */
                 if (this.controlListener == null || this.controlListener.removeMacro(m, this.source)) {
+                    if (this.listener != null) {
+                        this.listener.handleUndefine(m, this.source);
+                    }
                     macros.remove(m.getName());
+                }
+            } else {
+                m = new Macro(tok.getText());
+                if (this.controlListener == null || this.controlListener.removeMacro(m, this.source)) {
+                    if (this.listener != null) {
+                        this.listener.handleUndefine(m, this.source);
+                    }
                 }
             }
         }
@@ -1608,7 +1641,10 @@ public class Preprocessor implements Closeable {
 
     public long expr(String expr) throws IOException, LexerException {
         push_source(new StringLexerSource(expr), false);
+        Token tok = expr_token;
+        expr_token = null;
         long result = expr(0);
+        expr_token = tok;
         pop_source();
         return result;
     }
@@ -2047,7 +2083,7 @@ public class Preprocessor implements Closeable {
                             break;
 
                         case PP_IF:
-                            push_state();
+                            push_state(ppTokens);
                             if (!isActive()) {
                                 return source_skipline(false);
                             }
@@ -2081,6 +2117,8 @@ public class Preprocessor implements Closeable {
                                     if (partiallyProcessedTokens.get(partiallyProcessedTokens.size() - 1).getType() != NL) {
                                         partiallyProcessedTokens.add(ppTok);
                                     }
+                                    states.peek().removeLastTokens();
+                                    states.peek().setTokens(partiallyProcessedTokens);
                                     push_source(new UnprocessedFixedTokenSource(partiallyProcessedTokens), true);
                                 }
 
@@ -2101,6 +2139,7 @@ public class Preprocessor implements Closeable {
                             State state = states.peek();
                             getSource().removePeeked();
 
+                            state.setTokens(ppTokens);
                             if (false) {
                                 /* Check for 'if' */
                                 ;
@@ -2140,6 +2179,8 @@ public class Preprocessor implements Closeable {
                                         if (partiallyProcessedTokens.get(partiallyProcessedTokens.size() - 1).getType() != NL) {
                                             partiallyProcessedTokens.add(ppTok);
                                         }
+                                        states.peek().removeLastTokens();
+                                        states.peek().setTokens(partiallyProcessedTokens);
                                         push_source(new UnprocessedFixedTokenSource(partiallyProcessedTokens), true);
                                     }
 
@@ -2177,7 +2218,7 @@ public class Preprocessor implements Closeable {
                             // break;
 
                         case PP_IFDEF:
-                            push_state();
+                            push_state(ppTokens);
                             if (!isActive()) {
                                 return source_skipline(false);
                             } else {
@@ -2202,14 +2243,20 @@ public class Preprocessor implements Closeable {
                                             push_source(new UnprocessedFixedTokenSource(ppTokens), true);
                                         } else {
                                             List<Token> partiallyProcessedTokens = new LinkedList<Token>();
-                                            partiallyProcessedTokens.add(ppTokens.get(0));
-                                            partiallyProcessedTokens.add(ppTokens.get(1));
                                             StringLexerSource lex = new StringLexerSource(partiallyProcessed);
                                             Token t = lex.token();
                                             while (t.getType() != EOF) {
                                                 partiallyProcessedTokens.add(t);
                                                 t = lex.token();
                                             }
+                                            if(partiallyProcessedTokens.get(0).getType() == HASH){
+                                                partiallyProcessedTokens.remove(0);
+                                            } else {
+                                                partiallyProcessedTokens.add(0, ppTokens.get(0));
+                                                partiallyProcessedTokens.add(1, ppTokens.get(1));
+                                            }
+                                            states.peek().removeLastTokens();
+                                            states.peek().setTokens(partiallyProcessedTokens);
                                             push_source(new UnprocessedFixedTokenSource(partiallyProcessedTokens), true);
                                         }
                                         return hash;
@@ -2221,7 +2268,7 @@ public class Preprocessor implements Closeable {
                             // break;
 
                         case PP_IFNDEF:
-                            push_state();
+                            push_state(ppTokens);
                             if (!isActive()) {
                                 return source_skipline(false);
                             } else {
@@ -2246,15 +2293,34 @@ public class Preprocessor implements Closeable {
                                         if(partiallyProcessed == null) {
                                             push_source(new UnprocessedFixedTokenSource(ppTokens), true);
                                         } else {
+//                                            List<Token> partiallyProcessedTokens = new LinkedList<Token>();
+//                                            partiallyProcessedTokens.add(ppTokens.get(0));
+//                                            partiallyProcessedTokens.add(ppTokens.get(1));
+//                                            StringLexerSource lex = new StringLexerSource(partiallyProcessed);
+//                                            Token t = lex.token();
+//                                            while (t.getType() != EOF) {
+//                                                partiallyProcessedTokens.add(t);
+//                                                t = lex.token();
+//                                            }
+//                                            states.peek().removeLastTokens();
+//                                            states.peek().setTokens(partiallyProcessedTokens);
+//                                            push_source(new UnprocessedFixedTokenSource(partiallyProcessedTokens), true);
+
                                             List<Token> partiallyProcessedTokens = new LinkedList<Token>();
-                                            partiallyProcessedTokens.add(ppTokens.get(0));
-                                            partiallyProcessedTokens.add(ppTokens.get(1));
                                             StringLexerSource lex = new StringLexerSource(partiallyProcessed);
                                             Token t = lex.token();
                                             while (t.getType() != EOF) {
                                                 partiallyProcessedTokens.add(t);
                                                 t = lex.token();
                                             }
+                                            if(partiallyProcessedTokens.get(0).getType() == HASH){
+                                                partiallyProcessedTokens.remove(0);
+                                            } else {
+                                                partiallyProcessedTokens.add(0, ppTokens.get(0));
+                                                partiallyProcessedTokens.add(1, ppTokens.get(1));
+                                            }
+                                            states.peek().removeLastTokens();
+                                            states.peek().setTokens(partiallyProcessedTokens);
                                             push_source(new UnprocessedFixedTokenSource(partiallyProcessedTokens), true);
                                         }
                                         return hash;

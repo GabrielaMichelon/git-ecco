@@ -4,8 +4,6 @@ import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -46,7 +44,6 @@ public class PreprocessorAPI {
         pp.addFeature(Feature.INCLUDENEXT);
         pp.addWarning(Warning.IMPORT);
         // pp.addMacro("__JCPP__");
-        //TODO: here the system include path could be changed in case this files are going to be needed
         pp.getSystemIncludePath().add("/usr/local/include");
         pp.getSystemIncludePath().add("/usr/include");
         pp.getFrameworksPath().add("/System/Library/Frameworks");
@@ -104,6 +101,16 @@ public class PreprocessorAPI {
                             for (Token tok : m.getTokens()) {
                                 out.print(tok.getText());
                             }
+                        }
+                    }
+                }
+            }
+
+            public void handleUndefine(Macro m, Source source) {
+                if (keepDefines) {
+                    if (source instanceof FileLexerSource) {
+                        if (((FileLexerSource) source).getFile().equals(fileCurrentlyProcessed)) {
+                            out.print("#undef " + m.getName());
                         }
                     }
                 }
@@ -197,29 +204,7 @@ public class PreprocessorAPI {
         }
 
         List<File> files = new LinkedList<File>();
-        List<File> filesToCopy = new LinkedList<File>();
-        getFilesToProcess(src, files, filesToCopy);
-
-        for(File f : filesToCopy) {
-            try {
-                String sourcePath = f.getCanonicalPath();
-                String relativePath = sourcePath.substring(src.getCanonicalPath().length());
-                File target;
-                if (relativePath.length() == 0) {
-                    target = new File(targetDir, f.getName());
-                } else {
-                    target = new File(targetDir, relativePath);
-                }
-
-                target.getParentFile().mkdirs();
-
-                Files.copy(Paths.get(f.getPath()),Paths.get(target.getPath()));
-
-            } catch(IOException e) {
-                System.err.println("Preprocessor failed: \n -> failed to copy non source file " + f.getPath());
-                e.printStackTrace();
-            }
-        }
+        getFilesToProcess(src, files);
 
         for (File f : files) {
 
@@ -278,21 +263,17 @@ public class PreprocessorAPI {
 
     }
 
-    private void getFilesToProcess(File f, List<File> files, List<File> filestoCopy) {
+    private void getFilesToProcess(File f, List<File> files) {
         if (f.isDirectory()) {
             for (File file : f.listFiles()) {
-                if(!file.getPath().endsWith(".git")) {
-                    getFilesToProcess(file, files, filestoCopy);
-                }
+                getFilesToProcess(file, files);
             }
         } else if (f.isFile()) {
             for (String ext : this.fileTypes) {
                 if (f.getName().endsWith("." + ext)) {
                     files.add(f);
-                    return;
                 }
             }
-            filestoCopy.add(f);
         }
     }
 }

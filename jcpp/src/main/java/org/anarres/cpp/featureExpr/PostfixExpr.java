@@ -3,9 +3,9 @@ package org.anarres.cpp.featureExpr;
 import java.util.LinkedList;
 import java.util.List;
 
-public class PostExpr extends UnaryExpr {
+public class PostfixExpr extends UnaryExpr {
 
-    public PostExpr(FeatureExpression expr, SingleTokenExpr operator) {
+    public PostfixExpr(FeatureExpression expr, SingleTokenExpr operator) {
         super(expr, operator);
     }
 
@@ -19,5 +19,9 @@ public class PostExpr extends UnaryExpr {
     @Override
     public String toString() {
         return "" + getExpr() + getOperator();
+    }
+
+    public PostfixExpr clone() {
+        return new PostfixExpr(getExpr().clone(), getOperator().clone());
     }
 }

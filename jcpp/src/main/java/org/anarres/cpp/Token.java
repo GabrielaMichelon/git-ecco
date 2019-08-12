@@ -16,6 +16,7 @@
  */
 package org.anarres.cpp;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nonnull;
 
 /**
@@ -33,7 +34,7 @@ public final class Token {
     private final String text;
 
     public Token(int type, int line, int column,
-                 String text, Object value) {
+            String text, Object value) {
         this.type = type;
         this.line = line;
         this.column = column;
@@ -58,9 +59,9 @@ public final class Token {
     }
 
     /**
-     * Returns the semantic types of this token.
+     * Returns the semantic type of this token.
      *
-     * @return the semantic types of this token.
+     * @return the semantic type of this token.
      * @see #getTokenName(int)
      */
     public int getType() {
@@ -121,7 +122,7 @@ public final class Token {
      * @return the semantic value of this token, or null.
      * @see #getText()
      */
-    // @CheckForNull    // Not useful to annotate, as we have usually checked the types before calling this.
+    // @CheckForNull    // Not useful to annotate, as we have usually checked the type before calling this.
     public Object getValue() {
         return value;
     }
@@ -152,12 +153,12 @@ public final class Token {
     }
 
     /**
-     * Returns the descriptive name of the given token types.
+     * Returns the descriptive name of the given token type.
      *
      * This is mostly used for stringification and debugging.
      *
-     * @param type The types constant from this class to name.
-     * @return the descriptive name of the given token types.
+     * @param type The type constant from this class to name.
+     * @return the descriptive name of the given token type.
      * @see Token#getType()
      */
     @Nonnull

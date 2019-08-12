@@ -206,7 +206,7 @@ public class App {
 
                 //adding the expression of the changedNode that solver will use to give a solution
                 if (!changedNode.getParent().getIfBlock().getParent().getParent().getCondition().contains("BASE")) {
-                    solver.setExpr(changedNode.getCondition() + " && " + changedNode.getParent().getIfBlock().getParent().getParent().getCondition() + " && " + changedNodeParent.getCondition());
+                    solver.setExpr(changedNode.getCondition() + " && " + changedNode.getParent().getIfBlock().getParent().getIfBlock().getParent().getParent().getCondition() + " && " + changedNodeParent.getCondition());
                     //System.out.println(changedNode.getCondition()+ " && " +changedNode.getParent().getIfBlock().getParent().getParent().getCondition()+ " && BASE");
                 } else {
                     solver.setExpr(changedNode.getCondition() + " && " + changedNodeParent.getCondition());
@@ -223,9 +223,9 @@ public class App {
 
                     } else { //undef
                         if (!changedNode.getParent().getParent().getCondition().contains("BASE"))
-                            featureImplication = new FeatureImplication(changedNodeParent.getParent().getParent().getCondition() + " && " + changedNodeParent.getCondition() + " && " + changedNode.getCondition(), "!" + definedNode.getMacroName());
+                            featureImplication = new FeatureImplication(changedNodeParent.getParent().getParent().getCondition() + " && " + changedNodeParent.getCondition() + " && " + changedNode.getCondition(), definedNode.getMacroName());
                         else
-                            featureImplication = new FeatureImplication(changedNodeParent.getCondition() + " && " + changedNode.getCondition(), "!" + definedNode.getMacroName());
+                            featureImplication = new FeatureImplication(changedNodeParent.getCondition() + " && " + changedNode.getCondition(), definedNode.getMacroName());
                         featureImplications.add(featureImplication);
                     }
                     feature = new Feature(definedNode.getMacroName()); //feature is the variable of the define or undef
@@ -244,7 +244,7 @@ public class App {
                         feature = new Feature(defineNode.getMacroName()); //feature is the variable of the define or undef
                         solver.addClause(feature, featureImplications);
                     } else if (defineNode instanceof Undef && defineNode.getLineInfo() < changedNode.getLineFrom()) { //undef
-                        featureImplication = new FeatureImplication("BASE", "!" + defineNode.getMacroName());
+                        featureImplication = new FeatureImplication("BASE",   defineNode.getMacroName());
                         featureImplications.add(featureImplication);
                         feature = new Feature(defineNode.getMacroName()); //feature is the variable of the define or undef
                         solver.addClause(feature, featureImplications);
@@ -265,7 +265,7 @@ public class App {
                                 feature = new Feature(definedNode.getMacroName()); //feature is the variable of the define or undef
                                 solver.addClause(feature, featureImplications);
                             } else if (definedNode instanceof Undef && definedNode.getLineInfo() < changedNode.getLineFrom()) { //undef
-                                featureImplication = new FeatureImplication(changedNodeParent.getCondition() + " && " + children.getIfBlock().getCondition(), "!" + definedNode.getMacroName());
+                                featureImplication = new FeatureImplication(changedNodeParent.getCondition() + " && " + children.getIfBlock().getCondition(), definedNode.getMacroName());
                                 featureImplications.add(featureImplication);
                                 feature = new Feature(definedNode.getMacroName()); //feature is the variable of the define or undef
                                 solver.addClause(feature, featureImplications);
@@ -364,9 +364,9 @@ public class App {
 
                     } else { //undef
                         if (!children.getIfBlock().getParent().getParent().getCondition().contains("BASE"))
-                            featureImplication = new FeatureImplication(changedNodeParent + " && " + children.getIfBlock().getParent().getParent().getCondition() + " && " + children.getIfBlock().getCondition(), "!" + definedNode.getMacroName());
+                            featureImplication = new FeatureImplication(changedNodeParent + " && " + children.getIfBlock().getParent().getParent().getCondition() + " && " + children.getIfBlock().getCondition(),  definedNode.getMacroName());
                         else
-                            featureImplication = new FeatureImplication(changedNodeParent + " && " + children.getIfBlock().getCondition(), "!" + definedNode.getMacroName());
+                            featureImplication = new FeatureImplication(changedNodeParent + " && " + children.getIfBlock().getCondition(), definedNode.getMacroName());
                         featureImplications.add(featureImplication);
                     }
                     feature = new Feature(definedNode.getMacroName()); //feature is the variable of the define or undef

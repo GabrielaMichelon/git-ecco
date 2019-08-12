@@ -58,6 +58,22 @@ public class AssignExpr extends FeatureExpression {
         return leftHandSide + " " + operator + " " + rightHandSide;
     }
 
+    public boolean equals(FeatureExpression other) {
+        if(other == this){
+            return true;
+        }
+        if(!(other instanceof AssignExpr)){
+            return false;
+        }
+        return this.leftHandSide.equals(((AssignExpr)other).leftHandSide)
+                && this.operator.equals(((AssignExpr)other).operator)
+                && this.rightHandSide.equals(((AssignExpr)other).rightHandSide);
+    }
+
+    public AssignExpr clone() {
+        return new AssignExpr(leftHandSide.clone(), operator.clone(), rightHandSide.clone());
+    }
+
     public boolean replace(FeatureExpression child, FeatureExpression newChild) {
         if(child == this.leftHandSide){
             setLeftHandSide(newChild);

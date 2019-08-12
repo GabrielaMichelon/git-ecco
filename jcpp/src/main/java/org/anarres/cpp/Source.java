@@ -16,16 +16,19 @@
  */
 package org.anarres.cpp;
 
-import javax.annotation.CheckForNull;
-import javax.annotation.Nonnegative;
-import javax.annotation.Nonnull;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-
-import static org.anarres.cpp.Token.*;
+import javax.annotation.CheckForNull;
+import javax.annotation.Nonnegative;
+import javax.annotation.Nonnull;
+import static org.anarres.cpp.Token.CCOMMENT;
+import static org.anarres.cpp.Token.CPPCOMMENT;
+import static org.anarres.cpp.Token.EOF;
+import static org.anarres.cpp.Token.NL;
+import static org.anarres.cpp.Token.WHITESPACE;
 
 /**
  * An input to the Preprocessor.
