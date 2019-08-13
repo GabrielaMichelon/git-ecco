@@ -2031,7 +2031,7 @@ public class Preprocessor implements Closeable {
                     List<Token> ppTokens = new LinkedList<Token>();
                     Token ppTok = tok;
                     if (ppcmd == PP_IF || ppcmd == PP_IFDEF || ppcmd == PP_IFNDEF || ppcmd == PP_ELIF || ppcmd == PP_ELSE || ppcmd == PP_ENDIF) {
-                        while (ppTok.getType() != NL) {
+                        while (ppTok.getType() != NL ) {
                             if (!ppTok.getText().equals("\r")) {
                                 ppTokens.add(ppTok);
                             }

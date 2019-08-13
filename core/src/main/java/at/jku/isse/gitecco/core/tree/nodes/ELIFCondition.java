@@ -14,13 +14,13 @@ public final class ELIFCondition extends ConditionalNode {
     @Override
     public String getCondition() {
         StringBuilder ret = new StringBuilder();
-        ret.append("!" + getParent().getIfBlock().getCondition() + " && ");
-        for (ELIFCondition elseIfBlock : getParent().getElseIfBlocks()) {
+        ret.append("!(" + getParent().getIfBlock().getCondition() + ")");
+        /*for (ELIFCondition elseIfBlock : getParent().getElseIfBlocks()) {
             if(this.equals(elseIfBlock)) {
                 break;
             }
             ret.append("!" + elseIfBlock.getCondition() + " && ");
-        }
+        }*/
         return ret.toString();
     }
 

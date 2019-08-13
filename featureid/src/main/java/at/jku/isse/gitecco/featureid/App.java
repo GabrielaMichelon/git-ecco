@@ -21,7 +21,7 @@ public class App extends Thread{
 
     //private final static String REPO_PATH = "C:\\obermanndavid\\git-ecco-test\\test_featureid\\Marlin";
     //private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\Marlin\\Marlin";
-    private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\test-featureid";
+    private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\test5";
     //private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\Test";
     // "C:\\obermanndavid\\git-to-ecco\\test_repo5"
     // "C:\\obermanndavid\\git-ecco-test\\test_featureid\\betaflight"
