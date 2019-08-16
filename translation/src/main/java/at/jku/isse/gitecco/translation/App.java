@@ -41,10 +41,14 @@ public class App {
         //maybe even start commit and/or end commit (hashes or numbers)
         //String repoPath = "C:\\obermanndavid\\git-ecco-test\\appimpleTest\\marlin\\Marlin";
         //String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\Marlin\\Marlin";
-        String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\test12";
+        String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\test15";
         //String repoPath = "C:\\Users\\gabil\\Desktop\\Test";
         final GitHelper gitHelper = new GitHelper(repoPath);
         final GitCommitList commitList = new GitCommitList(repoPath);
+        ArrayList<String> featureList = new ArrayList<>();
+        featureList.add("B");
+        featureList.add("C");
+        featureList.add("X");
 
         commitList.addGitCommitListener((gc, gcl) -> {
 
@@ -86,6 +90,7 @@ public class App {
 
                         classNodes.addAll(visitor.getchangedNodes());
                         ChangeConstraint changeConstraint = new ChangeConstraint();
+                        changeConstraint.setFeatureList(featureList);
                         changeConstraint.constructConstraintPerFeature(classNodes, changedNodes, gitHelper, change, visitor, child);
 
 

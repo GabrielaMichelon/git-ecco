@@ -6,6 +6,7 @@ import org.anarres.cpp.Token;
 import org.anarres.cpp.featureExpr.*;
 import org.chocosolver.solver.Model;
 import org.chocosolver.solver.Solution;
+import org.chocosolver.solver.Solver;
 import org.chocosolver.solver.constraints.Constraint;
 import org.chocosolver.solver.constraints.nary.cnf.LogOp;
 import org.chocosolver.solver.variables.BoolVar;
@@ -109,7 +110,7 @@ public class ExpressionSolver {
 	 * @param feature
 	 * @param implications
 	 */
-	public void addClause(Feature feature, Queue<FeatureImplication> implications) {
+	public void addClause(Feature feature, Queue<FeatureImplication> implications, String elsePartFeature) {
         LogOp elsePart = null;
 
         while (!implications.isEmpty()) {
@@ -117,10 +118,11 @@ public class ExpressionSolver {
             BoolVar ifPart = getBoolVarFromExpr(im.getCondition());
             BoolVar thenPart = getBoolVarFromExpr(im.getValue());
 
-            if(elsePart == null) {
+            if(elsePartFeature == null) {
                 elsePart = LogOp.implies(ifPart,thenPart);
             } else {
-                elsePart = LogOp.ifThenElse(ifPart, thenPart, elsePart);
+				BoolVar elsePartAux = getBoolVarFromExpr(elsePartFeature);
+                elsePart = LogOp.ifThenElse(ifPart, thenPart, elsePartAux);
             }
         }
         model.addClauses(elsePart);
@@ -135,7 +137,7 @@ public class ExpressionSolver {
      * @param expr
      * @return
      */
-    private BoolVar getBoolVarFromExpr (String expr) {
+    public BoolVar getBoolVarFromExpr (String expr) {
 	    traverse(new FeatureExpressionParser(expr).parse());
 	    Variable var = stack.pop();
 	    if(!(var instanceof BoolVar) && var instanceof IntVar) {
@@ -153,7 +155,7 @@ public class ExpressionSolver {
 	 *
 	 * @param expr the expression tree to be parsed.
 	 */
-	private void traverse(FeatureExpression expr) throws EmptyStackException{
+	public void traverse(FeatureExpression expr) throws EmptyStackException{
 		if (expr == null) return;
 
 		if (expr instanceof Name) {
@@ -295,7 +297,7 @@ public class ExpressionSolver {
      * Sets the IntVar flag in case it is needed.
      * @param expr
      */
-	private void checkIntVar(InfixExpr expr) {
+	public void checkIntVar(InfixExpr expr) {
         int op = expr.getOperator().getToken().getType();
 
         if (op == 43 || op == 45 || op == 42 || op == 47 || op == 37 //266 == wirklich notwendig?
@@ -308,6 +310,7 @@ public class ExpressionSolver {
 		return vars;
 	}
 
+
 	/**
 	 * Helper Method
 	 * Checks if a variable with a given name exists already in a given model.
@@ -317,7 +320,7 @@ public class ExpressionSolver {
 	 * @param name
 	 * @return
 	 */
-	private Variable checkVars(Model model, String name) {
+	public Variable checkVars(Model model, String name) {
 		for (Variable var : model.getVars()) {
 			if (var.getName().equals(name)) return var;
 		}

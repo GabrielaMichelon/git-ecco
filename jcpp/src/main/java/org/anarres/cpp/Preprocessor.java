@@ -1696,8 +1696,7 @@ public class Preprocessor implements Closeable {
 
             default:
                 expr_untoken(tok);
-                error(tok,
-                        "Bad token in expression: " + tok.getText());
+                error(tok,"Bad token in expression: " + tok.getText());
                 return 0;
         }
 
