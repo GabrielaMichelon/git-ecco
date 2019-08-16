@@ -67,9 +67,9 @@ public class ChangeConstraint {
                         }
                     else if (conditionalNode instanceof ELIFCondition) {
                         if (changedNode.getCondition().contains("!")) {
-                            expression += " && " + conditionalNode.getCondition().replace("!", "") + "==0";
+                            expression += " && " + conditionalNode.getLocalCondition().replace("!", "") + "==0";
                         } else {
-                            expression += " && " + conditionalNode.getCondition() + "==1";
+                            expression += " && " + conditionalNode.getLocalCondition() + "==1";
                         }
                     }
                     conditionalNode = conditionalNode.getParent().getParent();
@@ -183,11 +183,11 @@ public class ChangeConstraint {
                 System.out.println("\nBlock: " + changedNode.getCondition() + " has change!");
                 System.out.println("Solution ChocoSolver: ");
                 result.entrySet().forEach(x -> System.out.print(x.getKey() + " = " + x.getValue() + "; "));
-                System.out.println("\nConfiguration that has impact on this change: ");
+                System.out.println("\nConfiguration that has impact on this change: \nBASE");
                 for (int j = 0; j < featureList.size(); j++) {
                     Feature key = new Feature(featureList.get(j));
                     if (result.containsKey(key)) {
-                        System.out.println("Feature: " + featureList.get(j));
+                        System.out.println("Feature " + featureList.get(j));
                     }
                 }
 
