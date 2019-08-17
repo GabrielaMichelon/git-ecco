@@ -13,14 +13,37 @@ public final class ELIFCondition extends ConditionalNode {
 
     @Override
     public String getCondition() {
-        StringBuilder ret = new StringBuilder();
+        /*StringBuilder ret = new StringBuilder();
         ret.append("!(" + getParent().getIfBlock().getCondition() + ")");
-        /*for (ELIFCondition elseIfBlock : getParent().getElseIfBlocks()) {
+        for (ELIFCondition elseIfBlock : getParent().getElseIfBlocks()) {
             if(this.equals(elseIfBlock)) {
                 break;
             }
             ret.append("!" + elseIfBlock.getCondition() + " && ");
-        }*/
+        }
+        return ret.toString();*/
+        StringBuilder ret = new StringBuilder();
+        if(getLocalCondition().contains("!")){
+            ret.append(getLocalCondition().replace("!","==0"));
+        }else{
+            ret.append(getLocalCondition() + "==1");
+        }
+        if(getParent().getIfBlock().getCondition().contains("==0")){
+            ret.append(" && "+getParent().getIfBlock().getCondition().replace("==0", "==1"));
+        }else{
+            ret.append(" && "+getParent().getIfBlock().getCondition().replace("==1", "==0"));
+        }
+
+        for (ELIFCondition elseIfBlock : getParent().getElseIfBlocks()) {
+            if(this.equals(elseIfBlock)) {
+                break;
+            }
+            if(elseIfBlock.getLocalCondition().contains("!")){
+                ret.append(" && "+elseIfBlock.getLocalCondition().replace("!","==0") );
+            }else{
+                ret.append(" && "+elseIfBlock.getLocalCondition() + "==1");
+            }
+        }
         return ret.toString();
     }
 
@@ -28,6 +51,7 @@ public final class ELIFCondition extends ConditionalNode {
     public String getLocalCondition() {
         return this.condition;
     }
+
 
     @Override
     public void accept(TreeVisitor v) {

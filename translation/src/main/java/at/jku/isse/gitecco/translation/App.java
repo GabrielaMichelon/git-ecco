@@ -41,7 +41,7 @@ public class App {
         //maybe even start commit and/or end commit (hashes or numbers)
         //String repoPath = "C:\\obermanndavid\\git-ecco-test\\appimpleTest\\marlin\\Marlin";
         //String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\Marlin\\Marlin";
-        String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\test18";
+        String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\test-featureid";
         //String repoPath = "C:\\Users\\gabil\\Desktop\\Test";
         final GitHelper gitHelper = new GitHelper(repoPath);
         final GitCommitList commitList = new GitCommitList(repoPath);
@@ -49,6 +49,7 @@ public class App {
         featureList.add("B");
         featureList.add("C");
         featureList.add("X");
+        featureList.add("A");
 
         commitList.addGitCommitListener((gc, gcl) -> {
 

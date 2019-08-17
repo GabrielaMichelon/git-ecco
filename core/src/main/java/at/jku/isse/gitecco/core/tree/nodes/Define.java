@@ -15,7 +15,11 @@ public final class Define extends DefineNode implements Visitable {
     }
 
     public String getMacroExpansion() {
-        return macroExpansion;
+        if (this.macroExpansion.equals(""))
+            return this.macroExpansion+"==1";
+        else
+            return "==" + macroExpansion;
+
     }
 
     @Override

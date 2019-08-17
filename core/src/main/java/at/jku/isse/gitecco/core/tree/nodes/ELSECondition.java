@@ -19,16 +19,27 @@ public final class ELSECondition extends ConditionalNode implements Visitable {
     @Override
     public String getCondition() {
         StringBuilder ret = new StringBuilder();
-        ret.append("!" + getParent().getIfBlock().getCondition() );
+        if(getParent().getIfBlock().getCondition().contains("!")){
+            ret.append(getParent().getIfBlock().getLocalCondition().replace("!","==1"));
+        }else{
+            ret.append(getParent().getIfBlock().getLocalCondition()+"==0");
+        }
+        //ret.append("!" + getParent().getIfBlock().getCondition() );
         for (ELIFCondition elseIfBlock : getParent().getElseIfBlocks()) {
-            ret.append("!" + elseIfBlock.getCondition() + " && ");
+            if(elseIfBlock.getLocalCondition().contains("!")){
+                ret.append(" && "+elseIfBlock.getLocalCondition().replace("!","==1"));
+            }else{
+                ret.append(" && "+elseIfBlock.getLocalCondition()+"==0");
+            }
+            //ret.append("!" + elseIfBlock.getCondition() + " && ");
         }
         return ret.toString();
     }
 
     @Override
     public String getLocalCondition() {
-        return "";
+        return getCondition();
+        //return "";
     }
 
     @Override

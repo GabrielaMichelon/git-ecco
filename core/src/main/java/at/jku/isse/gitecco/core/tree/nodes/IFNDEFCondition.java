@@ -12,17 +12,23 @@ public final class IFNDEFCondition extends ConditionalNode implements Visitable 
 
     public IFNDEFCondition(ConditionBlockNode parent, String condition) {
         super(parent);
-        this.condition = "!(" + condition + ")";
+        this.condition = condition; //"!(" + condition + ")";
     }
 
     @Override
     public String getCondition() {
-        return this.condition;
+        if (!this.condition.contains("!"))
+            return this.condition.replace("!", "") + "==0";
+        else
+            return this.condition + "==1";
     }
 
     @Override
     public String getLocalCondition() {
-        return getCondition();
+        //if (this.condition.contains("!"))
+        //    return this.condition.replace("!", "") + "==0";
+        //else
+            return this.condition;
     }
 
     @Override
