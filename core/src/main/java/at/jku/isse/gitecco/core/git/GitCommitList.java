@@ -87,6 +87,7 @@ public class GitCommitList extends ArrayList<GitCommit> {
         //generate clean version
         pph.generateCleanVersion(gitFolder,cleanFolder);
 
+
         try {
             Files.walk(cleanFolder.toPath())
                     .filter(path->!path.toFile().isDirectory())

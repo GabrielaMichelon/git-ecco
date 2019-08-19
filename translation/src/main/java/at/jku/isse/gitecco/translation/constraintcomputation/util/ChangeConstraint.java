@@ -42,7 +42,7 @@ public class ChangeConstraint {
         for (ConditionalNode changedNode : changedNodes) {
             ArrayList<String> featureChangedNode = new ArrayList<>();
             if (!changedNode.getCondition().contains("BASE")) {
-                IFCondition changedNodeParent = (IFCondition) changedNode.getParent().getIfBlock().getParent().getParent();
+                ConditionalNode changedNodeParent = changedNode.getParent().getIfBlock().getParent().getParent();
                 ConditionalNode conditionalNode = changedNode.getParent().getParent();
                 String expression = "";
                 expression = changedNode.getCondition();
@@ -123,6 +123,7 @@ public class ChangeConstraint {
                         System.out.println("Feature " + key);
 
                 }
+                System.out.println("________________________");
 
             }
         }

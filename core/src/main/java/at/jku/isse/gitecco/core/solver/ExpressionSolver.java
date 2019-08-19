@@ -195,7 +195,7 @@ public class ExpressionSolver {
 					if (isIntVar) {
 						right = stack.pop().asIntVar();
 						left = stack.pop().asIntVar();
-						stack.push(left.eq(right).boolVar());
+						stack.push(left.eq(right).intVar());
 					} else {
 						bright = stack.pop().asBoolVar();
 						bleft = stack.pop().asBoolVar();
@@ -242,9 +242,10 @@ public class ExpressionSolver {
 					stack.push(left.add(right).intVar());
 					break;
 				case 45:            //minus "-"
-					right = stack.pop().asIntVar();
-					left = stack.pop().asIntVar();
-					stack.push(left.sub(right).intVar());
+					//right = stack.pop().asIntVar();
+					//left = stack.pop().asIntVar();
+					//stack.push(left.intVar());
+					//stack.push(left.sub(right).intVar());
 					break;
 				case 42:            //mul "*"
 					right = stack.pop().asIntVar();

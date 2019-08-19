@@ -17,10 +17,19 @@ public final class IFCondition extends ConditionalNode implements Visitable {
 
     @Override
     public String getCondition() {
-        if(this.condition.contains("!"))
-            return this.condition.replace("!", "")+"==0";
-        else
-            return this.condition+"==1";
+        String aux;
+        if (this.condition.contains(">")) {
+            aux=this.condition.substring(0, this.condition.indexOf(">"));
+        }else if(this.condition.contains("<")){
+            aux=this.condition.substring(0, this.condition.indexOf("<"));
+        }else{
+            aux=this.condition;
+        }
+            if (aux.contains("!"))
+                return aux.replace("!", "") + "==0";
+            else
+                return aux + "==1";
+
     }
 
     @Override

@@ -20,7 +20,7 @@ import java.util.concurrent.Future;
 public class App extends Thread{
 
     //private final static String REPO_PATH = "C:\\obermanndavid\\git-ecco-test\\test_featureid\\Marlin";
-    private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\Marlin\\Marlin";
+    private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin";
     //private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\test5";
     //private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\Test";
     // "C:\\obermanndavid\\git-to-ecco\\test_repo5"

@@ -1269,7 +1269,8 @@ public class Preprocessor implements Closeable {
                     return;
             }
         }
-
+        if(!sysincludepath.contains("C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin\\Marlin"))
+            sysincludepath.add("C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin\\Marlin");
         if (include(sysincludepath, name))
             return;
 
@@ -1696,7 +1697,7 @@ public class Preprocessor implements Closeable {
 
             default:
                 expr_untoken(tok);
-                error(tok,"Bad token in expression: " + tok.getText());
+                //error(tok,"Bad token in expression: " + tok.getText());
                 return 0;
         }
 
