@@ -153,13 +153,13 @@ public class ChangeConstraint {
                         }
                     }
                     Map<Feature, Integer> resultVariant = new HashMap<>();
-                    for (String featureVersioned:featuresVersioned) {
+                    for (String featureVersioned : featuresVersioned) {
                         System.out.println("Feature " + featureVersioned);
                         Feature featureVariant = new Feature(featureVersioned);
                         resultVariant.put(featureVariant, 1);
                     }
                     //Feature featureVariant = new Feature("BASE");
-                   // resultVariant.put(featureVariant, 1);
+                    // resultVariant.put(featureVariant, 1);
                     pph.generateVariants(resultVariant, gitFolder, eccoFolder);
                 }
 
@@ -183,8 +183,34 @@ public class ChangeConstraint {
             }
         }
 
-        if (changedNode.getLocalCondition().contains("&&")) {
+        if (changedNode.getLocalCondition().contains("&&") && changedNode.getLocalCondition().contains("||")) {
             literals = changedNode.getLocalCondition().split("&&");
+            for (int i = 0; i < literals.length; i++) {
+                if (literals[i].contains("||")) {
+                    String[] literalsAux = literals[i].split("\\|\\|");
+                    for (int j = 0; j < literalsAux.length; j++) {
+                        if (literalsAux[j].contains("!") && !(features.contains(literalsAux[j].replace("!", ""))))
+                            literalsAux[j] = literalsAux[j].replace("!", "");
+                        if (featureList.contains(literalsAux[j]))
+                            features.add(literalsAux[j]);
+                    }
+                } else {
+                    if (literals[i].contains("!") && !(features.contains(literals[i].replace("!", ""))))
+                        literals[i] = literals[i].replace("!", "");
+                    if (featureList.contains(literals[i]))
+                        features.add(literals[i]);
+                }
+            }
+        } else if (changedNode.getLocalCondition().contains("&&") && !changedNode.getLocalCondition().contains("||")) {
+            literals = changedNode.getLocalCondition().split("&&");
+            for (int i = 0; i < literals.length; i++) {
+                if (literals[i].contains("!") && !(features.contains(literals[i].replace("!", ""))))
+                    literals[i] = literals[i].replace("!", "");
+                if (featureList.contains(literals[i]))
+                    features.add(literals[i]);
+            }
+        } else if (!changedNode.getLocalCondition().contains("&&") && changedNode.getLocalCondition().contains("||")) {
+            literals = changedNode.getLocalCondition().split("\\|\\|");
             for (int i = 0; i < literals.length; i++) {
                 if (literals[i].contains("!") && !(features.contains(literals[i].replace("!", ""))))
                     literals[i] = literals[i].replace("!", "");
