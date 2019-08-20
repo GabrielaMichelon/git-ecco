@@ -157,6 +157,21 @@ public class ExpressionSolver {
 	 */
 	public void traverse(FeatureExpression expr) throws EmptyStackException{
 		if (expr == null) return;
+		/*if (expr.toString().contains("defined")){
+			String aux = null;
+			if(expr.toString().contains("defined (")) {
+				aux = expr.toString().replace("defined (", "");
+				aux = aux.replace(")", "");
+			}else if(expr.toString().contains("defined(")){
+				aux = expr.toString().replace("defined(", "");
+				aux = aux.replace(")", "");
+			}
+
+			//IntVar iv = model.intVar(String.valueOf(expr), Short.MIN_VALUE, Short.MAX_VALUE);
+			//vars.add(iv);
+			//stack.push(iv);
+			//return;
+		}*/
 
 		if (expr instanceof Name) {
 			String name = ((Name) expr).getToken().getText();

@@ -11,6 +11,8 @@ import org.apache.commons.math3.analysis.function.Exp;
 import org.chocosolver.solver.constraints.nary.cnf.LogOp;
 import org.chocosolver.solver.variables.BoolVar;
 import org.chocosolver.solver.variables.IntVar;
+import org.chocosolver.solver.variables.Variable;
+import scala.util.parsing.combinator.testing.Str;
 
 import java.io.File;
 import java.security.Key;
@@ -107,30 +109,70 @@ public class ChangeConstraint {
 
                 //after added all clauses the solver returns a solution
                 Map<Feature, Integer> result = solver.solve();
-                solver.reset();
-                pph.generateVariants(result, gitFolder, eccoFolder);
                 System.out.println("\nBlock: " + changedNode.getLocalCondition() + " has change!");
-                System.out.println("Solution ChocoSolver: ");
-                result.entrySet().forEach(x -> System.out.print(x.getKey() + " = " + x.getValue() + "; "));
-                System.out.println("\nConfiguration that has impact on this change:");
-                Feature key;
-                Integer value;
-                Set<Map.Entry<Feature, Integer>> setRetornado = result.entrySet();
-                for (Map.Entry<Feature, Integer> literalsValues : setRetornado) {
-                    key = literalsValues.getKey();
-                    value = literalsValues.getValue();
-                    if (value >= 1 && (featureList.contains(key.toString()) || key.toString().contains("BASE")))
-                        System.out.println("Feature " + key);
+                ArrayList<String> featuresVersioned = new ArrayList<>();
+                if (!result.entrySet().isEmpty()) {
+                    pph.generateVariants(result, gitFolder, eccoFolder);
+                    System.out.println("Solution ChocoSolver: ");
+                    result.entrySet().forEach(x -> System.out.print(x.getKey() + " = " + x.getValue() + "; "));
+                    Feature key;
+                    Integer value;
+                    Set<Map.Entry<Feature, Integer>> setRetornado = result.entrySet();
+                    boolean flag = true;
+                    for (Map.Entry<Feature, Integer> literalsValues : setRetornado) {
+                        if (flag) {
+                            System.out.println("\nConfiguration that has impact on this change (0 is false and 1 true):");
+                            flag = false;
+                        }
+                        key = literalsValues.getKey();
+                        value = literalsValues.getValue();
+                        if (value >= 1 && (featureList.contains(key.toString()) || key.toString().contains("BASE"))) {
+                            featuresVersioned.add(key.toString());
+                            System.out.println("Feature " + key.toString() + " == " + value);
+                        }
+                    }
+                } else {
+                    String[] expressionSplited = expression.split("&&");
+                    for (int k = 0; k < expressionSplited.length; k++) {
+                        String exp = expressionSplited[k].substring(0, expressionSplited[k].indexOf("=")).replace(" ", "");
+                        //System.out.println("VAR:" +expressionSplited[k]);
+                        for (int j = 0; j < solver.getVars().size(); j++) {
+                            if (solver.getVars().get(j).getName().contains(exp)) {
+                                if (featureList.contains(exp) || exp.contains("BASE")) {
+                                    featuresVersioned.add(exp);
+                                }
+                            }
+                        }
+                    }
 
+                    for (int k = 0; k < expressionSplited.length; k++) {
+                        String left = expressionSplited[k].substring(0, expressionSplited[k].indexOf("=")).replace(" ", "");
+                        String right = expressionSplited[k].substring(expressionSplited[k].indexOf("==") + 2).replace(" ", "");
+                        if (featureList.contains(left) && right.equals("0") && !featuresVersioned.contains(left)) {
+                            featuresVersioned.add(left);
+                        }
+                    }
+                    Map<Feature, Integer> resultVariant = new HashMap<>();
+                    for (String featureVersioned:featuresVersioned) {
+                        System.out.println("Feature " + featureVersioned);
+                        Feature featureVariant = new Feature(featureVersioned);
+                        resultVariant.put(featureVariant, 1);
+                    }
+                    //Feature featureVariant = new Feature("BASE");
+                   // resultVariant.put(featureVariant, 1);
+                    pph.generateVariants(resultVariant, gitFolder, eccoFolder);
                 }
+
                 System.out.println("________________________");
+                solver.reset();
 
             }
         }
     }
 
     //we need to look if the changedNode is a feature and look if exists any parent besides BASE
-    public ArrayList<String> searchingFeatureCorrespondingtoChangedNode(ConditionalNode changedNode, ArrayList<String> featureList, String expression) {
+    public ArrayList<String> searchingFeatureCorrespondingtoChangedNode(ConditionalNode
+                                                                                changedNode, ArrayList<String> featureList, String expression) {
         ArrayList<String> features = new ArrayList<>();
         String[] literals;
         ExpressionSolver ex = new ExpressionSolver();
@@ -157,7 +199,9 @@ public class ChangeConstraint {
     }
 
 
-    public void searchingDefineNodes(ConditionBlockNode children, ExpressionSolver solver, Queue<FeatureImplication> featureImplications, String changedNodeParent, Integer changedNodeLineFrom, ArrayList<String> featureChangedNode) {
+    public void searchingDefineNodes(ConditionBlockNode children, ExpressionSolver
+            solver, Queue<FeatureImplication> featureImplications, String changedNodeParent, Integer
+                                             changedNodeLineFrom, ArrayList<String> featureChangedNode) {
         FeatureImplication featureImplication;
         Feature feature = null;
         String elsePartFeature = null;
@@ -186,7 +230,7 @@ public class ChangeConstraint {
                                 }
                             }
                         }
-                    } else if (definedNode.getLineInfo() < changedNodeLineFrom && featureChangedNode.contains(definedNode.getMacroName())) { //undef
+                    } else if (definedNode instanceof Undef && definedNode.getLineInfo() < changedNodeLineFrom && featureChangedNode.contains(definedNode.getMacroName())) { //undef
                         if (!children.getIfBlock().getParent().getParent().getCondition().contains("BASE")) {
                             featureImplication = new FeatureImplication(changedNodeParent + " && " + children.getIfBlock().getCondition(), definedNode.getMacroName() + "==0");
                             featureImplications.add(featureImplication);

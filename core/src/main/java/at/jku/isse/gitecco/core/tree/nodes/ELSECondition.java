@@ -19,11 +19,35 @@ public final class ELSECondition extends ConditionalNode implements Visitable {
     @Override
     public String getCondition() {
         StringBuilder ret = new StringBuilder();
-        if(getParent().getIfBlock().getCondition().contains("!")){
-            ret.append(getParent().getIfBlock().getLocalCondition().replace("!","==1"));
-        }else{
-            ret.append(getParent().getIfBlock().getLocalCondition()+"==0");
+        //if(getParent().getIfBlock().getCondition().contains("!")){
+        //    ret.append(getParent().getIfBlock().getLocalCondition().replace("!","==1"));
+        //}else{
+        //    ret.append(getParent().getIfBlock().getLocalCondition()+"==0");
+        //}
+        String aux = "";
+        if (getParent().getIfBlock().getLocalCondition().contains(">")) {
+            aux = getParent().getIfBlock().getLocalCondition().substring(0, getParent().getIfBlock().getLocalCondition().indexOf(">"));
+        } else if (getParent().getIfBlock().getLocalCondition().contains("<")) {
+            aux = getParent().getIfBlock().getLocalCondition().substring(0, getParent().getIfBlock().getLocalCondition().indexOf("<"));
+        } else if (getParent().getIfBlock().getLocalCondition().contains("==")) {
+            aux = getParent().getIfBlock().getLocalCondition().substring(0, getParent().getIfBlock().getLocalCondition().indexOf("="));
+        } else {
+            aux = getParent().getIfBlock().getLocalCondition();
         }
+
+        if (aux.contains("!")) {
+            if (aux.contains("("))
+                aux=aux.replace("!", "") + "== 1)";
+            else
+                aux= aux.replace("!", "") + "== 1";
+        } else {
+            if (aux.contains("("))
+                aux = aux + "== 0)";
+            else
+                aux = aux + "== 0";
+        }
+        ret.append(aux);
+
         //ret.append("!" + getParent().getIfBlock().getCondition() );
         for (ELIFCondition elseIfBlock : getParent().getElseIfBlocks()) {
             if(elseIfBlock.getLocalCondition().contains("!")){

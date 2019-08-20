@@ -141,7 +141,7 @@ public class GitCommitList extends ArrayList<GitCommit> {
 
         //trigger listeners, etc.
         notifyObservers(gitCommit);
-        System.out.println("commit nr.:"+this.size());
+        System.out.println("commit nr.:"+this.size()+" branch: "+gitCommit.getBranch());
         return super.add(gitCommit);
     }
 

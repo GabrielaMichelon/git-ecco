@@ -94,10 +94,10 @@ public class Main {
             return;
         }
 
-        if (options.has(versionOption)) {
-            version(System.out);
-            return;
-        }
+        //if (options.has(versionOption)) {
+         //   version(System.out);
+        //    return;
+        //}
 
         Preprocessor pp = new Preprocessor();
         pp.addFeature(Feature.DIGRAPHS);

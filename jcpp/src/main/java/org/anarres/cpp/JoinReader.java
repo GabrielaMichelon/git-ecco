@@ -144,6 +144,13 @@ import java.io.Reader;
             switch (c) {
                 case '\\':
                     int d = _read();
+                    /**
+                     * sFischer
+                     * added this to avoid error in multiline macros, if the have whitespaces after \
+                     */
+                    while(Character.isWhitespace(d) && !(d == '\n') && !(d == '\r')){
+                        d = _read();
+                    }
                     switch (d) {
                         case '\n':
                             newlines++;

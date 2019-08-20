@@ -993,6 +993,7 @@ public class Preprocessor implements Closeable {
         Macro m = new Macro(getSource(), name);
         List<String> args;
 
+        //parse macro arguments
         tok = source_token();
         if (tok.getType() == '(') {
             tok = source_token_nonwhite();
@@ -1200,6 +1201,7 @@ public class Preprocessor implements Closeable {
         // System.out.println("Try to include " + ((File)file).getAbsolutePath());
         if (!file.isFile())
             return false;
+
         if (getFeature(Feature.DEBUG))
             LOG.debug("pp: including " + file);
         includes.add(file);
@@ -1348,7 +1350,7 @@ public class Preprocessor implements Closeable {
 
                 if (this.listener != null) {
                     //fire event
-                    this.listener.handleInclude(includeText, currSource, source);
+                    this.listener.handleInclude(includeText, next, currSource, source);
                 }
             }
 

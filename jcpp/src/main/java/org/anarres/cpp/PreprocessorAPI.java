@@ -70,11 +70,16 @@ public class PreprocessorAPI {
                 }
             }
 
-            public void handleInclude(@Nonnull String text, Source source, Source toInclude) {
+            public void handleInclude(@Nonnull String text, boolean next, Source source, Source toInclude) {
                 if (keepIncludes) {
                     if (source instanceof FileLexerSource) {
                         if (!inlineIncludes && ((FileLexerSource) source).getFile().equals(fileCurrentlyProcessed)) {
-                            out.println("#include " + text);
+                            //out.println("#include " + text);
+                            if(next){
+                                out.println("#include_next " + text);
+                            } else {
+                                out.println("#include " + text);
+                            }
                         }
                     }
                 }

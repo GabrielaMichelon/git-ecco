@@ -35,7 +35,7 @@ public interface PreprocessorListener {
      * it may throw an exception.
      */
     void handleWarning(@Nonnull Source source, int line, int column,
-            @Nonnull String msg)
+                       @Nonnull String msg)
             throws LexerException;
 
     /**
@@ -46,7 +46,7 @@ public interface PreprocessorListener {
      * it may throw an exception.
      */
     void handleError(@Nonnull Source source, int line, int column,
-            @Nonnull String msg)
+                     @Nonnull String msg)
             throws LexerException;
 
     enum SourceChangeEvent {
@@ -56,7 +56,7 @@ public interface PreprocessorListener {
 
     void handleSourceChange(@Nonnull Source source, @Nonnull SourceChangeEvent event);
 
-    void handleInclude(@Nonnull String text, Source source, Source toInclude);
+    void handleInclude(@Nonnull String text, boolean next, Source source, Source toInclude);
 
     void handleDefine(Macro m, Source source);
 

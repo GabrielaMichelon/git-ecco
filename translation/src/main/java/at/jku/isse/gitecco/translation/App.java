@@ -40,11 +40,11 @@ public class App {
         //TODO: planned arguments: DEBUG, dispose tree, max commits, repo path, csv path(feature id), outpath for ecco
         //maybe even start commit and/or end commit (hashes or numbers)
         //String repoPath = "C:\\obermanndavid\\git-ecco-test\\appimpleTest\\marlin\\Marlin";
-        String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin";
-        //String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\test23";
+        //String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin";
+        String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\Test29";
         final GitHelper gitHelper = new GitHelper(repoPath);
         final GitCommitList commitList = new GitCommitList(repoPath);
-        String[] featuresToAdd = {"X_MAX_PIN", "X_MIN_PIN"};
+        String[] featuresToAdd = {"X_MAX_PIN", "X_MIN_PIN", "DIO0_PIN"};
         ArrayList<String> featureList = new ArrayList<>();
         for(String feat : featuresToAdd){
             featureList.add(feat);
