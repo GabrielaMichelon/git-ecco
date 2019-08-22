@@ -157,6 +157,8 @@ public class ExpressionSolver {
 	 */
 	public void traverse(FeatureExpression expr) throws EmptyStackException{
 		if (expr == null) return;
+		ExpressionSolver ex = new ExpressionSolver();
+		BoolVar boolVar;
 		/*if (expr.toString().contains("defined")){
 			String aux = null;
 			if(expr.toString().contains("defined (")) {
@@ -228,9 +230,12 @@ public class ExpressionSolver {
 					stack.push(bleft.or(bright).boolVar());
 					break;
 				case Token.LAND:    //logical and "&&
-					bright = stack.pop().asBoolVar();
-					bleft = stack.pop().asBoolVar();
-					stack.push(bleft.and(bright).boolVar());
+					right = stack.pop().asIntVar();
+					left = stack.pop().asIntVar();
+					boolVar = ex.getBoolVarFromExpr(right.getName());
+					stack.push(boolVar);
+					boolVar = ex.getBoolVarFromExpr(left.getName());
+					stack.push(boolVar);
 					break;
 				case Token.NE:      //not equal "!="
 					right = stack.pop().asIntVar();
@@ -248,8 +253,9 @@ public class ExpressionSolver {
 					stack.push(left.gt(right).boolVar());
 					break;
 				case 33:            //not "!"
-					bright = stack.pop().asBoolVar();
-					stack.push(bright.not());
+					left = stack.pop().asIntVar();
+					boolVar = ex.getBoolVarFromExpr(left.getName()+"==0");
+					stack.push(boolVar.intVar());
 					break;
 				case 43:            //plus "+"
 					right = stack.pop().asIntVar();

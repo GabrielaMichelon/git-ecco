@@ -295,7 +295,6 @@ public class GitHelper {
             }catch (ArrayIndexOutOfBoundsException e) {
                 parent = "NULLCOMMIT";
             }
-            System.out.println("branch: "+branch);
             commits.add(new GitCommit(rc.getName(), parent, null/*new ArrayList<GitCommitType>(types)*/, branch, rc));
         }
 

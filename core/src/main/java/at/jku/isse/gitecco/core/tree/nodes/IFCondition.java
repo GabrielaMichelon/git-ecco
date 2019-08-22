@@ -19,16 +19,19 @@ public final class IFCondition extends ConditionalNode implements Visitable {
     @Override
     public String getCondition() {
         String aux = this.condition;
-        if(aux.contains("defined (")) {
+        if (aux.contains("defined (")) {
             aux = aux.replace("defined (", "");
             aux = aux.replace(")", "");
-        }else if(aux.contains("defined(")){
+        } else if (aux.contains("defined(")) {
             aux = aux.replace("defined(", "");
             aux = aux.replace(")", "");
+        } else if (aux.contains("defined")) {
+            aux = aux.replace("defined", "");
         }
 
+
         String[] features;
-        if(aux.contains("||")) {
+        if (aux.contains("||")) {
             features = aux.split("\\|\\|");
 
             String newAux = "";
@@ -41,12 +44,12 @@ public final class IFCondition extends ConditionalNode implements Visitable {
                 } else if (features[i].contains("==")) {
                     features[i] = features[i].substring(0, features[i].indexOf("="));
                 }
-                if (features[i].contains("!")) {
-                    if (features[i].contains("("))
+                if (!features[i].contains("!")) {
+                   /* if (features[i].contains("("))
                         features[i] = features[i].replace("!", "") + "==0)";
                     else
                         features[i] = features[i].replace("!", "") + "==0";
-                } else {
+                } else {*/
                     if (features[i].contains("("))
                         features[i] = features[i] + "==1)";
                     else
@@ -59,7 +62,7 @@ public final class IFCondition extends ConditionalNode implements Visitable {
                 }
             }
             aux = newAux;
-        }else {
+        } else {
 
             if (aux.contains(">")) {
                 aux = aux.substring(0, aux.indexOf(">"));
@@ -69,17 +72,18 @@ public final class IFCondition extends ConditionalNode implements Visitable {
                 aux = aux.substring(0, aux.indexOf("="));
             }
 
-            if (aux.contains("!")) {
-                if (aux.contains("("))
+            if (!aux.contains("!")) {
+                /*if (aux.contains("("))
                     aux = aux.replace("!", "") + "==0)";
                 else
                     aux = aux.replace("!", "") + "==0";
-            } else {
+            } else {*/
                 if (aux.contains("("))
                     aux = aux + "==1)";
                 else
                     aux = aux + "==1";
             }
+
 
         }
         return aux;
@@ -87,8 +91,7 @@ public final class IFCondition extends ConditionalNode implements Visitable {
 
     @Override
     public String getLocalCondition() {
-        return
-                this.condition;
+        return this.condition;
     }
 
     @Override

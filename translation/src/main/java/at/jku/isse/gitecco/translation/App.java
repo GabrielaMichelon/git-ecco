@@ -41,62 +41,18 @@ public class App {
         //maybe even start commit and/or end commit (hashes or numbers)
         //String repoPath = "C:\\obermanndavid\\git-ecco-test\\appimpleTest\\marlin\\Marlin";
         //String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin";
-        String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\Test29";
+        String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\Test32";
         final GitHelper gitHelper = new GitHelper(repoPath);
         final GitCommitList commitList = new GitCommitList(repoPath);
-        String[] featuresToAdd = {"X_MAX_PIN", "X_MIN_PIN", "DIO0_PIN"};
+        String[] featuresToAdd = {"F_FILE_DIR_DIRTY", "F_UNUSED", "F_FILE_UNBUFFERED_READ", "RAMPS_V_1_0", "__AVR_ATmega2560__", "F_CPU", "F_OFLAG", "WATCHPERIOD",
+                                  "THERMISTORBED", "THERMISTORHEATER", "PID_DEBUG", "HEATER_USES_THERMISTOR", "__AVR_ATmega328P__", "__AVR_ATmega1280__", "__AVR_ATmega168__",
+                                  "ADVANCE", "PID_OPENLOOP", "SDSUPPORT", "BED_USES_THERMISTOR", "SIMPLE_LCD", "NEWPANEL", "DEBUG_STEPS", "BED_USES_AD595", "ARDUINO",
+                                  "HEATER_1_USES_THERMISTOR", "THERMISTORHEATER_1", "HEATER_USES_THERMISTOR_1", "HEATER_2_USES_AD595", "HEATER_1_MAXTEMP", "THERMISTORHEATER_0",
+                                   "HEATER_1_MINTEMP", "HEATER_0_USES_THERMISTOR", "RESET_MANUAL", "PID_PID"};
         ArrayList<String> featureList = new ArrayList<>();
         for(String feat : featuresToAdd){
             featureList.add(feat);
         }
-        //featureList.add("F_FILE_DIR_DIRTY");
-        //featureList.add("F_UNUSED");
-        //featureList.add("__AVR_ATmega644P__");
-        //featureList.add("RAMPS_V_1_0");
-        /*featureList.add("DISTINCT_E_FACTORS");
-        featureList.add("ARC_SUPPORT");
-        featureList.add("Auto_Bed_Leveling_Bilinear");
-        featureList.add("FILAMENT_CHANGE_FEATURE");
-        featureList.add("BLTOUCH");
-        featureList.add("Board");
-        featureList.add("Buzzer");
-        featureList.add("CASE_LIGHT");
-        featureList.add("Command_Input_Process");
-        featureList.add("EMERGENCY_PARSER");
-        featureList.add("Endstop");
-        featureList.add("Extended_Capabilities_Report");
-        featureList.add("Extruder");
-        featureList.add("Inch_Mode_Support");
-        featureList.add("Bed_Heated");
-        featureList.add("HotEnd");
-        featureList.add("IO_Handling");
-        featureList.add("LIN_ADVANCE");
-        featureList.add("Emergency_Cancel_Heatup");
-        featureList.add("Temperature_Units_Support");
-        featureList.add("AUTO_REPORT_TEMPERATURES");
-        featureList.add("Control_Software_EndStop");
-        featureList.add("PINS_DEBUGGING");
-        featureList.add("MINIMUM_STEPPER_PULSE");
-        featureList.add("MIXING_EXTRUDER");
-        featureList.add("Move_To_Destination");
-        featureList.add("Homing");
-        featureList.add("NOZZLE_CLEAN_FEATURE");
-        featureList.add("NOZZLE_PARK_FEATURE");
-        featureList.add("Power_Supply");
-        featureList.add("PRINTCOUNTER");
-        featureList.add("Print_Job_Timer");
-        featureList.add("Moter_Type_Servo");
-        featureList.add("SINGLENOZZLE");
-        featureList.add("Moter_Type_Stepper");
-        featureList.add("RGB_LED");
-        featureList.add("Support_COREXY_COREXZ_COREYZ");
-        featureList.add("PWM");
-        featureList.add("G2_G3_R_Parameter");
-        featureList.add("SWITCHING_EXTRUDER");
-        featureList.add("Temperature");
-        featureList.add("THERMAL_PROTECTION_BED");
-        featureList.add("TMC2130");
-        featureList.add("WatchDog");*/
 
 
         commitList.addGitCommitListener((gc, gcl) -> {

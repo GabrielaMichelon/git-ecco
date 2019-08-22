@@ -236,43 +236,49 @@ public class FeatureExpressionParser {
         }
     }
 
-    private FeatureExpression PostfixExpr(){
+    private FeatureExpression PostfixExpr() {
         FeatureExpression lastExpr = Primary();
-        while(la.getType() == '[' || la.getType() == '.' || la.getType() == Token.ARROW || la.getType() == '(' || la.getType() == Token.INC || la.getType() == Token.DEC){
-            if(la.getType() == '['){
-                scan();
-                FeatureExpression index = Expr();
-                check(']');
-                lastExpr = new ArrayAccess(lastExpr, index);
-            } else if(la.getType() == '.'){
-                SingleTokenExpr op = new SingleTokenExpr(la);
-                scan();
-                check(Token.IDENTIFIER);
-                lastExpr = new Pointer(lastExpr, op, new Name(t));
-            } else if(la.getType() == Token.ARROW){
-                SingleTokenExpr op = new SingleTokenExpr(la);
-                scan();
-                check(Token.IDENTIFIER);
-                lastExpr = new Pointer(lastExpr, op, new Name(t));
-            } else if(la.getType() == '('){
-                scan();
-                MacroCall call = MacroCall(lastExpr);
-                check(')');
-                lastExpr = call;
-            } else if(la.getType() == Token.INC){
-                SingleTokenExpr op = new SingleTokenExpr(la);
-                scan();
-                lastExpr = new PostfixExpr(lastExpr, op);
-            } else if(la.getType() == Token.DEC){
-                SingleTokenExpr op = new SingleTokenExpr(la);
-                scan();
-                lastExpr = new PostfixExpr(lastExpr, op);
-            } else {
-                System.err.println("ERROR");
+        if (lastExpr instanceof Name && ((Name) lastExpr).getToken().getText().equals("defined") && la.getType() == Token.IDENTIFIER) {
+            MacroCall call = MacroCall(lastExpr);
+            lastExpr = call;
+        } else {
+            while (la.getType() == '[' || la.getType() == '.' || la.getType() == Token.ARROW || la.getType() == '(' || la.getType() == Token.INC || la.getType() == Token.DEC) {
+                if (la.getType() == '[') {
+                    scan();
+                    FeatureExpression index = Expr();
+                    check(']');
+                    lastExpr = new ArrayAccess(lastExpr, index);
+                } else if (la.getType() == '.') {
+                    SingleTokenExpr op = new SingleTokenExpr(la);
+                    scan();
+                    check(Token.IDENTIFIER);
+                    lastExpr = new Pointer(lastExpr, op, new Name(t));
+                } else if (la.getType() == Token.ARROW) {
+                    SingleTokenExpr op = new SingleTokenExpr(la);
+                    scan();
+                    check(Token.IDENTIFIER);
+                    lastExpr = new Pointer(lastExpr, op, new Name(t));
+                } else if (la.getType() == '(') {
+                    scan();
+                    MacroCall call = MacroCall(lastExpr);
+                    check(')');
+                    lastExpr = call;
+                } else if (la.getType() == Token.INC) {
+                    SingleTokenExpr op = new SingleTokenExpr(la);
+                    scan();
+                    lastExpr = new PostfixExpr(lastExpr, op);
+                } else if (la.getType() == Token.DEC) {
+                    SingleTokenExpr op = new SingleTokenExpr(la);
+                    scan();
+                    lastExpr = new PostfixExpr(lastExpr, op);
+                } else {
+                    System.err.println("ERROR");
+                }
             }
         }
         return lastExpr;
     }
+
 
     private FeatureExpression Primary(){
         if(la.getType() == Token.IDENTIFIER){
