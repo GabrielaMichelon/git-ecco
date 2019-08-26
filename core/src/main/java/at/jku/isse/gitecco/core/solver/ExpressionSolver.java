@@ -141,7 +141,7 @@ public class ExpressionSolver {
 	    traverse(new FeatureExpressionParser(expr).parse());
 	    Variable var = stack.pop();
 	    if(!(var instanceof BoolVar) && var instanceof IntVar) {
-            if(var.asIntVar().getValue() > 0)
+            if(var.asIntVar().getValue() != 0)
             	return model.boolVar(true);
             else return model.boolVar(false);
 	    }
@@ -168,7 +168,7 @@ public class ExpressionSolver {
 					vars.add(iv);
 					stack.push(iv);
 				} else {
-					BoolVar bv = model.boolVar(name);
+					BoolVar bv = model.intVar(name, 0, 1).ne(0).boolVar();
 					vars.add(bv);
 					stack.push(bv);
 				}
@@ -214,17 +214,20 @@ public class ExpressionSolver {
 					stack.push(bleft.or(bright).boolVar());
 					break;
 				case Token.LAND:    //logical and "&&
-					right = stack.pop().asIntVar();
+					/*right = stack.pop().asIntVar();
 					left = stack.pop().asIntVar();
 					boolVar = ex.getBoolVarFromExpr(right.getName());
 					stack.push(boolVar);
 					boolVar = ex.getBoolVarFromExpr(left.getName());
-					stack.push(boolVar);
+					stack.push(boolVar);*/
+					bright = stack.pop().asBoolVar();
+					bleft = stack.pop().asBoolVar();
+					stack.push(bleft.and(bright).boolVar());
 					break;
 				case Token.NE:      //not equal "!="
-					right = stack.pop().asIntVar();
-					left = stack.pop().asIntVar();
-					stack.push(left.ne(right).boolVar());
+					bright = stack.pop().asBoolVar();
+					bleft = stack.pop().asBoolVar();
+					stack.push(bleft.ne(bright).boolVar());
 					break;
 				case 60:            //less than "<"
 					right = stack.pop().asIntVar();
@@ -237,9 +240,9 @@ public class ExpressionSolver {
 					stack.push(left.gt(right).boolVar());
 					break;
 				case 33:            //not "!"
-					left = stack.pop().asIntVar();
-					boolVar = ex.getBoolVarFromExpr(left.getName()+"==0");
-					stack.push(boolVar.intVar());
+					bleft = stack.pop().asBoolVar();
+					//boolVar = ex.getBoolVarFromExpr(left.getName()+"==0");
+					stack.push(bleft.not());
 					break;
 				case 43:            //plus "+"
 					right = stack.pop().asIntVar();
@@ -247,10 +250,10 @@ public class ExpressionSolver {
 					stack.push(left.add(right).intVar());
 					break;
 				case 45:            //minus "-"
-					//right = stack.pop().asIntVar();
-					//left = stack.pop().asIntVar();
-					//stack.push(left.intVar());
-					//stack.push(left.sub(right).intVar());
+					right = stack.pop().asIntVar();
+					left = stack.pop().asIntVar();
+					stack.push(left.intVar());
+					stack.push(left.sub(right).intVar());
 					break;
 				case 42:            //mul "*"
 					right = stack.pop().asIntVar();

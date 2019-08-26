@@ -104,7 +104,7 @@ public class ChangeConstraint {
                         }
                     }
                 }
-
+                //we need the root BASE to look for its every children that are above the changed node
                 if (!changedNodeParent.getCondition().contains("BASE")) {
                     conditionalNode = changedNodeParent;
 
@@ -116,7 +116,6 @@ public class ChangeConstraint {
                 }
 
                 //adding clauses for each BASE children Nodes that has defines above the changedNode that has literal which implies on the changedNode
-                //for (ConditionBlockNode children : changedNodeParent.getChildren()) {
                 for (int i = changedNodeParent.getChildren().size() - 1; i >= 0; i--) {
                     if (changedNodeParent.getChildren().get(i).getIfBlock().getLineFrom() < changedNode.getLineFrom()) {
                         searchingDefineNodes(changedNodeParent.getChildren().get(i), solver, featureImplications, changedNodeParent.getCondition(), changedNode.getLineFrom(), featureChangedNode);
@@ -133,17 +132,17 @@ public class ChangeConstraint {
                     ArrayList<String> featuresVersioned = new ArrayList<>();
                     if (!result.entrySet().isEmpty()) {
                         pph.generateVariants(result, gitFolder, eccoFolder, dirFiles);
-                        text = "Solution ChocoSolver: \n";
-                        Files.write(Paths.get(String.valueOf(outputDirectory)), text.getBytes(), new StandardOpenOption[]{StandardOpenOption.APPEND});
                         System.out.println("Solution ChocoSolver: ");
                         result.entrySet().forEach(x -> System.out.print(x.getKey() + " = " + x.getValue() + "; "));
-                        result.entrySet().forEach(x -> {
-                            try {
-                                Files.write(Paths.get(String.valueOf(outputDirectory)), (x.getKey() + " = " + x.getValue() + "; ").toString().getBytes(), new StandardOpenOption[]{StandardOpenOption.APPEND});
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        });
+                        text = "Solution ChocoSolver: \n";
+                        Files.write(Paths.get(String.valueOf(outputDirectory)), text.getBytes(), new StandardOpenOption[]{StandardOpenOption.APPEND});
+                       // result.entrySet().forEach(x -> {
+                           // try {
+                             //   Files.write(Paths.get(String.valueOf(outputDirectory)), (x.getKey() + " = " + x.getValue() + "; ").toString().getBytes(), new StandardOpenOption[]{StandardOpenOption.APPEND});
+                        //    } catch (IOException e) {
+                        //        e.printStackTrace();
+                        //    }
+                       // });
                         Feature key;
                         Integer value;
                         Set<Map.Entry<Feature, Integer>> setRetornado = result.entrySet();
@@ -160,12 +159,13 @@ public class ChangeConstraint {
                             if (value != 0 && (featureList.contains(key.toString()) || key.toString().contains("BASE"))) {
                                 featuresVersioned.add(key.toString());
                                 System.out.println("Feature " + key.toString() + " == " + value);
-                                text = "Feature " + key.toString() + " == " + value+"\n";
+                                text = "Feature " + key.toString() + " == " + value + "\n";
                                 Files.write(Paths.get(String.valueOf(outputDirectory)), text.getBytes(), new StandardOpenOption[]{StandardOpenOption.APPEND});
                             }
                         }
-                    } else {
+                    } /*else {//case Choco solver does not find a solution we look the literals that are in the
                         String[] expressionSplited = expression.split("&&");
+                        HashMap<String, Integer>  dividingORExpression = new HashMap<>();
                         for (int k = 0; k < expressionSplited.length; k++) {
                             if (expressionSplited[k].contains("(!")) {
                                 expressionSplited[k] = expressionSplited[k].replace("(!", "!");
@@ -175,27 +175,47 @@ public class ChangeConstraint {
                                 expressionSplited[k] = expressionSplited[k].replace(")", "");
 
                             }
-                            String exp = expressionSplited[k].substring(0, expressionSplited[k].indexOf("=")).replace(" ", "");
 
-                            for (int j = 0; j < solver.getVars().size(); j++) {
-                                if (solver.getVars().get(j).getName().contains(exp)) {
-                                    if (featureList.contains(exp) || exp.contains("BASE")) {
-                                        featuresVersioned.add(exp);
+                            if (expressionSplited[k].contains("||")) {
+                                String[] splittingOR = expressionSplited[k].split("||");
+                                for (String splittedexpression : splittingOR) {
+                                    dividingORExpression.put(splittedexpression,1);
+                                }
+                            } else {
+                                dividingORExpression.put(expressionSplited[k],1);
+                            }
+
+                            for (int i=0; i<dividingORExpression.entrySet().size(); i++) {
+                                String vars = dividingORExpression.
+                                if (vars.contains("==1")) {
+                                    String auxvar = vars.replace("==1", "");
+                                    dividingORExpression.remove(vars);
+                                    dividingORExpression.put(auxvar,1);
+                                } else {
+                                    if (vars.contains("!")) {
+                                        String auxvar = vars.replace("!", "");
+                                        dividingORExpression.remove(vars);
+                                        dividingORExpression.add(auxvar);
                                     }
                                 }
                             }
-                        }
 
-                        for (int k = 0; k < expressionSplited.length; k++) {
-                            String left = expressionSplited[k].substring(0, expressionSplited[k].indexOf("=")).replace(" ", "");
-                            String right = expressionSplited[k].substring(expressionSplited[k].indexOf("==") + 2).replace(" ", "");
-                            if (featureList.contains(left) && !featuresVersioned.contains(left)) {
-                                featuresVersioned.add(left);
+
+                            for (int j = 0; j < solver.getVars().size(); j++) {
+                                for (String literal : dividingORExpression) {
+                                    if (solver.getVars().get(j).getName().contains(literal)) {
+                                        if (featureList.contains(literal) || literal.contains("BASE")) {
+                                            featuresVersioned.add(literal);
+                                        }
+                                    }
+                                }
+
                             }
                         }
+
                         Map<Feature, Integer> resultVariant = new HashMap<>();
                         for (String featureVersioned : featuresVersioned) {
-                            text = "Feature " + featureVersioned+"\n";
+                            text = "Feature " + featureVersioned + "\n";
                             Files.write(Paths.get(String.valueOf(outputDirectory)), text.getBytes(), new StandardOpenOption[]{StandardOpenOption.APPEND});
                             System.out.println("Feature " + featureVersioned);
                             Feature featureVariant = new Feature(featureVersioned);
@@ -204,7 +224,7 @@ public class ChangeConstraint {
                         //Feature featureVariant = new Feature("BASE");
                         // resultVariant.put(featureVariant, 1);
                         pph.generateVariants(resultVariant, gitFolder, eccoFolder, dirFiles);
-                    }
+                    }*/
 
                     text = "________________________\n";
                     Files.write(Paths.get(String.valueOf(outputDirectory)), text.getBytes(), new StandardOpenOption[]{StandardOpenOption.APPEND});
