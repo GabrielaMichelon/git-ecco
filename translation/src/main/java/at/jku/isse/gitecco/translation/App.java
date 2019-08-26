@@ -39,13 +39,13 @@ public class App {
         final boolean debug = true;
         //TODO: planned arguments: DEBUG, dispose tree, max commits, repo path, csv path(feature id), outpath for ecco
         //maybe even start commit and/or end commit (hashes or numbers)
-        //String repoPath = "C:\\obermanndavid\\git-ecco-test\\appimpleTest\\marlin\\Marlin";
         //String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin";
         String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\Test32";
         final GitHelper gitHelper = new GitHelper(repoPath);
         final GitCommitList commitList = new GitCommitList(repoPath);
-        String[] featuresToAdd = {"F_FILE_DIR_DIRTY", "F_UNUSED", "F_FILE_UNBUFFERED_READ", "RAMPS_V_1_0", "__AVR_ATmega2560__", "F_CPU", "F_OFLAG", "WATCHPERIOD",
-                                  "THERMISTORBED", "THERMISTORHEATER", "PID_DEBUG", "HEATER_USES_THERMISTOR", "__AVR_ATmega328P__", "__AVR_ATmega1280__", "__AVR_ATmega168__",
+        //optional features of the project obtained by the featureID (chosen that which is in almost cases external feature)
+        String[] featuresToAdd = {"BASE","F_FILE_DIR_DIRTY", "F_UNUSED", "F_FILE_UNBUFFERED_READ", "RAMPS_V_1_0", "__AVR_ATmega2560__", "F_CPU", "F_OFLAG", "WATCHPERIOD",
+                                  "THERMISTORBED", "TSd2PinMap_hHERMISTORHEATER", "PID_DEBUG", "HEATER_USES_THERMISTOR", "__AVR_ATmega328P__", "__AVR_ATmega1280__", "__AVR_ATmega168__",
                                   "ADVANCE", "PID_OPENLOOP", "SDSUPPORT", "BED_USES_THERMISTOR", "SIMPLE_LCD", "NEWPANEL", "DEBUG_STEPS", "BED_USES_AD595", "ARDUINO",
                                   "HEATER_1_USES_THERMISTOR", "THERMISTORHEATER_1", "HEATER_USES_THERMISTOR_1", "HEATER_2_USES_AD595", "HEATER_1_MAXTEMP", "THERMISTORHEATER_0",
                                    "HEATER_1_MINTEMP", "HEATER_0_USES_THERMISTOR", "RESET_MANUAL", "PID_PID"};
@@ -53,7 +53,9 @@ public class App {
         for(String feat : featuresToAdd){
             featureList.add(feat);
         }
-
+        //add directories that we need to include manually to get all the files to create a clean version because "/usr/local/include"
+        // and "/usr/include")does not includes files outside the root path
+        final String[] dirFiles = {"C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin\\Marlin"};
 
         commitList.addGitCommitListener((gc, gcl) -> {
 
@@ -64,6 +66,9 @@ public class App {
             GetNodesForChangeVisitor visitor = new GetNodesForChangeVisitor();
             Set<ConditionalNode> changedNodes = new HashSet<>();
             List<String> changedFiles = gitHelper.getChangedFiles(gc);
+            //directory to save the output
+            final File outputDirectory = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\Commits\\"+gcl.getBranch(gc,gcl));
+
 
             //retrieve changed nodes
             for (FileNode child : gc.getTree().getChildren()) {
@@ -96,7 +101,8 @@ public class App {
                         classNodes.addAll(visitor.getchangedNodes());
                         ChangeConstraint changeConstraint = new ChangeConstraint();
                         changeConstraint.setFeatureList(featureList);
-                        changeConstraint.constructConstraintPerFeature(classNodes, changedNodes, gitHelper, change, visitor, child);
+                        //create the constraints for each changed node and generates the variant
+                        changeConstraint.constructConstraintPerFeature(classNodes, changedNodes, gitHelper, change, visitor, child, dirFiles, outputDirectory);
 
 
                     }
@@ -132,7 +138,7 @@ public class App {
 
         });
 
-        gitHelper.getAllCommits(commitList);
+        gitHelper.getAllCommits(commitList, dirFiles);
 
     }
 

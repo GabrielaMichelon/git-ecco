@@ -30,24 +30,84 @@ public final class ELIFCondition extends ConditionalNode {
 
         ret.append(getLocalCondition());
 
-        if(getParent().getIfBlock().getCondition().contains("!")){
-            ret.append(" && "+getParent().getIfBlock().getCondition().replace("!", "==1"));
-        }else{
-            ret.append(" && !("+getParent().getIfBlock().getCondition().replace("==1", ")"));
-        }
 
+        //appending the ifparent
+        String aux=getParent().getIfBlock().getCondition().replaceAll("[()]","");
+
+        String[] features;
+        if(aux.contains("||")) {
+
+            features = aux.split("\\|\\|");
+
+            String newAux = "";
+
+            for (int i = 0; i < features.length; i++) {
+                if (features[i].contains(">")) {
+                    features[i] = features[i].substring(0, features[i].indexOf(">"));
+                } else if (features[i].contains("<")) {
+                    aux = features[i].substring(0, features[i].indexOf("<"));
+                } else if (features[i].contains("==")) {
+                    features[i] = features[i].substring(0, features[i].indexOf("="));
+                }
+                if (!features[i].contains("!")) {
+                    features[i] =  "!("+features[i] + ")";
+                }else{
+                    features[i] = features[i].replace("!","");
+                    features[i] = "("+features[i]+"==1";
+                }
+
+                if (i < features.length - 1) {
+                    newAux += features[i] + " || ";
+                } else {
+                    newAux += features[i] +"";
+                }
+            }
+            aux = "("+newAux+")";
+        }else {
+
+            if (aux.contains(">")) {
+                aux = aux.substring(0, aux.indexOf(">"));
+            } else if (aux.contains("<")) {
+                aux = aux.substring(0, aux.indexOf("<"));
+            } else if (aux.contains("==")) {
+                aux = aux.substring(0, aux.indexOf("="));
+            }
+
+            if (aux.contains("!")) {
+                aux = "("+ aux + "==1)";
+            }else{
+                aux = "!("+aux+")";
+            }
+
+        }
+        ret.append(" && "+aux);
+
+
+        /*if(getParent().getIfBlock().getCondition().contains("!")){
+            ret.append(" && ("+getParent().getIfBlock().getCondition().replace("!", ""));
+            ret.append("==1");
+        }else{
+            ret.append(" && !("+getParent().getIfBlock().getCondition().replace("==1", ""));
+        }
+        ret.append(")");
+        /*
+         */
+        //appending elseifblock
         for (ELIFCondition elseIfBlock : getParent().getElseIfBlocks()) {
             if(this.equals(elseIfBlock)) {
                 break;
             }
+            //String aux =  elseIfBlock.getLocalCondition().replaceAll("[()]","");
             if(elseIfBlock.getLocalCondition().contains("!")){
-                ret.append(" && "+elseIfBlock.getLocalCondition().replace("!", "==1"));
+                ret.append(" && "+elseIfBlock.getLocalCondition().replace("!", ""));
                 //ret.append(" && "+elseIfBlock.getLocalCondition().replace("!","==0") );
             }else{
-                ret.append(" && !("+elseIfBlock.getLocalCondition().replace("==1", ")"));
+                ret.append(" && !("+elseIfBlock.getLocalCondition().replace("==1", ""));
+                ret.append(")");
                 //ret.append(" && "+elseIfBlock.getLocalCondition() + "==1");
             }
         }
+
         return ret.toString();
     }
 
@@ -56,13 +116,12 @@ public final class ELIFCondition extends ConditionalNode {
         String aux = this.condition;
         if(aux.contains("defined (")) {
             aux = aux.replace("defined (", "");
-            aux = aux.replace(")", "");
         }else if(aux.contains("defined(")){
             aux = aux.replace("defined(", "");
-            aux = aux.replace(")", "");
         } else if(aux.contains("defined")){
             aux = aux.replace("defined", "");
         }
+        aux=aux.replaceAll("[()]","");
 
         String[] features;
         if(aux.contains("||")) {
@@ -87,9 +146,10 @@ public final class ELIFCondition extends ConditionalNode {
                 } else {*/
                     features[i] = features[i].replace("(","");
                     features[i] =  features[i].replace(")","") + "==1";
+                }else{
+                    features[i] = features[i].replace("(","");
+                    features[i] =  features[i].replace(")","");
                 }
-                features[i] = features[i].replace("(","");
-                features[i] =  features[i].replace(")","");
 
                 if (i < features.length - 1) {
                     newAux += features[i] + " || ";
@@ -114,8 +174,6 @@ public final class ELIFCondition extends ConditionalNode {
                 else
                     aux = aux.replace("!", "") + "==0";
             } else {*/
-                aux = aux.replace("(","");
-                aux = aux.replace(")","");
                 aux = aux + "==1";
             }
 

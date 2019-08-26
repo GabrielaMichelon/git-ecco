@@ -202,7 +202,15 @@ public class PreprocessorAPI {
      * @param src       - source file or directory
      * @param targetDir - target directory for output
      */
-    public void preprocess(File src, File targetDir) {
+    public void preprocess(File src, File targetDir, String[] dirFiles) {
+        //add directories that we need to include manually to get all the files to create a clean version because the
+        // pp.getSystemIncludePath().add("/usr/local/include"); pp.getSystemIncludePath().add("/usr/include"); does not includes
+        //files outside the root path
+        if(dirFiles.length>0){
+            for (String dir: dirFiles) {
+                pp.getSystemIncludePath().add(dir);
+            }
+        }
 
         if (this.inlineIncludes && this.keepIncludes) {
             throw new IllegalStateException("includeHeaders and keepIncludes should not be set at the same time");

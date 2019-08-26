@@ -29,7 +29,7 @@ public final class IFCondition extends ConditionalNode implements Visitable {
             aux = aux.replace("defined", "");
         }
 
-
+        aux =  aux.replaceAll("[()]","");
         String[] features;
         if (aux.contains("||")) {
             features = aux.split("\\|\\|");
@@ -45,15 +45,7 @@ public final class IFCondition extends ConditionalNode implements Visitable {
                     features[i] = features[i].substring(0, features[i].indexOf("="));
                 }
                 if (!features[i].contains("!")) {
-                   /* if (features[i].contains("("))
-                        features[i] = features[i].replace("!", "") + "==0)";
-                    else
-                        features[i] = features[i].replace("!", "") + "==0";
-                } else {*/
-                    if (features[i].contains("("))
-                        features[i] = features[i] + "==1)";
-                    else
-                        features[i] = features[i] + "==1";
+                   features[i] = features[i] + "==1";
                 }
                 if (i < features.length - 1) {
                     newAux += features[i] + " || ";
@@ -73,15 +65,7 @@ public final class IFCondition extends ConditionalNode implements Visitable {
             }
 
             if (!aux.contains("!")) {
-                /*if (aux.contains("("))
-                    aux = aux.replace("!", "") + "==0)";
-                else
-                    aux = aux.replace("!", "") + "==0";
-            } else {*/
-                if (aux.contains("("))
-                    aux = aux + "==1)";
-                else
-                    aux = aux + "==1";
+                aux = aux + "==1";
             }
 
 

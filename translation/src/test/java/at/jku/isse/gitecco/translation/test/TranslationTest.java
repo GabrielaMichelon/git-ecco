@@ -118,8 +118,8 @@ public class TranslationTest {
         String f1 = "C:\\obermanndavid\\git-ecco\\ppfiles\\test\\git2";
         File file = new File("C:\\obermanndavid\\git-ecco\\ppfiles\\test\\git2");
         File file2 = new File("C:\\obermanndavid\\git-ecco\\ppfiles\\test\\git2_sub\\clean");
-
-        pph.generateCleanVersion(file,file2);
+        String[] dirFiles = null;
+        pph.generateCleanVersion(file,file2, dirFiles);
     }
 
     @Test

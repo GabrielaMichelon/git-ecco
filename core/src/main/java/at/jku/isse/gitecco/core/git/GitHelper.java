@@ -274,8 +274,8 @@ public class GitHelper {
      * @throws GitAPIException
      * @throws IOException
      */
-    public GitCommitList getAllCommits(GitCommitList commits) throws Exception {
-        final boolean FASTMODE = true;
+    public GitCommitList getAllCommits(GitCommitList commits, String[] dirFiles) throws Exception {
+        final boolean FASTMODE = false;
         final List<GitCommitType> types = new ArrayList<>();
         final Repository repository = git.getRepository();
         final Collection<Ref> allRefs = repository.getRefDatabase().getRefs();
@@ -295,7 +295,7 @@ public class GitHelper {
             }catch (ArrayIndexOutOfBoundsException e) {
                 parent = "NULLCOMMIT";
             }
-            commits.add(new GitCommit(rc.getName(), parent, null/*new ArrayList<GitCommitType>(types)*/, branch, rc));
+            commits.add(new GitCommit(rc.getName(), parent, null/*new ArrayList<GitCommitType>(types)*/, branch, rc),dirFiles);
         }
 
         return commits;

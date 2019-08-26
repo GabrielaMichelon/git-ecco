@@ -18,14 +18,14 @@ public class PreprocessorHelper {
      * @param src
      * @param target
      */
-    public void generateCleanVersion(File src, File target) {
+    public void generateCleanVersion(File src, File target, String[] dirFiles) {
         PreprocessorAPI pp = new PreprocessorAPI(new OnlyExpandMacrosInIfsController());
         pp.setInlineIncludes(false);
         pp.setKeepIncludes(true);
         pp.setKeepDefines(true);
 
 
-        pp.preprocess(src, target);
+        pp.preprocess(src, target, dirFiles);
     }
 
     /**
@@ -34,7 +34,7 @@ public class PreprocessorHelper {
      * @param src input folder
      * @param target output folder
      */
-    public void generateVariants(Map<Feature, Integer> configuration,File src, File target) {
+    public void generateVariants(Map<Feature, Integer> configuration,File src, File target, String[] dirFiles) {
 
         if(target.exists()) GitCommitList.recursiveDelete(target.toPath());
 
@@ -48,7 +48,7 @@ public class PreprocessorHelper {
             pp.addMacro(entry.getKey().getName(),entry.getValue().toString());
         }
 
-        pp.preprocess(src, target);
+        pp.preprocess(src, target, dirFiles);
 
     }
 

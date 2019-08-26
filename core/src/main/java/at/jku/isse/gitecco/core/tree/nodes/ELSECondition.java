@@ -34,7 +34,8 @@ public final class ELSECondition extends ConditionalNode implements Visitable {
         } else if (aux.contains("defined")) {
             aux = aux.replace("defined", "");
         }
-
+        aux=aux.replace("(","");
+        aux=aux.replace(")","");
 
         String[] features;
         if (aux.contains("||")) {
@@ -116,19 +117,23 @@ public final class ELSECondition extends ConditionalNode implements Visitable {
         }*/
         ret.append(aux);
 
+
         //ret.append("!" + getParent().getIfBlock().getCondition() );
         for (ELIFCondition elseIfBlock : getParent().getElseIfBlocks()) {
+            aux= elseIfBlock.getLocalCondition().replaceAll("[()]", "");
             if (elseIfBlock.getLocalCondition().contains("!")) {
                 //ret.append(" && "+elseIfBlock.getLocalCondition().replace("==0","==1"));
-                ret.append(" && (" + elseIfBlock.getLocalCondition().replace("!", "") + "==1)");
+                ret.append(" && (" + aux.replace("!", "") + "==1)");
             } else if (elseIfBlock.getLocalCondition().contains("==1")) {
-                ret.append(" && !(" + elseIfBlock.getLocalCondition().replace("==1", ")"));
+                ret.append(" && !(" +aux.replace("==1", ""));
                 //ret.append(" && "+elseIfBlock.getLocalCondition().replace("==1","==0"));
             } else{
-                ret.append(" && !("+elseIfBlock.getLocalCondition()+")");
+                ret.append(" && !("+aux+")");
             }
+            ret.append(")");
             //ret.append("!" + elseIfBlock.getCondition() + " && ");*/
         }
+
         return ret.toString();
     }
 
