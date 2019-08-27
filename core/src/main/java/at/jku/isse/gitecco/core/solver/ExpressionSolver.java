@@ -78,6 +78,10 @@ public class ExpressionSolver {
 		this.expr = expr;
 	}
 
+	public Model getModel() {
+		return this.model;
+	}
+
 	/**
 	 * Solves the expression currently assigned to this solver.
 	 * Returns a Map with the Feature as key and the value to be assigned as an Integer.
@@ -168,8 +172,9 @@ public class ExpressionSolver {
 					vars.add(iv);
 					stack.push(iv);
 				} else {
-					BoolVar bv = model.intVar(name, 0, 1).ne(0).boolVar();
-					vars.add(bv);
+					IntVar iv = model.intVar(name, 0, 1);
+					BoolVar bv = iv.ne(0).boolVar();
+					vars.add(iv);
 					stack.push(bv);
 				}
 			} else {
@@ -240,9 +245,8 @@ public class ExpressionSolver {
 					stack.push(left.gt(right).boolVar());
 					break;
 				case 33:            //not "!"
-					bleft = stack.pop().asBoolVar();
-					//boolVar = ex.getBoolVarFromExpr(left.getName()+"==0");
-					stack.push(bleft.not());
+					bright = stack.pop().asBoolVar();
+					stack.push(bright.not());
 					break;
 				case 43:            //plus "+"
 					right = stack.pop().asIntVar();
@@ -285,6 +289,7 @@ public class ExpressionSolver {
 			String cond = "(!(" + e.getExpr() + ")||(" + e.getThenExpr() + "))&&((" + e.getExpr() + ")||(" + e.getElseExpr() + "))";
 			traverse(new FeatureExpressionParser(cond).parse());
 		} else if (expr instanceof PrefixExpr) {
+			isIntVar = false;
 			traverse(((PrefixExpr) expr).getExpr());
 			traverse(((PrefixExpr) expr).getOperator());
 		} else if (expr instanceof InfixExpr) {
@@ -295,6 +300,7 @@ public class ExpressionSolver {
             checkIntVar((InfixExpr)expr);
 			traverse(((InfixExpr) expr).getOperator());
 		} else if (expr instanceof ParenthesizedExpr) {
+			isIntVar = false;
 			traverse(((ParenthesizedExpr) expr).getExpr());
 		} else {
 			System.err.println("unexpected node in AST: " + expr.toString() + " " + expr.getClass());

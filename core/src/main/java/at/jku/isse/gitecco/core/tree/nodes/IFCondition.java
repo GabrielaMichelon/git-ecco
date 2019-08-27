@@ -18,7 +18,7 @@ public final class IFCondition extends ConditionalNode implements Visitable {
 
     @Override
     public String getCondition() {
-        String aux = this.condition;
+        /*String aux = this.condition;
         if (aux.contains("defined (")) {
             aux = aux.replace("defined (", "");
             aux = aux.replace(")", "");
@@ -70,7 +70,8 @@ public final class IFCondition extends ConditionalNode implements Visitable {
 
 
         }
-        return aux;
+        return aux;*/
+        return  this.condition;
     }
 
     @Override

@@ -7,21 +7,14 @@ import at.jku.isse.gitecco.core.solver.ExpressionSolver;
 import at.jku.isse.gitecco.core.tree.nodes.*;
 import at.jku.isse.gitecco.core.type.Feature;
 import at.jku.isse.gitecco.core.type.FeatureImplication;
-import org.apache.commons.math3.analysis.function.Exp;
-import org.chocosolver.solver.constraints.nary.cnf.LogOp;
-import org.chocosolver.solver.variables.BoolVar;
 import org.chocosolver.solver.variables.IntVar;
 import org.chocosolver.solver.variables.Variable;
-import scala.util.parsing.combinator.testing.Str;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.security.Key;
 import java.util.*;
 
 public class ChangeConstraint {
@@ -53,18 +46,11 @@ public class ChangeConstraint {
                 ConditionalNode changedNodeParent = changedNode.getParent().getIfBlock().getParent().getParent();
                 ConditionalNode conditionalNode = changedNode.getParent().getParent();
                 String expression = "";
-                expression = "((" + changedNode.getCondition() + ")";
-                //adding the expression of the changedNode that solver will use to give a solution
-                //concatenate the expression with each parent of its changed node until the parent be BASE
-                while (!conditionalNode.getCondition().contains("BASE")) {
-                    expression += " && (" + conditionalNode.getCondition() + ")";
-                    conditionalNode = conditionalNode.getParent().getParent();
-                }
-                expression += " && (" + conditionalNode.getCondition() + "))";
+                expression = changedNode.getCondition();
                 solver.setExpr(expression);
-                //System.out.println(expression);
+
                 //obtains the literals that we need to search its parents and defines to add to the queue implication
-                featureChangedNode = searchingFeatureCorrespondingtoChangedNode(changedNode, featureList, expression);
+                featureChangedNode = searchingFeatureCorrespondingtoChangedNode(changedNode, featureList, expression, solver);
 
 
                 //adding clauses to the defines children of BASE that are above the changed node and that are not macro functions
@@ -134,6 +120,13 @@ public class ChangeConstraint {
                         pph.generateVariants(result, gitFolder, eccoFolder, dirFiles);
                         System.out.println("Solution ChocoSolver: ");
                         result.entrySet().forEach(x -> System.out.print(x.getKey() + " = " + x.getValue() + "; "));
+                        Variable[] getVars = solver.getModel().getVars();
+                        System.out.println("\nConfiguration that has impact on this change:");
+                        for(int j =0; j< getVars.length; j++) {
+                            if (featureList.contains(getVars[j].getName())) {
+                                System.out.println("\n"+getVars[j].getName() +" = "+ getVars[j].asIntVar().getValue());
+                            }
+                        }
                         text = "Solution ChocoSolver: \n";
                         Files.write(Paths.get(String.valueOf(outputDirectory)), text.getBytes(), new StandardOpenOption[]{StandardOpenOption.APPEND});
                        // result.entrySet().forEach(x -> {
@@ -143,7 +136,7 @@ public class ChangeConstraint {
                         //        e.printStackTrace();
                         //    }
                        // });
-                        Feature key;
+                        /*Feature key;
                         Integer value;
                         Set<Map.Entry<Feature, Integer>> setRetornado = result.entrySet();
                         boolean flag = true;
@@ -162,72 +155,10 @@ public class ChangeConstraint {
                                 text = "Feature " + key.toString() + " == " + value + "\n";
                                 Files.write(Paths.get(String.valueOf(outputDirectory)), text.getBytes(), new StandardOpenOption[]{StandardOpenOption.APPEND});
                             }
-                        }
-                    } /*else {//case Choco solver does not find a solution we look the literals that are in the
-                        String[] expressionSplited = expression.split("&&");
-                        HashMap<String, Integer>  dividingORExpression = new HashMap<>();
-                        for (int k = 0; k < expressionSplited.length; k++) {
-                            if (expressionSplited[k].contains("(!")) {
-                                expressionSplited[k] = expressionSplited[k].replace("(!", "!");
-                                expressionSplited[k] = expressionSplited[k].replace(")", "");
-                            } else if (expressionSplited[k].contains("(")) {
-                                expressionSplited[k] = expressionSplited[k].replace("(", "");
-                                expressionSplited[k] = expressionSplited[k].replace(")", "");
-
-                            }
-
-                            if (expressionSplited[k].contains("||")) {
-                                String[] splittingOR = expressionSplited[k].split("||");
-                                for (String splittedexpression : splittingOR) {
-                                    dividingORExpression.put(splittedexpression,1);
-                                }
-                            } else {
-                                dividingORExpression.put(expressionSplited[k],1);
-                            }
-
-                            for (int i=0; i<dividingORExpression.entrySet().size(); i++) {
-                                String vars = dividingORExpression.
-                                if (vars.contains("==1")) {
-                                    String auxvar = vars.replace("==1", "");
-                                    dividingORExpression.remove(vars);
-                                    dividingORExpression.put(auxvar,1);
-                                } else {
-                                    if (vars.contains("!")) {
-                                        String auxvar = vars.replace("!", "");
-                                        dividingORExpression.remove(vars);
-                                        dividingORExpression.add(auxvar);
-                                    }
-                                }
-                            }
-
-
-                            for (int j = 0; j < solver.getVars().size(); j++) {
-                                for (String literal : dividingORExpression) {
-                                    if (solver.getVars().get(j).getName().contains(literal)) {
-                                        if (featureList.contains(literal) || literal.contains("BASE")) {
-                                            featuresVersioned.add(literal);
-                                        }
-                                    }
-                                }
-
-                            }
-                        }
-
-                        Map<Feature, Integer> resultVariant = new HashMap<>();
-                        for (String featureVersioned : featuresVersioned) {
-                            text = "Feature " + featureVersioned + "\n";
-                            Files.write(Paths.get(String.valueOf(outputDirectory)), text.getBytes(), new StandardOpenOption[]{StandardOpenOption.APPEND});
-                            System.out.println("Feature " + featureVersioned);
-                            Feature featureVariant = new Feature(featureVersioned);
-                            resultVariant.put(featureVariant, 1);
-                        }
-                        //Feature featureVariant = new Feature("BASE");
-                        // resultVariant.put(featureVariant, 1);
-                        pph.generateVariants(resultVariant, gitFolder, eccoFolder, dirFiles);
-                    }*/
-
-                    text = "________________________\n";
-                    Files.write(Paths.get(String.valueOf(outputDirectory)), text.getBytes(), new StandardOpenOption[]{StandardOpenOption.APPEND});
+                        }*/
+                    }
+                     text = "________________________\n";
+                     Files.write(Paths.get(String.valueOf(outputDirectory)), text.getBytes(), new StandardOpenOption[]{StandardOpenOption.APPEND});
                     System.out.println("________________________");
                     solver.reset();
                 } catch (IOException e) {
@@ -239,14 +170,13 @@ public class ChangeConstraint {
 
     //we need to look if the changedNode is a feature and look if exists any parent besides BASE
     public ArrayList<String> searchingFeatureCorrespondingtoChangedNode(ConditionalNode
-                                                                                changedNode, ArrayList<String> featureList, String expression) {
+                                                                                changedNode, ArrayList<String> featureList, String expression, ExpressionSolver solver) {
         ArrayList<String> features = new ArrayList<>();
         String[] literals;
-        ExpressionSolver ex = new ExpressionSolver();
-        BoolVar boolVar = ex.getBoolVarFromExpr(expression);
-        for (int i = 0; i < ex.getVars().size(); i++) {
-            if (expression.contains(ex.getVars().get(i).getName())) {
-                features.add(ex.getVars().get(i).getName());
+        Variable[] getVars = solver.getModel().getVars();
+        for(int j =0; j< getVars.length; j++) {
+            if (expression.contains(getVars[j].getName())) {
+                features.add(getVars[j].getName());
             }
         }
 

@@ -18,15 +18,16 @@ public final class IFDEFCondition extends ConditionalNode implements Visitable {
 
     @Override
     public String getCondition() {
-        if(this.condition.contains("!"))
+        /*if(this.condition.contains("!"))
             return this.condition;//.replace("!", "==0");
         else
-            return this.condition+"==1";
+            return this.condition+"==1";*/
+        return this.condition;
     }
 
     @Override
     public String getLocalCondition() {
-        return  this.condition;
+        return getCondition();
     }
 
     @Override

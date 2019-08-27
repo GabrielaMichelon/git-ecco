@@ -14,6 +14,15 @@ public final class ELIFCondition extends ConditionalNode {
     @Override
     public String getCondition() {
         StringBuilder ret = new StringBuilder();
+        ret.append("!(" + getParent().getIfBlock().getCondition()+")");
+        for (ELIFCondition elseIfBlock : getParent().getElseIfBlocks()) {
+            if(this.equals(elseIfBlock)) {
+                break;
+            }
+            ret.append(" && !(" + elseIfBlock.getLocalCondition()+")");
+        }
+        return ret.toString();
+
         /*ret.append("!(" + getParent().getIfBlock().getCondition() + ")");
         for (ELIFCondition elseIfBlock : getParent().getElseIfBlocks()) {
             if(this.equals(elseIfBlock)) {
@@ -28,7 +37,7 @@ public final class ELIFCondition extends ConditionalNode {
             ret.append(getLocalCondition() + "==1");
         }*/
 
-        ret.append(getLocalCondition());
+       /* ret.append(getLocalCondition());
 
 
         //appending the ifparent
@@ -90,8 +99,7 @@ public final class ELIFCondition extends ConditionalNode {
             ret.append(" && !("+getParent().getIfBlock().getCondition().replace("==1", ""));
         }
         ret.append(")");
-        /*
-         */
+
         //appending elseifblock
         for (ELIFCondition elseIfBlock : getParent().getElseIfBlocks()) {
             if(this.equals(elseIfBlock)) {
@@ -108,12 +116,13 @@ public final class ELIFCondition extends ConditionalNode {
             }
         }
 
-        return ret.toString();
+        return ret.toString();*/
     }
 
     @Override
     public String getLocalCondition() {
-        String aux = this.condition;
+        return this.condition;
+        /*String aux = this.condition;
         if(aux.contains("defined (")) {
             aux = aux.replace("defined (", "");
         }else if(aux.contains("defined(")){
@@ -144,7 +153,7 @@ public final class ELIFCondition extends ConditionalNode {
                     else
                         features[i] = features[i].replace("!", "") + "==0";
                 } else {*/
-                    features[i] = features[i].replace("(","");
+                   /* features[i] = features[i].replace("(","");
                     features[i] =  features[i].replace(")","") + "==1";
                 }else{
                     features[i] = features[i].replace("(","");
@@ -168,17 +177,12 @@ public final class ELIFCondition extends ConditionalNode {
                 aux = aux.substring(0, aux.indexOf("="));
             }
 
-            if (!aux.contains("!")) {/*
-                if (aux.contains("("))
-                    aux = aux.replace("!", "") + "==0)";
-                else
-                    aux = aux.replace("!", "") + "==0";
-            } else {*/
+            if (!aux.contains("!")) {
                 aux = aux + "==1";
             }
 
         }
-        return aux;
+        return aux;*/
     }
 
 
