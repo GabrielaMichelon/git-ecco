@@ -9,6 +9,8 @@ import org.chocosolver.solver.Solution;
 import org.chocosolver.solver.Solver;
 import org.chocosolver.solver.constraints.Constraint;
 import org.chocosolver.solver.constraints.nary.cnf.LogOp;
+import org.chocosolver.solver.constraints.nary.cnf.PropFalse;
+import org.chocosolver.solver.exception.ContradictionException;
 import org.chocosolver.solver.variables.BoolVar;
 import org.chocosolver.solver.variables.IntVar;
 import org.chocosolver.solver.variables.Variable;
@@ -114,7 +116,7 @@ public class ExpressionSolver {
 	 * @param feature
 	 * @param implications
 	 */
-	public void addClause(Feature feature, Queue<FeatureImplication> implications, String elsePartFeature) {
+	public void addClause(Feature feature, Queue<FeatureImplication> implications) {
         LogOp elsePart = null;
 
         while (!implications.isEmpty()) {
@@ -122,14 +124,18 @@ public class ExpressionSolver {
             BoolVar ifPart = getBoolVarFromExpr(im.getCondition());
             BoolVar thenPart = getBoolVarFromExpr(im.getValue());
 
-            if(elsePartFeature == null) {
-                elsePart = LogOp.implies(ifPart,thenPart);
+            if(elsePart == null) {
+                elsePart = LogOp.ifThenElse(ifPart,thenPart, getBoolVarFromExpr(feature.getName()).not());
             } else {
-				BoolVar elsePartAux = getBoolVarFromExpr(elsePartFeature);
-                elsePart = LogOp.ifThenElse(ifPart, thenPart, elsePartAux);
+                elsePart = LogOp.ifThenElse(ifPart, thenPart, elsePart);
             }
         }
+
         model.addClauses(elsePart);
+    }
+
+    public void addClause(Feature feature, Queue<FeatureImplication> implications, String elsePart) {
+
     }
 
     /**
@@ -142,13 +148,9 @@ public class ExpressionSolver {
      * @return
      */
     public BoolVar getBoolVarFromExpr (String expr) {
+    	isIntVar = false;
 	    traverse(new FeatureExpressionParser(expr).parse());
 	    Variable var = stack.pop();
-	    if(!(var instanceof BoolVar) && var instanceof IntVar) {
-            if(var.asIntVar().getValue() != 0)
-            	return model.boolVar(true);
-            else return model.boolVar(false);
-	    }
 
 	    return var.asBoolVar();
     }
@@ -178,7 +180,11 @@ public class ExpressionSolver {
 					stack.push(bv);
 				}
 			} else {
-				stack.push(check);
+				if(check instanceof IntVar && !isIntVar) {
+					stack.push(((IntVar) check).ne(0).boolVar());
+				} else {
+					stack.push(check);
+				}
 			}
 		} else if (expr instanceof AssignExpr) {
 			System.err.println("AssignExpr should not appear in a normal condition!");
@@ -219,12 +225,6 @@ public class ExpressionSolver {
 					stack.push(bleft.or(bright).boolVar());
 					break;
 				case Token.LAND:    //logical and "&&
-					/*right = stack.pop().asIntVar();
-					left = stack.pop().asIntVar();
-					boolVar = ex.getBoolVarFromExpr(right.getName());
-					stack.push(boolVar);
-					boolVar = ex.getBoolVarFromExpr(left.getName());
-					stack.push(boolVar);*/
 					bright = stack.pop().asBoolVar();
 					bleft = stack.pop().asBoolVar();
 					stack.push(bleft.and(bright).boolVar());
@@ -290,8 +290,14 @@ public class ExpressionSolver {
 			traverse(new FeatureExpressionParser(cond).parse());
 		} else if (expr instanceof PrefixExpr) {
 			isIntVar = false;
-			traverse(((PrefixExpr) expr).getExpr());
-			traverse(((PrefixExpr) expr).getOperator());
+            traverse(((PrefixExpr) expr).getExpr());
+			if(((PrefixExpr) expr).getOperator().getToken().getType() == 45) {
+			    IntVar ivar = stack.pop().asIntVar();
+			    ivar.mul(-1);
+			    stack.push(ivar);
+            } else {
+                traverse(((PrefixExpr) expr).getOperator());
+            }
 		} else if (expr instanceof InfixExpr) {
 		    checkIntVar((InfixExpr)expr);
 			traverse(((InfixExpr) expr).getLeftHandSide());

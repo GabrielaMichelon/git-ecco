@@ -45,7 +45,9 @@ public class PreprocessorHelper {
         pp.setKeepDefines(true);
 
         for (Map.Entry<Feature, Integer> entry : configuration.entrySet()) {
-            pp.addMacro(entry.getKey().getName(),entry.getValue().toString());
+            if(entry.getValue() != 0) {
+                pp.addMacro(entry.getKey().getName(),entry.getValue().toString());
+            }
         }
 
         pp.preprocess(src, target, dirFiles);

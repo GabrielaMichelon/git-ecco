@@ -89,7 +89,7 @@ public class App extends Thread{
                 }
         );
 
-        gitHelper.getAllCommits(commitList);
+        gitHelper.getAllCommits(commitList, null);
 
         while(PARALLEL && !isDone(tasks)) sleep(100);
         executorService.shutdownNow();
