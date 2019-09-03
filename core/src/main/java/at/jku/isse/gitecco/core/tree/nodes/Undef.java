@@ -10,8 +10,8 @@ import java.util.Objects;
  */
 public final class Undef extends DefineNode implements Visitable {
 
-    public Undef(String name, int lineInfo) {
-        super(name, lineInfo);
+    public Undef(String name, int lineInfo, ConditionalNode parent) {
+        super(name, lineInfo, parent);
     }
 
     @Override

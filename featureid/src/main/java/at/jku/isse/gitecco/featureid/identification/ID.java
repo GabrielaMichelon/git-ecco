@@ -64,7 +64,7 @@ public class ID {
                     if(tmpF != null) tmpF.accept(definesVisitor);
                     for (DefineNode define : definesVisitor.getDefines()) {
                         //just acting like undefs are just defines because in this scenario it does not matter
-                        allDefines.add(new Define(define.getMacroName(), null, include.getLineInfo()));
+                        allDefines.add(new Define(define.getMacroName(), null, include.getLineInfo(), (ConditionalNode) include.getParent()));
                     }
                 }
 

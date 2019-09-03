@@ -206,7 +206,7 @@ public class PreprocessorAPI {
         //add directories that we need to include manually to get all the files to create a clean version because the
         // pp.getSystemIncludePath().add("/usr/local/include"); pp.getSystemIncludePath().add("/usr/include"); does not includes
         //files outside the root path
-        if(dirFiles.length>0){
+        if(dirFiles != null && dirFiles.length>0){
             for (String dir: dirFiles) {
                 pp.getSystemIncludePath().add(dir);
             }

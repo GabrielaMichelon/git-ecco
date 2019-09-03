@@ -9,8 +9,8 @@ import at.jku.isse.gitecco.core.tree.visitor.Visitable;
 public final class Define extends DefineNode implements Visitable {
     private final String macroExpansion;
 
-    public Define(String name, String exp, int lineInfo) {
-        super(name, lineInfo);
+    public Define(String name, String exp, int lineInfo, ConditionalNode parent) {
+        super(name, lineInfo, parent);
         this.macroExpansion = exp;
     }
 

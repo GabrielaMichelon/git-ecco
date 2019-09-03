@@ -2,6 +2,8 @@ package at.jku.isse.gitecco.translation.test;
 
 import at.jku.isse.gitecco.core.preprocessor.PreprocessorHelper;
 import at.jku.isse.gitecco.core.solver.ExpressionSolver;
+import at.jku.isse.gitecco.core.type.Feature;
+import at.jku.isse.gitecco.core.type.FeatureImplication;
 import org.chocosolver.solver.Model;
 import org.chocosolver.solver.Solution;
 import org.chocosolver.solver.constraints.Constraint;
@@ -13,6 +15,8 @@ import org.junit.Test;
 
 import javax.swing.text.StyledEditorKit;
 import java.io.File;
+import java.util.LinkedList;
+import java.util.Queue;
 
 import static org.chocosolver.solver.constraints.nary.cnf.LogOp.*;
 
@@ -24,6 +28,24 @@ public class TranslationTest {
 
         ExpressionSolver es = new ExpressionSolver(condition);
 
+        es.solve().entrySet().forEach(x->System.out.println(x.getKey() + " = " + x.getValue()));
+    }
+
+    @Test
+    public void testAddClause() {
+        String condition = "C>5";
+        ExpressionSolver es = new ExpressionSolver(condition);
+        Queue<FeatureImplication> impls = new LinkedList<>();
+        impls.add(new FeatureImplication("X","C == 4"));
+        impls.add(new FeatureImplication("Y","C == 8"));
+        es.addClause(new Feature("C"), impls);
+        es.solve().entrySet().forEach(x->System.out.println(x.getKey() + " = " + x.getValue()));
+    }
+
+    @Test
+    public void testNegativeNumber() {
+        String condition = "PIDTEMP > -1";
+        ExpressionSolver es = new ExpressionSolver(condition);
         es.solve().entrySet().forEach(x->System.out.println(x.getKey() + " = " + x.getValue()));
     }
 

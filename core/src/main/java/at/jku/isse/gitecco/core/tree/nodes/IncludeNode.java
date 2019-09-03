@@ -9,10 +9,12 @@ import at.jku.isse.gitecco.core.tree.visitor.Visitable;
 public final class IncludeNode extends ConditionNode implements Visitable {
     private final String fileName;
     private final int lineInfo;
+    private final ConditionalNode parent;
 
-    public IncludeNode(String fileName, int lineInfo) {
+    public IncludeNode(String fileName, int lineInfo, ConditionalNode parent) {
         this.fileName = fileName;
         this.lineInfo = lineInfo;
+        this.parent = parent;
     }
 
     /**

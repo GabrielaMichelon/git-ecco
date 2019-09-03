@@ -10,10 +10,12 @@ import java.util.Objects;
 public abstract class DefineNode extends ConditionNode implements Comparable<DefineNode>, Visitable {
     private final String macroName;
     private final int lineInfo;
+    private final ConditionalNode parent;
 
-    public DefineNode(String name, int lineInfo) {
+    public DefineNode(String name, int lineInfo, ConditionalNode parent) {
         this.lineInfo = lineInfo;
         this.macroName = name;
+        this.parent = parent;
     }
 
     public String getMacroName() {
@@ -27,7 +29,8 @@ public abstract class DefineNode extends ConditionNode implements Comparable<Def
     /**
      * Determines if the given node is identical to this one.
      * ATTENTION: This does also compare the line info of the given node.
-     *            use equals to check only for macro name.
+     * use equals to check only for macro name.
+     *
      * @param n
      * @return
      */
@@ -35,25 +38,23 @@ public abstract class DefineNode extends ConditionNode implements Comparable<Def
         return this.equals(n) && this.lineInfo == n.lineInfo;
     }
 
+
     @Override
     public int compareTo(DefineNode o) {
-        return getMacroName().compareTo(o.getMacroName());
+        if (Integer.compare(getLineInfo(), o.getLineInfo()) == 0) {
+            return getMacroName().compareTo(o.getMacroName());
+        }
+        return Integer.compare(getLineInfo(), o.getLineInfo());
     }
 
-    /**
-     * Determines if the defineNode is equal to this.
-     * ATTENTION: equality means same macro name!
-     *            use isIdentical() to check also for lineinfo.
-     * @param o
-     * @return
-     */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         DefineNode that = (DefineNode) o;
         return lineInfo == that.lineInfo &&
-                Objects.equals(macroName, that.macroName);
+                macroName.equals(that.macroName) &&
+                Objects.equals(parent, that.parent);
     }
 
     @Override
@@ -63,10 +64,11 @@ public abstract class DefineNode extends ConditionNode implements Comparable<Def
 
     /**
      * Never needed for define nodes. Will always be accessed through parent.
+     *
      * @return null
      */
     @Override
     public Node getParent() {
-        return null;
+        return this.parent;
     }
 }

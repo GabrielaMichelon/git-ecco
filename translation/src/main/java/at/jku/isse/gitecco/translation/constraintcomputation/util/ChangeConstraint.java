@@ -51,32 +51,26 @@ public class ChangeConstraint {
         for (ConditionalNode changedNode : changedNodes) {
 
             GetAllIncludesVisitor getAllIncludesVisitor = new GetAllIncludesVisitor(changedNode.getLineFrom());
-            GetAllDefinesVisitor definesVisitor = new GetAllDefinesVisitor();
-            List<Define> allDefines = new ArrayList<>();
-            //getting includes of the changedNode
-            for (IncludeNode includeNode : changedNode.getIncludeNodes()) {
-                getAllIncludesVisitor.visit(includeNode);
-            }
-            //getting includes of the changedNode inside BASE
+            GetAllDefinesVisitorTranslation definesVisitor = new GetAllDefinesVisitorTranslation(changedNode.getLineFrom());
+            Set<DefineNode> allDefines = new TreeSet<>();
+
+            //getting includes before the changedNode inside BASE
             for (IncludeNode includeNode : ((SourceFileNode) child).getIncludesBase()) {
                 getAllIncludesVisitor.visit(includeNode);
             }
             //getting defineNodes inside includeFiles
             for (IncludeNode includeInsideIncludesChangedNode : getAllIncludesVisitor.getIncludeNodes()) {
-                definesVisitor.reset();
                 FileNode tmpF = tree.getChild(includeInsideIncludesChangedNode.getFileName());
                 if (tmpF != null) tmpF.accept(definesVisitor);
                 for (DefineNode defineNode : definesVisitor.getDefines()) {
                     //add define
-                    if(defineNode instanceof Define){
-                        allDefines.add(new Define(defineNode.getMacroName(), ((Define) defineNode).getMacroExpansion(), includeInsideIncludesChangedNode.getLineInfo()));
-                    }else{ //add undef
-                        allDefines.add(new Define(defineNode.getMacroName(), null, includeInsideIncludesChangedNode.getLineInfo()));
+                    if (defineNode instanceof Define) {
+                        allDefines.add(new Define(defineNode.getMacroName(), ((Define) defineNode).getMacroExpansion(), includeInsideIncludesChangedNode.getLineInfo(), (ConditionalNode) includeInsideIncludesChangedNode.getParent()));
+                    } else { //add undef
+                        allDefines.add(new Define(defineNode.getMacroName(), null, includeInsideIncludesChangedNode.getLineInfo(), (ConditionalNode) includeInsideIncludesChangedNode.getParent()));
                     }
                 }
-            }
-            for (Define define: allDefines) {
-                System.out.println("DEFINE: "+define.getMacroName()+ " " +define.getMacroExpansion());
+                definesVisitor.reset();
             }
 
 
@@ -106,7 +100,7 @@ public class ChangeConstraint {
                                 if (!featureList.contains(feature)) {
                                     elsePartFeature = "!(" + feature + ")";
                                 }
-                                solver.addClause(feature, featureImplications, elsePartFeature);
+                                solver.addClause(feature, featureImplications);
                                 for (int i = 0; i < solver.getVars().size(); i++) {
                                     if (!(featureChangedNode.contains(solver.getVars().get(i).getName()))) {
                                         featureChangedNode.add(solver.getVars().get(i).getName());
@@ -121,7 +115,7 @@ public class ChangeConstraint {
                         featureImplications.add(featureImplication);
                         feature = new Feature(defineNode.getMacroName());  //feature is the variable/literal of the define or undef
                         elsePartFeature = null;
-                        solver.addClause(feature, featureImplications, elsePartFeature);
+                        solver.addClause(feature, featureImplications);
                         for (int i = 0; i < solver.getVars().size(); i++) {
                             if (!(featureChangedNode.contains(solver.getVars().get(i).getName()))) {
                                 featureChangedNode.add(solver.getVars().get(i).getName());
@@ -139,12 +133,47 @@ public class ChangeConstraint {
 
                     changedNodeParent = conditionalNode.getParent().getParent();
                 }
-
+                definesVisitor = new GetAllDefinesVisitorTranslation(changedNode.getLineFrom());
                 //adding clauses for each BASE children Nodes that has defines above the changedNode that has literal which implies on the changedNode
                 for (int i = changedNodeParent.getChildren().size() - 1; i >= 0; i--) {
                     if (changedNodeParent.getChildren().get(i).getIfBlock().getLineFrom() < changedNode.getLineFrom()) {
-                        searchingDefineNodes(changedNodeParent.getChildren().get(i), solver, featureImplications, changedNodeParent.getCondition(), changedNode.getLineFrom(), featureChangedNode);
+                        //getting defineNodes inside includeFiles
+                        FileNode tmpF = tree.getChild(child.getFilePath());
+                        if (tmpF != null) tmpF.accept(definesVisitor);
+                        for (DefineNode defineNode : definesVisitor.getDefines()) {
+                            //add define
+                            if (defineNode instanceof Define) {
+                                allDefines.add(new Define(defineNode.getMacroName(), ((Define) defineNode).getMacroExpansion(), defineNode.getLineInfo(), (ConditionalNode) defineNode.getParent()));
+                            } else { //add undef
+                                allDefines.add(new Define(defineNode.getMacroName(), null, defineNode.getLineInfo(), (ConditionalNode) defineNode.getParent()));
+                            }
+                        }
+
+                        //searchingDefineNodes(changedNodeParent.getChildren().get(i), solver, featureImplications, changedNodeParent.getCondition(), changedNode.getLineFrom(), featureChangedNode, tree);
                     }
+                }
+
+                //add clauses
+                for (DefineNode defineNode : allDefines) {
+                    //if(defineNode.getMacroName().contains())
+                    if (!(((Define) defineNode).getMacroExpansion().contains("(") && ((Define) defineNode).getMacroExpansion().contains(")"))) {//not add macro function
+                        ConditionalNode parent = (ConditionalNode) defineNode.getParent();
+                        featureImplication = new FeatureImplication(parent.getCondition(), defineNode.getMacroName() + ((Define) defineNode).getMacroExpansion());
+                        featureImplications.add(featureImplication);
+                        feature = new Feature(defineNode.getMacroName()); //feature is the variable of the define or undef
+                        if (!featureList.contains(feature)) {
+                            elsePartFeature = "!(" + feature + ")"; //feature + "==0";
+                        } else {
+                            elsePartFeature = null;
+                        }
+                        solver.addClause(feature, featureImplications);
+                        for (int i = 0; i < solver.getVars().size(); i++) {
+                            if (!(featureChangedNode.contains(solver.getVars().get(i).getName()))) {
+                                featureChangedNode.add(solver.getVars().get(i).getName());
+                            }
+                        }
+                    }
+
                 }
 
 
@@ -166,35 +195,6 @@ public class ChangeConstraint {
                                 System.out.println("\n" + getVars[j].getName() + " = " + getVars[j].asIntVar().getValue());
                             }
                         }
-                        text = "Solution ChocoSolver: \n";
-                        Files.write(Paths.get(String.valueOf(outputDirectory)), text.getBytes(), new StandardOpenOption[]{StandardOpenOption.APPEND});
-                        // result.entrySet().forEach(x -> {
-                        // try {
-                        //   Files.write(Paths.get(String.valueOf(outputDirectory)), (x.getKey() + " = " + x.getValue() + "; ").toString().getBytes(), new StandardOpenOption[]{StandardOpenOption.APPEND});
-                        //    } catch (IOException e) {
-                        //        e.printStackTrace();
-                        //    }
-                        // });
-                        /*Feature key;
-                        Integer value;
-                        Set<Map.Entry<Feature, Integer>> setRetornado = result.entrySet();
-                        boolean flag = true;
-                        for (Map.Entry<Feature, Integer> literalsValues : setRetornado) {
-                            if (flag) {
-                                text = "\nConfiguration that has impact on this change (0 is false and others integers true):\n";
-                                Files.write(Paths.get(String.valueOf(outputDirectory)), text.getBytes(), new StandardOpenOption[]{StandardOpenOption.APPEND});
-                                System.out.println("\nConfiguration that has impact on this change (0 is false and others integers true):");
-                                flag = false;
-                            }
-                            key = literalsValues.getKey();
-                            value = literalsValues.getValue();
-                            if (value != 0 && (featureList.contains(key.toString()) || key.toString().contains("BASE"))) {
-                                featuresVersioned.add(key.toString());
-                                System.out.println("Feature " + key.toString() + " == " + value);
-                                text = "Feature " + key.toString() + " == " + value + "\n";
-                                Files.write(Paths.get(String.valueOf(outputDirectory)), text.getBytes(), new StandardOpenOption[]{StandardOpenOption.APPEND});
-                            }
-                        }*/
                     }
                     text = "________________________\n";
                     Files.write(Paths.get(String.valueOf(outputDirectory)), text.getBytes(), new StandardOpenOption[]{StandardOpenOption.APPEND});
@@ -206,6 +206,29 @@ public class ChangeConstraint {
             }
         }
     }
+
+
+    public void insertAndSort(List<DefineNode> defineNodes, DefineNode defineNode) {
+        if (defineNodes.size() == 0) {
+            defineNodes.add(defineNode);
+        } else {
+            List<DefineNode> listSecond = new ArrayList<DefineNode>(defineNodes.size() + 1);
+            int i = 0;
+            while ((i < defineNodes.size()) && (defineNodes.get(i).getLineInfo() < defineNode.getLineInfo())) {
+                listSecond.add(defineNodes.get(i));
+                i++;
+            }
+            listSecond.add(defineNode);
+            while (i < defineNodes.size()) {
+                listSecond.add(defineNodes.get(i));
+                i++;
+            }
+            defineNodes.clear();
+            defineNodes.addAll(listSecond);
+        }
+
+    }
+
 
     //we need to look if the changedNode is a feature and look if exists any parent besides BASE
     public ArrayList<String> searchingFeatureCorrespondingtoChangedNode(ConditionalNode
@@ -263,7 +286,7 @@ public class ChangeConstraint {
 
     public void searchingDefineNodes(ConditionBlockNode children, ExpressionSolver
             solver, Queue<FeatureImplication> featureImplications, String changedNodeParent, Integer
-                                             changedNodeLineFrom, ArrayList<String> featureChangedNode) {
+                                             changedNodeLineFrom, ArrayList<String> featureChangedNode, RootNode tree) {
         FeatureImplication featureImplication;
         Feature feature = null;
         String elsePartFeature = null;
@@ -284,7 +307,7 @@ public class ChangeConstraint {
                                 } else {
                                     elsePartFeature = null;
                                 }
-                                solver.addClause(feature, featureImplications, elsePartFeature);
+                                solver.addClause(feature, featureImplications);
                                 for (int i = 0; i < solver.getVars().size(); i++) {
                                     if (!(featureChangedNode.contains(solver.getVars().get(i).getName()))) {
                                         featureChangedNode.add(solver.getVars().get(i).getName());
@@ -298,7 +321,7 @@ public class ChangeConstraint {
                             featureImplications.add(featureImplication);
                             feature = new Feature(definedNode.getMacroName());
                             elsePartFeature = null;
-                            solver.addClause(feature, featureImplications, elsePartFeature);
+                            solver.addClause(feature, featureImplications);
                             for (int i = 0; i < solver.getVars().size(); i++) {
                                 if (!(featureChangedNode.contains(solver.getVars().get(i).getName()))) {
                                     featureChangedNode.add(solver.getVars().get(i).getName());
@@ -310,7 +333,7 @@ public class ChangeConstraint {
                 }
             }
             for (ConditionBlockNode childrenChildren : children.getIfBlock().getChildren()) {
-                searchingDefineNodes(childrenChildren, solver, featureImplications, changedNodeParent, changedNodeLineFrom, featureChangedNode);
+                searchingDefineNodes(childrenChildren, solver, featureImplications, changedNodeParent, changedNodeLineFrom, featureChangedNode, tree);
             }
         } else {
             if (children.getIfBlock().getDefineNodes().size() > 0) {
@@ -327,7 +350,7 @@ public class ChangeConstraint {
                                 } else {
                                     elsePartFeature = null;
                                 }
-                                solver.addClause(feature, featureImplications, elsePartFeature);
+                                solver.addClause(feature, featureImplications);
                                 for (int i = 0; i < solver.getVars().size(); i++) {
                                     if (!(featureChangedNode.contains(solver.getVars().get(i).getName()))) {
                                         featureChangedNode.add(solver.getVars().get(i).getName());
@@ -342,7 +365,7 @@ public class ChangeConstraint {
                                 } else {
                                     elsePartFeature = null;
                                 }
-                                solver.addClause(feature, featureImplications, elsePartFeature);
+                                solver.addClause(feature, featureImplications);
                                 for (int i = 0; i < solver.getVars().size(); i++) {
                                     if (!(featureChangedNode.contains(solver.getVars().get(i).getName()))) {
                                         featureChangedNode.add(solver.getVars().get(i).getName());
@@ -356,7 +379,7 @@ public class ChangeConstraint {
                             featureImplications.add(featureImplication);
                             feature = new Feature(definedNode.getMacroName());
                             elsePartFeature = null;
-                            solver.addClause(feature, featureImplications, elsePartFeature);
+                            solver.addClause(feature, featureImplications);
                             for (int i = 0; i < solver.getVars().size(); i++) {
                                 if (!(featureChangedNode.contains(solver.getVars().get(i).getName()))) {
                                     featureChangedNode.add(solver.getVars().get(i).getName());

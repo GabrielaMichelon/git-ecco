@@ -89,17 +89,18 @@ public class FeatureParser {
                 currentConditional.addDefineNode(
                         new Define(md.getName().toString(),
                                    md.getExpansion(),
-                                   md.getFileLocation().getStartingLineNumber())
+                                   md.getFileLocation().getStartingLineNumber(),
+                                currentConditional)
                 );
             } else if (pps instanceof IASTPreprocessorUndefStatement) {
                 IASTPreprocessorUndefStatement uds = (IASTPreprocessorUndefStatement) pps;
                 currentConditional.addDefineNode(
-                        new Undef(uds.getMacroName().toString(), uds.getFileLocation().getStartingLineNumber())
+                        new Undef(uds.getMacroName().toString(), uds.getFileLocation().getStartingLineNumber(),currentConditional)
                 );
             } else if (pps instanceof IASTPreprocessorIncludeStatement) {
                 IASTPreprocessorIncludeStatement is = (IASTPreprocessorIncludeStatement) pps;
                 currentConditional.addInclude(
-                        new IncludeNode(is.getName().toString(), is.getFileLocation().getStartingLineNumber())
+                        new IncludeNode(is.getName().toString(), is.getFileLocation().getStartingLineNumber(),currentConditional)
                 );
             }
         }
