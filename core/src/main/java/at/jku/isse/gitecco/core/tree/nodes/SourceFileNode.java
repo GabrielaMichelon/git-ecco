@@ -3,6 +3,9 @@ package at.jku.isse.gitecco.core.tree.nodes;
 import at.jku.isse.gitecco.core.tree.visitor.TreeVisitor;
 import at.jku.isse.gitecco.core.tree.visitor.Visitable;
 
+import java.util.ArrayList;
+import java.util.Collection;
+
 /**
  * Class for representing a source file of a repository in a commit tree.
  * A Source File has a BASE which will be the BASE feature.
@@ -26,6 +29,11 @@ public final class SourceFileNode extends FileNode implements Visitable {
     public void setBase(ConditionBlockNode n) throws IllegalAccessException {
         if(base == null) this.base = n;
         else throw new IllegalAccessException("Cannot set base twice.");
+    }
+
+    public Collection<IncludeNode> getIncludesBase(){
+        Collection<IncludeNode> includes = this.base.getIfBlock().getIncludeNodes();
+        return includes;
     }
 
     @Override

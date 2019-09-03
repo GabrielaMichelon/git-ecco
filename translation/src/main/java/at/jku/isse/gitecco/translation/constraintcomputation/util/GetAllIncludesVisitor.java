@@ -9,8 +9,8 @@ import java.util.List;
 public class GetAllIncludesVisitor implements TreeVisitor {
 
     private List<IncludeNode> includeNodes = new ArrayList<>();
-
     private Integer lineInformation;
+
 
     public List<IncludeNode> getIncludeNodes() {
         return includeNodes;

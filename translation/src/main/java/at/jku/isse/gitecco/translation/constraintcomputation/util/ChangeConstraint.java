@@ -1,21 +1,29 @@
 package at.jku.isse.gitecco.translation.constraintcomputation.util;
 
 import at.jku.isse.gitecco.core.git.Change;
+import at.jku.isse.gitecco.core.git.GitCommitListener;
 import at.jku.isse.gitecco.core.git.GitHelper;
 import at.jku.isse.gitecco.core.preprocessor.PreprocessorHelper;
 import at.jku.isse.gitecco.core.solver.ExpressionSolver;
 import at.jku.isse.gitecco.core.tree.nodes.*;
 import at.jku.isse.gitecco.core.type.Feature;
 import at.jku.isse.gitecco.core.type.FeatureImplication;
+import at.jku.isse.gitecco.featureid.featuretree.visitor.GetAllDefinesVisitor;
+import com.sun.research.ws.wadl.Include;
+import org.anarres.cpp.Source;
 import org.chocosolver.solver.variables.IntVar;
 import org.chocosolver.solver.variables.Variable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
+
+import static scala.collection.immutable.Nil.indexOf;
 
 public class ChangeConstraint {
 
@@ -29,7 +37,7 @@ public class ChangeConstraint {
         this.featureList = featureList;
     }
 
-    public void constructConstraintPerFeature(ArrayList<ConditionalNode> classUntilChange, Set<ConditionalNode> changedNodes, GitHelper gitHelper, Change change, GetNodesForChangeVisitor visitor, FileNode child, String[] dirFiles, File outputDirectory) {
+    public void constructConstraintPerFeature(ArrayList<ConditionalNode> classUntilChange, Set<ConditionalNode> changedNodes, GitHelper gitHelper, Change change, GetNodesForChangeVisitor visitor, FileNode child, String[] dirFiles, File outputDirectory, RootNode tree) {
         Feature feature = null;
         ExpressionSolver solver = new ExpressionSolver();
         PreprocessorHelper pph = new PreprocessorHelper();
@@ -41,6 +49,37 @@ public class ChangeConstraint {
         String elsePartFeature = null;
 
         for (ConditionalNode changedNode : changedNodes) {
+
+            GetAllIncludesVisitor getAllIncludesVisitor = new GetAllIncludesVisitor(changedNode.getLineFrom());
+            GetAllDefinesVisitor definesVisitor = new GetAllDefinesVisitor();
+            List<Define> allDefines = new ArrayList<>();
+            //getting includes of the changedNode
+            for (IncludeNode includeNode : changedNode.getIncludeNodes()) {
+                getAllIncludesVisitor.visit(includeNode);
+            }
+            //getting includes of the changedNode inside BASE
+            for (IncludeNode includeNode : ((SourceFileNode) child).getIncludesBase()) {
+                getAllIncludesVisitor.visit(includeNode);
+            }
+            //getting defineNodes inside includeFiles
+            for (IncludeNode includeInsideIncludesChangedNode : getAllIncludesVisitor.getIncludeNodes()) {
+                definesVisitor.reset();
+                FileNode tmpF = tree.getChild(includeInsideIncludesChangedNode.getFileName());
+                if (tmpF != null) tmpF.accept(definesVisitor);
+                for (DefineNode defineNode : definesVisitor.getDefines()) {
+                    //add define
+                    if(defineNode instanceof Define){
+                        allDefines.add(new Define(defineNode.getMacroName(), ((Define) defineNode).getMacroExpansion(), includeInsideIncludesChangedNode.getLineInfo()));
+                    }else{ //add undef
+                        allDefines.add(new Define(defineNode.getMacroName(), null, includeInsideIncludesChangedNode.getLineInfo()));
+                    }
+                }
+            }
+            for (Define define: allDefines) {
+                System.out.println("DEFINE: "+define.getMacroName()+ " " +define.getMacroExpansion());
+            }
+
+
             ArrayList<String> featureChangedNode = new ArrayList<>();
             if (!changedNode.getCondition().contains("BASE")) {
                 ConditionalNode changedNodeParent = changedNode.getParent().getIfBlock().getParent().getParent();
@@ -122,20 +161,20 @@ public class ChangeConstraint {
                         result.entrySet().forEach(x -> System.out.print(x.getKey() + " = " + x.getValue() + "; "));
                         Variable[] getVars = solver.getModel().getVars();
                         System.out.println("\nConfiguration that has impact on this change:");
-                        for(int j =0; j< getVars.length; j++) {
+                        for (int j = 0; j < getVars.length; j++) {
                             if (featureList.contains(getVars[j].getName())) {
-                                System.out.println("\n"+getVars[j].getName() +" = "+ getVars[j].asIntVar().getValue());
+                                System.out.println("\n" + getVars[j].getName() + " = " + getVars[j].asIntVar().getValue());
                             }
                         }
                         text = "Solution ChocoSolver: \n";
                         Files.write(Paths.get(String.valueOf(outputDirectory)), text.getBytes(), new StandardOpenOption[]{StandardOpenOption.APPEND});
-                       // result.entrySet().forEach(x -> {
-                           // try {
-                             //   Files.write(Paths.get(String.valueOf(outputDirectory)), (x.getKey() + " = " + x.getValue() + "; ").toString().getBytes(), new StandardOpenOption[]{StandardOpenOption.APPEND});
+                        // result.entrySet().forEach(x -> {
+                        // try {
+                        //   Files.write(Paths.get(String.valueOf(outputDirectory)), (x.getKey() + " = " + x.getValue() + "; ").toString().getBytes(), new StandardOpenOption[]{StandardOpenOption.APPEND});
                         //    } catch (IOException e) {
                         //        e.printStackTrace();
                         //    }
-                       // });
+                        // });
                         /*Feature key;
                         Integer value;
                         Set<Map.Entry<Feature, Integer>> setRetornado = result.entrySet();
@@ -157,8 +196,8 @@ public class ChangeConstraint {
                             }
                         }*/
                     }
-                     text = "________________________\n";
-                     Files.write(Paths.get(String.valueOf(outputDirectory)), text.getBytes(), new StandardOpenOption[]{StandardOpenOption.APPEND});
+                    text = "________________________\n";
+                    Files.write(Paths.get(String.valueOf(outputDirectory)), text.getBytes(), new StandardOpenOption[]{StandardOpenOption.APPEND});
                     System.out.println("________________________");
                     solver.reset();
                 } catch (IOException e) {
@@ -174,7 +213,7 @@ public class ChangeConstraint {
         ArrayList<String> features = new ArrayList<>();
         String[] literals;
         Variable[] getVars = solver.getModel().getVars();
-        for(int j =0; j< getVars.length; j++) {
+        for (int j = 0; j < getVars.length; j++) {
             if (expression.contains(getVars[j].getName())) {
                 features.add(getVars[j].getName());
             }

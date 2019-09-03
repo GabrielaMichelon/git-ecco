@@ -102,7 +102,7 @@ public class App {
                         ChangeConstraint changeConstraint = new ChangeConstraint();
                         changeConstraint.setFeatureList(featureList);
                         //create the constraints for each changed node and generates the variant
-                        changeConstraint.constructConstraintPerFeature(classNodes, changedNodes, gitHelper, change, visitor, child, dirFiles, outputDirectory);
+                        changeConstraint.constructConstraintPerFeature(classNodes, changedNodes, gitHelper, change, visitor, child, dirFiles, outputDirectory, gc.getTree());
 
 
                     }
