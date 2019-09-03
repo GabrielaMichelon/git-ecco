@@ -14,6 +14,10 @@ public final class Undef extends DefineNode implements Visitable {
         super(name, lineInfo, parent);
     }
 
+    public Undef(String name, int lineInfo, ConditionalNode parent, Node defineParent) {
+        super(name, lineInfo, parent, defineParent);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

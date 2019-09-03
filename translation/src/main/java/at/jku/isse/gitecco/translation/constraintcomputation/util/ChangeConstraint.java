@@ -65,9 +65,19 @@ public class ChangeConstraint {
                 for (DefineNode defineNode : definesVisitor.getDefines()) {
                     //add define
                     if (defineNode instanceof Define) {
-                        allDefines.add(new Define(defineNode.getMacroName(), ((Define) defineNode).getMacroExpansion(), includeInsideIncludesChangedNode.getLineInfo(), (ConditionalNode) includeInsideIncludesChangedNode.getParent()));
+                        if(!defineNode.getParent().equals(null)) {
+                            allDefines.add(new Define(defineNode.getMacroName(), ((Define) defineNode).getMacroExpansion(), includeInsideIncludesChangedNode.getLineInfo(), (ConditionalNode) includeInsideIncludesChangedNode.getParent(), defineNode.getParent()));
+                        }
+                        else{
+                            allDefines.add(new Define(defineNode.getMacroName(), ((Define) defineNode).getMacroExpansion(), includeInsideIncludesChangedNode.getLineInfo(), (ConditionalNode) includeInsideIncludesChangedNode.getParent()));
+                        }
                     } else { //add undef
-                        allDefines.add(new Define(defineNode.getMacroName(), null, includeInsideIncludesChangedNode.getLineInfo(), (ConditionalNode) includeInsideIncludesChangedNode.getParent()));
+                        if(!defineNode.getParent().equals(null)) {
+                            allDefines.add(new Define(defineNode.getMacroName(), null, includeInsideIncludesChangedNode.getLineInfo(), (ConditionalNode) includeInsideIncludesChangedNode.getParent().getParent(), defineNode.getParent()));
+                        }
+                        else{
+                            allDefines.add(new Define(defineNode.getMacroName(), null, includeInsideIncludesChangedNode.getLineInfo(), (ConditionalNode) includeInsideIncludesChangedNode.getParent()));
+                        }
                     }
                 }
                 definesVisitor.reset();

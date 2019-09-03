@@ -14,6 +14,11 @@ public final class Define extends DefineNode implements Visitable {
         this.macroExpansion = exp;
     }
 
+    public Define(String name, String exp, int lineInfo, ConditionalNode parent, Node defineParent) {
+        super(name, lineInfo, parent, defineParent);
+        this.macroExpansion = exp;
+    }
+
     public String getMacroExpansion() {
         return macroExpansion;
 

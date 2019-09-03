@@ -11,11 +11,31 @@ public abstract class DefineNode extends ConditionNode implements Comparable<Def
     private final String macroName;
     private final int lineInfo;
     private final ConditionalNode parent;
+    private final String condition;
 
     public DefineNode(String name, int lineInfo, ConditionalNode parent) {
         this.lineInfo = lineInfo;
         this.macroName = name;
         this.parent = parent;
+        condition = parent.getCondition();
+    }
+
+    public DefineNode(String name, int lineInfo, ConditionalNode includeParent, Node defineNodeParent) {
+        this.lineInfo = lineInfo;
+        this.macroName = name;
+        ConditionalNode condParent = (ConditionalNode) includeParent;
+        this.parent = condParent;
+        ConditionalNode cond = (ConditionalNode) defineNodeParent;
+        if (condParent.getCondition() != null) {
+            this.condition = "(" + condParent.getCondition() + ") && (" + ((ConditionalNode) defineNodeParent).getCondition() + ")";
+        }else{
+            this.condition =  ((ConditionalNode) defineNodeParent).getCondition();
+        }
+
+    }
+
+    public String getCondition() {
+        return condition;
     }
 
     public String getMacroName() {
