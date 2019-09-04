@@ -3,7 +3,6 @@ package at.jku.isse.gitecco.core.tree.nodes;
 import at.jku.isse.gitecco.core.tree.visitor.TreeVisitor;
 import at.jku.isse.gitecco.core.tree.visitor.Visitable;
 
-import java.util.ArrayList;
 import java.util.Collection;
 
 /**

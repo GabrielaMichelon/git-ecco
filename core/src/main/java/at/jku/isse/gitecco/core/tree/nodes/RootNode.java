@@ -5,8 +5,6 @@ import at.jku.isse.gitecco.core.tree.visitor.Visitable;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Class for a root node of a commit tree.

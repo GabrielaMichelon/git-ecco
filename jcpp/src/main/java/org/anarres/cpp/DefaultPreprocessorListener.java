@@ -16,10 +16,12 @@ package org.anarres.cpp;
  * or implied. See the License for the specific language governing
  * permissions and limitations under the License.
  */
-import javax.annotation.Nonnegative;
-import javax.annotation.Nonnull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nonnegative;
+import javax.annotation.Nonnull;
 
 /**
  * A handler for preprocessor events, primarily errors and warnings.

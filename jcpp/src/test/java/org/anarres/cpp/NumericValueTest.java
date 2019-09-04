@@ -1,9 +1,13 @@
 package org.anarres.cpp;
 
-import java.io.IOException;
 import org.junit.Test;
-import static org.anarres.cpp.Token.*;
-import static org.junit.Assert.*;
+
+import java.io.IOException;
+
+import static org.anarres.cpp.Token.EOF;
+import static org.anarres.cpp.Token.NUMBER;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 /**
  *

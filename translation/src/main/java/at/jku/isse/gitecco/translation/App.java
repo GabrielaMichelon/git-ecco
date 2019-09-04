@@ -1,25 +1,13 @@
 package at.jku.isse.gitecco.translation;
 
-import at.jku.isse.gitecco.core.cdt.CDTHelper;
 import at.jku.isse.gitecco.core.git.Change;
 import at.jku.isse.gitecco.core.git.GitCommitList;
 import at.jku.isse.gitecco.core.git.GitHelper;
-import at.jku.isse.gitecco.core.preprocessor.PreprocessorHelper;
-import at.jku.isse.gitecco.core.solver.ExpressionSolver;
-import at.jku.isse.gitecco.core.tree.nodes.*;
-import at.jku.isse.gitecco.core.type.Feature;
-import at.jku.isse.gitecco.core.type.FeatureImplication;
+import at.jku.isse.gitecco.core.tree.nodes.ConditionalNode;
+import at.jku.isse.gitecco.core.tree.nodes.FileNode;
+import at.jku.isse.gitecco.core.tree.nodes.SourceFileNode;
 import at.jku.isse.gitecco.translation.constraintcomputation.util.ChangeConstraint;
 import at.jku.isse.gitecco.translation.constraintcomputation.util.GetNodesForChangeVisitor;
-import com.sun.org.apache.xpath.internal.operations.Bool;
-import org.anarres.cpp.featureExpr.CondExpr;
-import org.chocosolver.solver.Model;
-import org.chocosolver.solver.Solution;
-import org.chocosolver.solver.variables.BoolVar;
-import org.chocosolver.solver.variables.IntVar;
-import org.eclipse.cdt.core.dom.ast.*;
-import org.eclipse.core.runtime.CoreException;
-import scala.util.parsing.combinator.testing.Str;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,10 +15,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
-
-import static org.chocosolver.solver.constraints.nary.cnf.LogOp.ifThenElse;
-import static org.chocosolver.solver.constraints.nary.cnf.LogOp.implies;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class App {
 

@@ -2,7 +2,6 @@ package at.jku.isse.gitecco.core.tree.nodes;
 
 import at.jku.isse.gitecco.core.tree.visitor.TreeVisitor;
 import at.jku.isse.gitecco.core.tree.visitor.Visitable;
-import org.chocosolver.solver.variables.BoolVar;
 
 /**
  * Class for representing an IFCondition.
@@ -18,60 +17,19 @@ public final class IFCondition extends ConditionalNode implements Visitable {
 
     @Override
     public String getCondition() {
-        /*String aux = this.condition;
-        if (aux.contains("defined (")) {
-            aux = aux.replace("defined (", "");
-            aux = aux.replace(")", "");
-        } else if (aux.contains("defined(")) {
-            aux = aux.replace("defined(", "");
-            aux = aux.replace(")", "");
-        } else if (aux.contains("defined")) {
-            aux = aux.replace("defined", "");
+        //getting the parent blocks
+        String expression = "(" + this.condition + ")";
+        ConditionalNode conditionalNode = getParent().getParent();
+        ConditionalNode changedNodeParent = getParent().getIfBlock().getParent().getParent();
+        if (!changedNodeParent.getLocalCondition().contains("BASE")) {
+            conditionalNode = changedNodeParent;
+            while (!(conditionalNode.getParent().getParent().getLocalCondition().contains("BASE"))) {
+                expression += " && ("+conditionalNode.getLocalCondition() + ")";
+                conditionalNode = conditionalNode.getParent().getParent();
+            }
+            changedNodeParent = conditionalNode.getParent().getParent();
         }
-
-        aux =  aux.replaceAll("[()]","");
-        String[] features;
-        if (aux.contains("||")) {
-            features = aux.split("\\|\\|");
-
-            String newAux = "";
-
-            for (int i = 0; i < features.length; i++) {
-                if (features[i].contains(">")) {
-                    features[i] = features[i].substring(0, features[i].indexOf(">"));
-                } else if (features[i].contains("<")) {
-                    aux = features[i].substring(0, features[i].indexOf("<"));
-                } else if (features[i].contains("==")) {
-                    features[i] = features[i].substring(0, features[i].indexOf("="));
-                }
-                if (!features[i].contains("!")) {
-                   features[i] = features[i] + "==1";
-                }
-                if (i < features.length - 1) {
-                    newAux += features[i] + " || ";
-                } else {
-                    newAux += features[i];
-                }
-            }
-            aux = newAux;
-        } else {
-
-            if (aux.contains(">")) {
-                aux = aux.substring(0, aux.indexOf(">"));
-            } else if (aux.contains("<")) {
-                aux = aux.substring(0, aux.indexOf("<"));
-            } else if (aux.contains("==")) {
-                aux = aux.substring(0, aux.indexOf("="));
-            }
-
-            if (!aux.contains("!")) {
-                aux = aux + "==1";
-            }
-
-
-        }
-        return aux;*/
-        return  this.condition;
+        return  expression;
     }
 
     @Override

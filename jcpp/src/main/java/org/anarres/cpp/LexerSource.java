@@ -16,10 +16,11 @@
  */
 package org.anarres.cpp;
 
+import javax.annotation.Nonnull;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
-import javax.annotation.Nonnull;
+
 import static org.anarres.cpp.Token.*;
 
 /** Does not handle digraphs. */

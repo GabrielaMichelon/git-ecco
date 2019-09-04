@@ -16,13 +16,15 @@
  */
 package org.anarres.cpp;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nonnegative;
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
-import javax.annotation.Nonnegative;
-import javax.annotation.Nonnull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
 import static org.anarres.cpp.Token.*;
 
 /* This source should always be active, since we don't expand macros

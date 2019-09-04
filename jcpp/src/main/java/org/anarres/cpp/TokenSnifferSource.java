@@ -18,6 +18,7 @@ package org.anarres.cpp;
 
 import java.io.IOException;
 import java.util.List;
+
 import static org.anarres.cpp.Token.EOF;
 
 @Deprecated

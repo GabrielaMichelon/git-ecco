@@ -2,10 +2,11 @@ package org.anarres.cpp;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
-import java.net.URL;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.net.URL;
 
 /**
  *

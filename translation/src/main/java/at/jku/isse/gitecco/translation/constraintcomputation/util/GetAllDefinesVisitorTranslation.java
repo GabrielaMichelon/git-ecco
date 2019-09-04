@@ -6,7 +6,6 @@ import at.jku.isse.gitecco.core.tree.visitor.TreeVisitor;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.TreeSet;
 
 public class GetAllDefinesVisitorTranslation implements TreeVisitor {
 

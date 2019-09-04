@@ -6,14 +6,12 @@ import at.jku.isse.gitecco.core.type.Feature;
 import at.jku.isse.gitecco.core.type.FeatureImplication;
 import org.chocosolver.solver.Model;
 import org.chocosolver.solver.Solution;
-import org.chocosolver.solver.constraints.Constraint;
 import org.chocosolver.solver.variables.BoolVar;
 import org.chocosolver.solver.variables.IntVar;
 import org.chocosolver.solver.variables.Variable;
 import org.junit.Assert;
 import org.junit.Test;
 
-import javax.swing.text.StyledEditorKit;
 import java.io.File;
 import java.util.LinkedList;
 import java.util.Queue;

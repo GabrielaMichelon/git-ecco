@@ -3,7 +3,8 @@ package at.jku.isse.gitecco.core.git;
 import at.jku.isse.gitecco.core.tree.nodes.RootNode;
 import org.eclipse.jgit.revwalk.RevCommit;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Class for handling commits and be able to

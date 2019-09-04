@@ -16,17 +16,18 @@
  */
 package org.anarres.cpp;
 
-import java.io.File;
-import java.io.PrintStream;
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.List;
-import javax.annotation.Nonnull;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nonnull;
+import java.io.File;
+import java.io.PrintStream;
+import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.List;
 
 /**
  * (Currently a simple test class).

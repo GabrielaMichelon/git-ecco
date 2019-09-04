@@ -1,12 +1,14 @@
 package org.anarres.cpp;
 
-import java.util.Arrays;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Arrays;
+
 import static org.anarres.cpp.PreprocessorTest.assertType;
 import static org.anarres.cpp.Token.*;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class LexerSourceTest {
 

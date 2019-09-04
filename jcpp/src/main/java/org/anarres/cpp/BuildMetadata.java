@@ -1,5 +1,6 @@
 package org.anarres.cpp;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -9,7 +10,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import javax.annotation.Nonnull;
 
 /**
  * Returns information about the build.

@@ -1,6 +1,9 @@
 package org.anarres.cpp;
 
-import org.anarres.cpp.featureExpr.*;
+import org.anarres.cpp.featureExpr.FeatureExpression;
+import org.anarres.cpp.featureExpr.FeatureExpressionParser;
+import org.anarres.cpp.featureExpr.MacroCall;
+import org.anarres.cpp.featureExpr.PostOrderTraversal;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;

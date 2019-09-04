@@ -2,10 +2,10 @@ package at.jku.isse.gitecco.featureid.identification;
 
 import at.jku.isse.gitecco.core.tree.nodes.*;
 import at.jku.isse.gitecco.core.type.Feature;
-import at.jku.isse.gitecco.featureid.type.FeatureType;
-import at.jku.isse.gitecco.featureid.type.TraceableFeature;
 import at.jku.isse.gitecco.featureid.featuretree.visitor.GetAllDefinesVisitor;
 import at.jku.isse.gitecco.featureid.featuretree.visitor.GetAllFeaturesDefinesIncludesVisitor;
+import at.jku.isse.gitecco.featureid.type.FeatureType;
+import at.jku.isse.gitecco.featureid.type.TraceableFeature;
 
 import java.util.ArrayList;
 import java.util.HashMap;

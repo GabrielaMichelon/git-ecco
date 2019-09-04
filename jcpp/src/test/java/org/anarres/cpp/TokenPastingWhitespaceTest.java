@@ -1,12 +1,14 @@
 package org.anarres.cpp;
 
 import com.google.common.io.CharStreams;
-import java.io.IOException;
-import java.io.Reader;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import static org.junit.Assert.*;
+
+import java.io.IOException;
+import java.io.Reader;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * https://github.com/shevek/jcpp/issues/25

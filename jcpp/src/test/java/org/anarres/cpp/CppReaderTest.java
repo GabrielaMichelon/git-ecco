@@ -1,10 +1,12 @@
 package org.anarres.cpp;
 
+import org.junit.Test;
+
+import javax.annotation.Nonnull;
 import java.io.BufferedReader;
 import java.io.StringReader;
 import java.util.Collections;
-import javax.annotation.Nonnull;
-import org.junit.Test;
+
 import static org.junit.Assert.assertEquals;
 
 public class CppReaderTest {

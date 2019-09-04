@@ -1,8 +1,11 @@
 package org.anarres.cpp;
 
-import java.io.IOException;
 import org.junit.Test;
-import static org.anarres.cpp.Token.*;
+
+import java.io.IOException;
+
+import static org.anarres.cpp.Token.EOF;
+import static org.anarres.cpp.Token.INVALID;
 import static org.junit.Assert.*;
 
 public class ErrorTest {

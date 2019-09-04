@@ -3,7 +3,9 @@ package at.jku.isse.gitecco.core.tree.visitor;
 import at.jku.isse.gitecco.core.tree.nodes.*;
 import at.jku.isse.gitecco.core.type.Feature;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 public class GetAllFeaturesVisitor implements TreeVisitor {
     private final Set<Feature> features;
