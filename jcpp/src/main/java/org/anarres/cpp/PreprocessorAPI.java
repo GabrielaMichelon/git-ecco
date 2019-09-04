@@ -202,11 +202,11 @@ public class PreprocessorAPI {
      * @param src       - source file or directory
      * @param targetDir - target directory for output
      */
-    public void preprocess(File src, File targetDir, String[] dirFiles) {
+    public void preprocess(File src, File targetDir, List<String> dirFiles) {
         //add directories that we need to include manually to get all the files to create a clean version because the
         // pp.getSystemIncludePath().add("/usr/local/include"); pp.getSystemIncludePath().add("/usr/include"); does not includes
         //files outside the root path
-        if(dirFiles != null && dirFiles.length>0){
+        if(dirFiles != null && !dirFiles.isEmpty()){
             for (String dir: dirFiles) {
                 pp.getSystemIncludePath().add(dir);
             }

@@ -56,8 +56,8 @@ public class App extends Thread{
             dispose = args[2].equals("y");
         }
 
-        final GitHelper gitHelper = new GitHelper(repoPath);
-        final GitCommitList commitList = new GitCommitList(repoPath);
+        final GitHelper gitHelper = new GitHelper(repoPath, null);
+        final GitCommitList commitList = new GitCommitList(gitHelper);
 
         final List<TraceableFeature> evaluation = Collections.synchronizedList(new ArrayList<>());
         final List<Future<?>> tasks = new ArrayList<>();

@@ -29,8 +29,7 @@ public class App {
         //maybe even start commit and/or end commit (hashes or numbers)
         //String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin";
         String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\Test31";
-        final GitHelper gitHelper = new GitHelper(repoPath);
-        final GitCommitList commitList = new GitCommitList(repoPath);
+
         //optional features of the project obtained by the featureID (chosen that which is in almost cases external feature)
         String[] featuresToAdd = {"BASE","F_FILE_DIR_DIRTY", "F_UNUSED", "F_FILE_UNBUFFERED_READ", "RAMPS_V_1_0", "__AVR_ATmega2560__", "F_CPU", "F_OFLAG", "WATCHPERIOD",
                                   "THERMISTORBED", "TSd2PinMap_hHERMISTORHEATER", "PID_DEBUG", "HEATER_USES_THERMISTOR", "__AVR_ATmega328P__", "__AVR_ATmega1280__", "__AVR_ATmega168__",
@@ -43,7 +42,10 @@ public class App {
         }
         //add directories that we need to include manually to get all the files to create a clean version because "/usr/local/include"
         // and "/usr/include")does not includes files outside the root path
-        final String[] dirFiles = {"C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin\\Marlin"};
+        final List<String> dirFiles = new ArrayList<>();
+        dirFiles.add("C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin\\Marlin");
+        final GitHelper gitHelper = new GitHelper(repoPath, dirFiles);
+        final GitCommitList commitList = new GitCommitList(gitHelper);
 
         commitList.addGitCommitListener((gc, gcl) -> {
 
@@ -90,7 +92,7 @@ public class App {
                         ChangeConstraint changeConstraint = new ChangeConstraint();
                         changeConstraint.setFeatureList(featureList);
                         //create the constraints for each changed node and generates the variant
-                        changeConstraint.constructConstraintPerFeature(classNodes, changedNodes, gitHelper, change, visitor, child, dirFiles, outputDirectory, gc.getTree());
+                        changeConstraint.constructConstraintPerFeature(classNodes, changedNodes, gitHelper, change, visitor, child, outputDirectory, gc.getTree());
 
 
                     }
@@ -126,7 +128,7 @@ public class App {
 
         });
 
-        gitHelper.getAllCommits(commitList, dirFiles);
+        gitHelper.getAllCommits(commitList);
 
     }
 
