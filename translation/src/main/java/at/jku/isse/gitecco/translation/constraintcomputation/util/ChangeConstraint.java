@@ -9,6 +9,7 @@ import at.jku.isse.gitecco.core.tree.nodes.*;
 import at.jku.isse.gitecco.core.type.Feature;
 import at.jku.isse.gitecco.core.type.FeatureImplication;
 import at.jku.isse.gitecco.featureid.featuretree.visitor.GetAllDefinesVisitor;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import com.sun.research.ws.wadl.Include;
 import org.anarres.cpp.Source;
 import org.chocosolver.solver.variables.IntVar;
@@ -37,6 +38,8 @@ public class ChangeConstraint {
         this.featureList = featureList;
     }
 
+    public Map<String, Boolean> featureChangedNode = new HashMap<>();
+
     public void constructConstraintPerFeature(ArrayList<ConditionalNode> classUntilChange, Set<ConditionalNode> changedNodes, GitHelper gitHelper, Change change, GetNodesForChangeVisitor visitor, FileNode child, String[] dirFiles, File outputDirectory, RootNode tree) {
         Feature feature = null;
         ExpressionSolver solver = new ExpressionSolver();
@@ -44,7 +47,6 @@ public class ChangeConstraint {
         final File gitFolder = new File(gitHelper.getPath());
         final File eccoFolder = new File(gitFolder.getParent(), "ecco");
         Queue<FeatureImplication> featureImplications = new LinkedList<>();
-        Queue<FeatureImplication> featureImplicationsAux = new LinkedList<>();
         FeatureImplication featureImplication;
         String elsePartFeature = null;
 
@@ -58,6 +60,14 @@ public class ChangeConstraint {
             for (IncludeNode includeNode : ((SourceFileNode) child).getIncludesBase()) {
                 getAllIncludesVisitor.visit(includeNode);
             }
+
+            //getting includes inside each block above changedNode
+            for (ConditionalNode conditionalNode: visitor.getchangedNodes()) {
+                for (IncludeNode includesBlocks : conditionalNode.getIncludeNodes()) {
+                    getAllIncludesVisitor.visit(includesBlocks);
+                }
+            }
+
             //getting defineNodes inside includeFiles
             for (IncludeNode includeInsideIncludesChangedNode : getAllIncludesVisitor.getIncludeNodes()) {
                 FileNode tmpF = tree.getChild(includeInsideIncludesChangedNode.getFileName());
@@ -65,17 +75,15 @@ public class ChangeConstraint {
                 for (DefineNode defineNode : definesVisitor.getDefines()) {
                     //add define
                     if (defineNode instanceof Define) {
-                        if(!defineNode.getParent().equals(null)) {
+                        if (!defineNode.getParent().equals(null)) {
                             allDefines.add(new Define(defineNode.getMacroName(), ((Define) defineNode).getMacroExpansion(), includeInsideIncludesChangedNode.getLineInfo(), (ConditionalNode) includeInsideIncludesChangedNode.getParent(), defineNode.getParent()));
-                        }
-                        else{
+                        } else {
                             allDefines.add(new Define(defineNode.getMacroName(), ((Define) defineNode).getMacroExpansion(), includeInsideIncludesChangedNode.getLineInfo(), (ConditionalNode) includeInsideIncludesChangedNode.getParent()));
                         }
                     } else { //add undef
-                        if(!defineNode.getParent().equals(null)) {
+                        if (!defineNode.getParent().equals(null)) {
                             allDefines.add(new Define(defineNode.getMacroName(), null, includeInsideIncludesChangedNode.getLineInfo(), (ConditionalNode) includeInsideIncludesChangedNode.getParent().getParent(), defineNode.getParent()));
-                        }
-                        else{
+                        } else {
                             allDefines.add(new Define(defineNode.getMacroName(), null, includeInsideIncludesChangedNode.getLineInfo(), (ConditionalNode) includeInsideIncludesChangedNode.getParent()));
                         }
                     }
@@ -84,7 +92,6 @@ public class ChangeConstraint {
             }
 
 
-            ArrayList<String> featureChangedNode = new ArrayList<>();
             if (!changedNode.getCondition().contains("BASE")) {
                 ConditionalNode changedNodeParent = changedNode.getParent().getIfBlock().getParent().getParent();
                 ConditionalNode conditionalNode = changedNode.getParent().getParent();
@@ -98,7 +105,7 @@ public class ChangeConstraint {
 
                 //adding clauses to the defines children of BASE that are above the changed node and that are not macro functions
                 //and that has the featureChangedNode literals
-                for (DefineNode defineNode : changedNodeParent.getDefineNodes()) {
+                /*for (DefineNode defineNode : changedNodeParent.getDefineNodes()) {
                     if (defineNode instanceof Define && defineNode.getLineInfo() < changedNode.getLineFrom()) {
                         if (!(((Define) defineNode).getMacroExpansion().contains("(") && ((Define) defineNode).getMacroExpansion().contains(")"))) {//not add macro function
                             //just add if it is a featureChangedNode literal, i.e., any literal that is on the expression
@@ -132,7 +139,7 @@ public class ChangeConstraint {
                             }
                         }
                     }
-                }
+                }*/
                 //we need the root BASE to look for its every children that are above the changed node
                 if (!changedNodeParent.getCondition().contains("BASE")) {
                     conditionalNode = changedNodeParent;
@@ -144,6 +151,7 @@ public class ChangeConstraint {
                     changedNodeParent = conditionalNode.getParent().getParent();
                 }
                 definesVisitor = new GetAllDefinesVisitorTranslation(changedNode.getLineFrom());
+
                 //adding clauses for each BASE children Nodes that has defines above the changedNode that has literal which implies on the changedNode
                 for (int i = changedNodeParent.getChildren().size() - 1; i >= 0; i--) {
                     if (changedNodeParent.getChildren().get(i).getIfBlock().getLineFrom() < changedNode.getLineFrom()) {
@@ -163,27 +171,50 @@ public class ChangeConstraint {
                     }
                 }
 
-                //add clauses
+                //getting the defineNodes in desc form
+                DefineNode[] arrayDefine = new DefineNode[allDefines.size()];
+                int k = allDefines.size() - 1;
                 for (DefineNode defineNode : allDefines) {
-                    //if(defineNode.getMacroName().contains())
-                    if (!(((Define) defineNode).getMacroExpansion().contains("(") && ((Define) defineNode).getMacroExpansion().contains(")"))) {//not add macro function
-                        ConditionalNode parent = (ConditionalNode) defineNode.getParent();
-                        featureImplication = new FeatureImplication(parent.getCondition(), defineNode.getMacroName() + ((Define) defineNode).getMacroExpansion());
-                        featureImplications.add(featureImplication);
-                        feature = new Feature(defineNode.getMacroName()); //feature is the variable of the define or undef
-                        if (!featureList.contains(feature)) {
-                            elsePartFeature = "!(" + feature + ")"; //feature + "==0";
-                        } else {
-                            elsePartFeature = null;
-                        }
-                        solver.addClause(feature, featureImplications);
-                        for (int i = 0; i < solver.getVars().size(); i++) {
-                            if (!(featureChangedNode.contains(solver.getVars().get(i).getName()))) {
-                                featureChangedNode.add(solver.getVars().get(i).getName());
+                    arrayDefine[k] = defineNode;
+                    k--;
+                }
+
+
+                //add clauses
+                for (Map.Entry<String, Boolean> literal : featureChangedNode.entrySet()) {
+                    if (literal.getValue()) {
+                        featureImplications = new LinkedList<>();
+                        featureImplication = null;
+                        for (int i = 0; i < allDefines.size(); i++) {
+                            if (arrayDefine[i].getMacroName().contains(literal.getKey())) {
+                                //ConditionalNode parent = (ConditionalNode) defineNode.getParent();
+                                if (arrayDefine[i] instanceof Define) {
+                                    if (!(((Define) arrayDefine[i]).getMacroExpansion().contains("(") && ((Define) arrayDefine[i]).getMacroExpansion().contains(")"))) {//not add macro function
+                                        featureImplication = new FeatureImplication(arrayDefine[i].getCondition(), arrayDefine[i].getMacroName() + ((Define) arrayDefine[i]).getMacroExpansion());
+                                    }
+                                } else {
+                                    featureImplication = new FeatureImplication(arrayDefine[i].getCondition(), arrayDefine[i].getMacroName());
+                                }
+                                if (featureImplication != null) {
+                                    featureImplications.add(featureImplication);
+                                }
+                                feature = new Feature(arrayDefine[i].getMacroName()); //feature is the variable of the define or undef
+                                if (!featureList.contains(feature)) {
+                                    elsePartFeature = "!(" + feature + ")"; //feature + "==0";
+                                } else {
+                                    elsePartFeature = null;
+                                }
+                                for (int j = 0; j < solver.getVars().size(); j++) {
+                                    if (!(featureChangedNode.entrySet().contains(solver.getVars().get(j).getName()))) {
+                                        featureChangedNode.put(solver.getVars().get(j).getName(), true);
+                                    }
+                                }
                             }
                         }
+                        if (feature != null && featureImplications.size() != 0)
+                            solver.addClause(feature, featureImplications);
+                        featureChangedNode.entrySet().remove(literal);
                     }
-
                 }
 
 
@@ -218,30 +249,8 @@ public class ChangeConstraint {
     }
 
 
-    public void insertAndSort(List<DefineNode> defineNodes, DefineNode defineNode) {
-        if (defineNodes.size() == 0) {
-            defineNodes.add(defineNode);
-        } else {
-            List<DefineNode> listSecond = new ArrayList<DefineNode>(defineNodes.size() + 1);
-            int i = 0;
-            while ((i < defineNodes.size()) && (defineNodes.get(i).getLineInfo() < defineNode.getLineInfo())) {
-                listSecond.add(defineNodes.get(i));
-                i++;
-            }
-            listSecond.add(defineNode);
-            while (i < defineNodes.size()) {
-                listSecond.add(defineNodes.get(i));
-                i++;
-            }
-            defineNodes.clear();
-            defineNodes.addAll(listSecond);
-        }
-
-    }
-
-
     //we need to look if the changedNode is a feature and look if exists any parent besides BASE
-    public ArrayList<String> searchingFeatureCorrespondingtoChangedNode(ConditionalNode
+    public Map<String,Boolean> searchingFeatureCorrespondingtoChangedNode(ConditionalNode
                                                                                 changedNode, ArrayList<String> featureList, String expression, ExpressionSolver solver) {
         ArrayList<String> features = new ArrayList<>();
         String[] literals;
@@ -252,8 +261,8 @@ public class ChangeConstraint {
             }
         }
 
-        if (changedNode.getLocalCondition().contains("&&") && changedNode.getLocalCondition().contains("||")) {
-            literals = changedNode.getLocalCondition().split("&&");
+        if (changedNode.getCondition().contains("&&") && changedNode.getCondition().contains("||")) {
+            literals = changedNode.getCondition().split("&&");
             for (int i = 0; i < literals.length; i++) {
                 if (literals[i].contains("||")) {
                     String[] literalsAux = literals[i].split("\\|\\|");
@@ -270,27 +279,32 @@ public class ChangeConstraint {
                         features.add(literals[i]);
                 }
             }
-        } else if (changedNode.getLocalCondition().contains("&&") && !changedNode.getLocalCondition().contains("||")) {
-            literals = changedNode.getLocalCondition().split("&&");
+        } else if (changedNode.getCondition().contains("&&") && !changedNode.getCondition().contains("||")) {
+            literals = changedNode.getCondition().split("&&");
             for (int i = 0; i < literals.length; i++) {
                 if (literals[i].contains("!") && !(features.contains(literals[i].replace("!", ""))))
                     literals[i] = literals[i].replace("!", "");
                 if (featureList.contains(literals[i]))
                     features.add(literals[i]);
             }
-        } else if (!changedNode.getLocalCondition().contains("&&") && changedNode.getLocalCondition().contains("||")) {
-            literals = changedNode.getLocalCondition().split("\\|\\|");
+        } else if (!changedNode.getCondition().contains("&&") && changedNode.getCondition().contains("||")) {
+            literals = changedNode.getCondition().split("\\|\\|");
             for (int i = 0; i < literals.length; i++) {
                 if (literals[i].contains("!") && !(features.contains(literals[i].replace("!", ""))))
                     literals[i] = literals[i].replace("!", "");
                 if (featureList.contains(literals[i]))
                     features.add(literals[i]);
             }
-        } else if (!(features.contains(changedNode.getLocalCondition()))) {
-            features.add(changedNode.getLocalCondition());
+        } else if (!(features.contains(changedNode.getCondition()))) {
+            features.add(changedNode.getCondition());
+        }
+        Map<String, Boolean> literalAndFeatures = new HashMap<>();
+        for (String feat : features) {
+            literalAndFeatures.put(feat, true);
         }
 
-        return features;
+
+        return literalAndFeatures;
     }
 
 
