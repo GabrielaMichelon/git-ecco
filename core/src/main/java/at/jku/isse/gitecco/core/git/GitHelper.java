@@ -37,6 +37,7 @@ public class GitHelper {
 
     private final Git git;
     private final String pathUrl;
+    private final List<String> dirFiles;
 
     /**
      * Creates a new instance of GitHelper and clones the specified
@@ -46,9 +47,10 @@ public class GitHelper {
      * @param path The path string, where the repository should be cloned to.
      * @throws Exception
      */
-    public GitHelper(String url, String path) throws Exception {
+    public GitHelper(String url, String path, List<String> dirFiles) throws Exception {
         git = cloneRepo(url, path);
         pathUrl = path;
+        this.dirFiles = dirFiles;
     }
 
     /**
@@ -59,9 +61,14 @@ public class GitHelper {
      * @param path The path String to the existing repository.
      * @throws IOException
      */
-    public GitHelper(String path) throws IOException {
+    public GitHelper(String path, List<String> dirFiles) throws IOException {
         git = openRepo(path);
         pathUrl = path;
+        this.dirFiles = dirFiles;
+    }
+
+    public List<String> getDirFiles() {
+        return dirFiles;
     }
 
     /**
@@ -274,7 +281,7 @@ public class GitHelper {
      * @throws GitAPIException
      * @throws IOException
      */
-    public GitCommitList getAllCommits(GitCommitList commits, String[] dirFiles) throws Exception {
+    public GitCommitList getAllCommits(GitCommitList commits) throws Exception {
         final boolean FASTMODE = false;
         final List<GitCommitType> types = new ArrayList<>();
         final Repository repository = git.getRepository();
@@ -295,7 +302,7 @@ public class GitHelper {
             }catch (ArrayIndexOutOfBoundsException e) {
                 parent = "NULLCOMMIT";
             }
-            commits.add(new GitCommit(rc.getName(), parent, null/*new ArrayList<GitCommitType>(types)*/, branch, rc),dirFiles);
+            commits.add(new GitCommit(rc.getName(), parent, null/*new ArrayList<GitCommitType>(types)*/, branch, rc));
         }
 
         return commits;

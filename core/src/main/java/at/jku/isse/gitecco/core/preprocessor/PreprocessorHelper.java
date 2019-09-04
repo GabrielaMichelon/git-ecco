@@ -6,6 +6,7 @@ import org.anarres.cpp.OnlyExpandMacrosInIfsController;
 import org.anarres.cpp.PreprocessorAPI;
 
 import java.io.File;
+import java.util.List;
 import java.util.Map;
 
 public class PreprocessorHelper {
@@ -18,7 +19,7 @@ public class PreprocessorHelper {
      * @param src
      * @param target
      */
-    public void generateCleanVersion(File src, File target, String[] dirFiles) {
+    public void generateCleanVersion(File src, File target, List<String> dirFiles) {
         PreprocessorAPI pp = new PreprocessorAPI(new OnlyExpandMacrosInIfsController());
         pp.setInlineIncludes(false);
         pp.setKeepIncludes(true);
@@ -34,7 +35,7 @@ public class PreprocessorHelper {
      * @param src input folder
      * @param target output folder
      */
-    public void generateVariants(Map<Feature, Integer> configuration,File src, File target, String[] dirFiles) {
+    public void generateVariants(Map<Feature, Integer> configuration,File src, File target, List<String> dirFiles) {
 
         if(target.exists()) GitCommitList.recursiveDelete(target.toPath());
 
