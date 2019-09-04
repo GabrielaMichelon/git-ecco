@@ -19,17 +19,18 @@ public final class IFCondition extends ConditionalNode implements Visitable {
     public String getCondition() {
         //getting the parent blocks
         String expression = "(" + this.condition + ")";
-        ConditionalNode conditionalNode = getParent().getParent();
-        ConditionalNode changedNodeParent = getParent().getIfBlock().getParent().getParent();
-        if (!changedNodeParent.getLocalCondition().contains("BASE")) {
-            conditionalNode = changedNodeParent;
+        if (!getLocalCondition().contains("BASE")) {
+            ConditionalNode changedNodeParent = getParent().getIfBlock().getParent().getParent();
+            ConditionalNode conditionalNode = changedNodeParent;
             while (!(conditionalNode.getParent().getParent().getLocalCondition().contains("BASE"))) {
-                expression += " && ("+conditionalNode.getLocalCondition() + ")";
+                expression += " && (" + conditionalNode.getLocalCondition() + ")";
                 conditionalNode = conditionalNode.getParent().getParent();
             }
             changedNodeParent = conditionalNode.getParent().getParent();
+            expression += " && (" + conditionalNode.getParent().getParent().getLocalCondition() + ")";
+            return expression;
         }
-        return  expression;
+        return expression;
     }
 
     @Override

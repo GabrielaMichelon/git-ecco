@@ -30,7 +30,7 @@ public class ChangeConstraint {
 
     public Map<String, Boolean> featureChangedNode = new HashMap<>();
 
-    public void constructConstraintPerFeature(ArrayList<ConditionalNode> classUntilChange, Set<ConditionalNode> changedNodes, GitHelper gitHelper, Change change, GetNodesForChangeVisitor visitor, FileNode child, String[] dirFiles, File outputDirectory, RootNode tree) {
+    public void constructConstraintPerFeature(ArrayList<ConditionalNode> classUntilChange, Set<ConditionalNode> changedNodes, GitHelper gitHelper, Change change, GetNodesForChangeVisitor visitor, FileNode child, File outputDirectory, RootNode tree) {
         Feature feature = null;
         ExpressionSolver solver = new ExpressionSolver();
         PreprocessorHelper pph = new PreprocessorHelper();
@@ -82,7 +82,7 @@ public class ChangeConstraint {
             }
 
 
-            if (!changedNode.getCondition().contains("BASE")) {
+            if (!changedNode.getLocalCondition().contains("BASE")) {
                 ConditionalNode changedNodeParent = changedNode.getParent().getIfBlock().getParent().getParent();
                 ConditionalNode conditionalNode = changedNode.getParent().getParent();
                 String expression = "";
@@ -162,7 +162,7 @@ public class ChangeConstraint {
                     System.out.println("\nBlock: " + changedNode.getLocalCondition() + " has change!");
                     ArrayList<String> featuresVersioned = new ArrayList<>();
                     if (!result.entrySet().isEmpty()) {
-                        pph.generateVariants(result, gitFolder, eccoFolder, dirFiles);
+                        pph.generateVariants(result, gitFolder, eccoFolder, gitHelper.getDirFiles());
                         System.out.println("Solution ChocoSolver: ");
                         result.entrySet().forEach(x -> System.out.print(x.getKey() + " = " + x.getValue() + "; "));
                         Variable[] getVars = solver.getModel().getVars();

@@ -18,11 +18,21 @@ public final class IFDEFCondition extends ConditionalNode implements Visitable {
 
     @Override
     public String getCondition() {
-        /*if(this.condition.contains("!"))
-            return this.condition;//.replace("!", "==0");
-        else
-            return this.condition+"==1";*/
-        return this.condition;
+        //getting the parent blocks
+        String expression = "(" + this.condition + ")";
+        if (!getLocalCondition().contains("BASE")) {
+            ConditionalNode conditionalNode = getParent().getParent();
+            ConditionalNode changedNodeParent = getParent().getIfBlock().getParent().getParent();
+            conditionalNode = changedNodeParent;
+            while (!(conditionalNode.getParent().getParent().getLocalCondition().contains("BASE"))) {
+                expression += " && (" + conditionalNode.getLocalCondition() + ")";
+                conditionalNode = conditionalNode.getParent().getParent();
+            }
+            changedNodeParent = conditionalNode.getParent().getParent();
+            expression += " && (" + conditionalNode.getParent().getParent().getLocalCondition() + ")";
+            return expression;
+        }
+        return expression;
     }
 
     @Override

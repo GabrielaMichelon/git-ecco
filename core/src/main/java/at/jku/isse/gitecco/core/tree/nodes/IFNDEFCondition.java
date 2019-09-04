@@ -17,12 +17,29 @@ public final class IFNDEFCondition extends ConditionalNode implements Visitable 
 
     @Override
     public String getCondition() {
-            return this.condition;
+        //getting the parent blocks
+        String expression = "(" + this.condition + ")";
+        if (!getLocalCondition().contains("BASE")) {
+            ConditionalNode changedNodeParent = getParent().getIfBlock().getParent().getParent();
+            ConditionalNode conditionalNode = changedNodeParent;
+
+            while (conditionalNode.getParent().getParent().getLocalCondition() != null ) {
+                if(!(conditionalNode.getParent().getParent().getLocalCondition().contains("BASE"))){
+                    expression += " && (" + conditionalNode.getLocalCondition() + ")";
+                }
+                conditionalNode = conditionalNode.getParent().getParent();
+            }
+            changedNodeParent = conditionalNode.getParent().getParent();
+            expression += " && (" + conditionalNode.getParent().getParent().getLocalCondition() + ")";
+            return expression;
+        }
+        return expression;
+            //return this.condition;
     }
 
     @Override
     public String getLocalCondition() {
-            return getCondition();
+            return this.condition;
     }
 
     @Override
