@@ -17,7 +17,7 @@ public abstract class DefineNode extends ConditionNode implements Comparable<Def
         this.lineInfo = lineInfo;
         this.macroName = name;
         this.parent = parent;
-        condition = parent.getCondition();
+        condition = parent.getLocalCondition();
     }
 
     public DefineNode(String name, int lineInfo, ConditionalNode includeParent, Node defineNodeParent) {
@@ -26,10 +26,10 @@ public abstract class DefineNode extends ConditionNode implements Comparable<Def
         ConditionalNode condParent = (ConditionalNode) includeParent;
         this.parent = condParent;
         ConditionalNode cond = (ConditionalNode) defineNodeParent;
-        if (condParent.getCondition() != null) {
-            this.condition = "(" + condParent.getCondition() + ") && (" + ((ConditionalNode) defineNodeParent).getCondition() + ")";
+        if (condParent.getLocalCondition() != null) {
+            this.condition = "(" + condParent.getCondition() + ") && (" + ((ConditionalNode) defineNodeParent).getLocalCondition() + ")";
         }else{
-            this.condition =  ((ConditionalNode) defineNodeParent).getCondition();
+            this.condition =  ((ConditionalNode) defineNodeParent).getLocalCondition();
         }
 
     }

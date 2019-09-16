@@ -63,18 +63,25 @@ public class ChangeConstraint {
                 FileNode tmpF = tree.getChild(includeInsideIncludesChangedNode.getFileName());
                 if (tmpF != null) tmpF.accept(definesVisitor);
                 for (DefineNode defineNode : definesVisitor.getDefines()) {
+                    ConditionalNode conditionalNode;
+                    if(includeInsideIncludesChangedNode.getParent().getParent() instanceof ConditionBlockNode){
+                        ConditionBlockNode conditionBlockNode = (ConditionBlockNode) includeInsideIncludesChangedNode.getParent().getParent();
+                        conditionalNode = conditionBlockNode.getIfBlock();
+                    }else{
+                        conditionalNode = (ConditionalNode) includeInsideIncludesChangedNode.getParent();
+                    }
                     //add define
                     if (defineNode instanceof Define) {
                         if (!defineNode.getParent().equals(null)) {
-                            allDefines.add(new Define(defineNode.getMacroName(), ((Define) defineNode).getMacroExpansion(), includeInsideIncludesChangedNode.getLineInfo(), (ConditionalNode) includeInsideIncludesChangedNode.getParent(), defineNode.getParent()));
+                            allDefines.add(new Define(defineNode.getMacroName(), ((Define) defineNode).getMacroExpansion(), includeInsideIncludesChangedNode.getLineInfo(), conditionalNode, defineNode.getParent()));
                         } else {
-                            allDefines.add(new Define(defineNode.getMacroName(), ((Define) defineNode).getMacroExpansion(), includeInsideIncludesChangedNode.getLineInfo(), (ConditionalNode) includeInsideIncludesChangedNode.getParent()));
+                            allDefines.add(new Define(defineNode.getMacroName(), ((Define) defineNode).getMacroExpansion(), includeInsideIncludesChangedNode.getLineInfo(), conditionalNode));
                         }
                     } else { //add undef
                         if (!defineNode.getParent().equals(null)) {
-                            allDefines.add(new Define(defineNode.getMacroName(), null, includeInsideIncludesChangedNode.getLineInfo(), (ConditionalNode) includeInsideIncludesChangedNode.getParent().getParent(), defineNode.getParent()));
+                            allDefines.add(new Define(defineNode.getMacroName(), null, includeInsideIncludesChangedNode.getLineInfo(), conditionalNode, defineNode.getParent()));
                         } else {
-                            allDefines.add(new Define(defineNode.getMacroName(), null, includeInsideIncludesChangedNode.getLineInfo(), (ConditionalNode) includeInsideIncludesChangedNode.getParent()));
+                            allDefines.add(new Define(defineNode.getMacroName(), null, includeInsideIncludesChangedNode.getLineInfo(), conditionalNode));
                         }
                     }
                 }
@@ -130,7 +137,7 @@ public class ChangeConstraint {
                 }
 
 
-                //adding clauses
+                //adding clauses for each literal (in desc order --> the arrayDefine has the last define in position 0)
                 for (Map.Entry<String, Boolean> literal : featureChangedNode.entrySet()) {
                         featureImplications = new LinkedList<>();
                         featureImplication = null;
@@ -159,12 +166,58 @@ public class ChangeConstraint {
                 try {
                     String text = "\nBlock: " + changedNode.getLocalCondition() + " has change!\n";
                     Files.write(Paths.get(String.valueOf(outputDirectory)), text.getBytes(), new StandardOpenOption[]{StandardOpenOption.APPEND});
-                    System.out.println("\nBlock: " + changedNode.getLocalCondition() + " has change!");
+                    System.out.println("\nLOCAL CONDITION Block: " + changedNode.getLocalCondition() + " has change!");
                     ArrayList<String> featuresVersioned = new ArrayList<>();
                     if (!result.entrySet().isEmpty()) {
                         pph.generateVariants(result, gitFolder, eccoFolder, gitHelper.getDirFiles());
                         System.out.println("Solution ChocoSolver: ");
                         result.entrySet().forEach(x -> System.out.print(x.getKey() + " = " + x.getValue() + "; "));
+                        Variable[] getVars = solver.getModel().getVars();
+                        System.out.println("\nFeatures that has impact on this change:");
+                        for (int j = 0; j < getVars.length; j++) {
+                            if (featureList.contains(getVars[j].getName())) {
+                                System.out.println("\n" + getVars[j].getName() + " = " + getVars[j].asIntVar().getValue());
+                            }
+                        }
+                    }
+                    text = "________________________\n";
+                    Files.write(Paths.get(String.valueOf(outputDirectory)), text.getBytes(), new StandardOpenOption[]{StandardOpenOption.APPEND});
+                    System.out.println("________________________");
+
+                    solver.reset();
+                    //adding clauses
+                    for (Map.Entry<String, Boolean> literal : featureChangedNode.entrySet()) {
+                        featureImplications = new LinkedList<>();
+                        featureImplication = null;
+                        for (int i = 0; i < allDefines.size(); i++) {
+                            if (arrayDefine[i].getMacroName().contains(literal.getKey())) {
+                                if (arrayDefine[i] instanceof Define) {
+                                    if (!(((Define) arrayDefine[i]).getMacroExpansion().contains("(") && ((Define) arrayDefine[i]).getMacroExpansion().contains(")"))) {//not add macro function
+                                        featureImplication = new FeatureImplication(arrayDefine[i].getCondition(), arrayDefine[i].getMacroName() + " == " +((Define) arrayDefine[i]).getMacroExpansion());
+                                    }
+                                } else {
+                                    featureImplication = new FeatureImplication(arrayDefine[i].getCondition(), arrayDefine[i].getMacroName());
+                                }
+                                if (featureImplication != null) {
+                                    featureImplications.add(featureImplication);
+                                }
+                                feature = new Feature(arrayDefine[i].getMacroName()); //feature is the variable of the define or undef
+                            }
+                        }
+                        if (feature != null && featureImplications.size() != 0)
+                            solver.addClause(feature, featureImplications);
+                    }
+                    solver.setExpr(changedNode.getCondition());
+                    Map<Feature, Integer> result2 = solver.solve();
+                    System.out.println("GLOBAL CONDITION: ");
+                    String text2 = "\nBlock: " + changedNode.getCondition() + " Configuration:\n";
+                    Files.write(Paths.get(String.valueOf(outputDirectory)), text.getBytes(), new StandardOpenOption[]{StandardOpenOption.APPEND});
+                    System.out.println("\nBlock: " + changedNode.getCondition() + " Configuration:\n");
+                    ArrayList<String> featuresVersioned2 = new ArrayList<>();
+                    if (!result.entrySet().isEmpty()) {
+                        pph.generateVariants(result2, gitFolder, eccoFolder, gitHelper.getDirFiles());
+                        System.out.println("Solution ChocoSolver: ");
+                        result2.entrySet().forEach(x -> System.out.print(x.getKey() + " = " + x.getValue() + "; "));
                         Variable[] getVars = solver.getModel().getVars();
                         System.out.println("\nConfiguration that has impact on this change:");
                         for (int j = 0; j < getVars.length; j++) {
@@ -176,7 +229,8 @@ public class ChangeConstraint {
                     text = "________________________\n";
                     Files.write(Paths.get(String.valueOf(outputDirectory)), text.getBytes(), new StandardOpenOption[]{StandardOpenOption.APPEND});
                     System.out.println("________________________");
-                    solver.reset();
+
+
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

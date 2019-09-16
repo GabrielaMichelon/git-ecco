@@ -21,15 +21,15 @@ public final class IFDEFCondition extends ConditionalNode implements Visitable {
         //getting the parent blocks
         String expression = "(" + this.condition + ")";
         if (!getLocalCondition().contains("BASE")) {
-            ConditionalNode conditionalNode = getParent().getParent();
             ConditionalNode changedNodeParent = getParent().getIfBlock().getParent().getParent();
-            conditionalNode = changedNodeParent;
-            while (!(conditionalNode.getParent().getParent().getLocalCondition().contains("BASE"))) {
-                expression += " && (" + conditionalNode.getLocalCondition() + ")";
+            ConditionalNode conditionalNode = changedNodeParent;
+            while (conditionalNode.getLocalCondition() != null &&  !(conditionalNode.getLocalCondition().contains("BASE"))) {
+                if(!(conditionalNode.getParent().getParent().getLocalCondition().contains("BASE"))){
+                    expression += " && (" + conditionalNode.getLocalCondition() + ")";
+                }
                 conditionalNode = conditionalNode.getParent().getParent();
             }
-            changedNodeParent = conditionalNode.getParent().getParent();
-            expression += " && (" + conditionalNode.getParent().getParent().getLocalCondition() + ")";
+            expression += " && (" + conditionalNode.getLocalCondition() + ")";
             return expression;
         }
         return expression;
@@ -37,7 +37,8 @@ public final class IFDEFCondition extends ConditionalNode implements Visitable {
 
     @Override
     public String getLocalCondition() {
-        return getCondition();
+        return this.condition;
+        //return getCondition();
     }
 
     @Override
