@@ -4,6 +4,7 @@ package at.jku.isse.gitecco.core.type;
 import at.jku.isse.gitecco.core.tree.nodes.DefineNode;
 import org.anarres.cpp.featureExpr.*;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -76,6 +77,19 @@ public class Feature implements Comparable<Feature> {
 
 		return ret;
 	}
+
+	public static ArrayList<Feature> parseConditionArray(String condition) {
+		Set<Feature> ret = new HashSet<>();
+
+		FeatureExpressionParser fep = new FeatureExpressionParser(condition);
+		FeatureExpression root = fep.parse();
+
+		traverse(root, ret);
+		ArrayList<Feature> featureListInCondition = new ArrayList<>();
+		featureListInCondition.addAll(ret);
+		return featureListInCondition;
+	}
+
 
 	/**
 	 * Helper Method

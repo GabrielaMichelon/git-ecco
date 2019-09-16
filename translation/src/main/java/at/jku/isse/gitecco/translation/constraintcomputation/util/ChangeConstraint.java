@@ -7,7 +7,10 @@ import at.jku.isse.gitecco.core.solver.ExpressionSolver;
 import at.jku.isse.gitecco.core.tree.nodes.*;
 import at.jku.isse.gitecco.core.type.Feature;
 import at.jku.isse.gitecco.core.type.FeatureImplication;
+import org.chocosolver.solver.variables.IntVar;
 import org.chocosolver.solver.variables.Variable;
+import scala.Int;
+import scala.util.parsing.combinator.testing.Str;
 
 import java.io.File;
 import java.io.IOException;
@@ -64,10 +67,10 @@ public class ChangeConstraint {
                 if (tmpF != null) tmpF.accept(definesVisitor);
                 for (DefineNode defineNode : definesVisitor.getDefines()) {
                     ConditionalNode conditionalNode;
-                    if(includeInsideIncludesChangedNode.getParent().getParent() instanceof ConditionBlockNode){
+                    if (includeInsideIncludesChangedNode.getParent().getParent() instanceof ConditionBlockNode) {
                         ConditionBlockNode conditionBlockNode = (ConditionBlockNode) includeInsideIncludesChangedNode.getParent().getParent();
                         conditionalNode = conditionBlockNode.getIfBlock();
-                    }else{
+                    } else {
                         conditionalNode = (ConditionalNode) includeInsideIncludesChangedNode.getParent();
                     }
                     //add define
@@ -137,30 +140,51 @@ public class ChangeConstraint {
                     k--;
                 }
 
-
-                //adding clauses for each literal (in desc order --> the arrayDefine has the last define in position 0)
-                for (Map.Entry<String, Boolean> literal : featureChangedNode.entrySet()) {
-                        featureImplications = new LinkedList<>();
-                        featureImplication = null;
-                        for (int i = 0; i < allDefines.size(); i++) {
-                            if (arrayDefine[i].getMacroName().contains(literal.getKey())) {
-                                if (arrayDefine[i] instanceof Define) {
-                                    if (!(((Define) arrayDefine[i]).getMacroExpansion().contains("(") && ((Define) arrayDefine[i]).getMacroExpansion().contains(")"))) {//not add macro function
-                                        featureImplication = new FeatureImplication(arrayDefine[i].getCondition(), arrayDefine[i].getMacroName() + " == " +((Define) arrayDefine[i]).getMacroExpansion());
-                                    }
-                                } else {
-                                    featureImplication = new FeatureImplication(arrayDefine[i].getCondition(), arrayDefine[i].getMacroName());
-                                }
-                                if (featureImplication != null) {
-                                    featureImplications.add(featureImplication);
-                                }
-                                feature = new Feature(arrayDefine[i].getMacroName()); //feature is the variable of the define or undef
-                            }
-                        }
-                        if (feature != null && featureImplications.size() != 0)
-                            solver.addClause(feature, featureImplications);
+                Boolean localConditionContainsFeature = false;
+                ArrayList<Feature> changedNodeLocalVars = feature.parseConditionArray(changedNode.getLocalCondition());
+                for (Feature feat:changedNodeLocalVars) {
+                    if(featureList.contains(feat)){
+                        localConditionContainsFeature = true;
+                    }
+                }
+                ArrayList<Feature> changedNodeVars;
+                if(!localConditionContainsFeature) {
+                    changedNodeVars = feature.parseConditionArray(changedNode.getCondition());
+                }
+                else{
+                    changedNodeVars = changedNodeLocalVars;
                 }
 
+                //adding clauses for each literal (in desc order --> the arrayDefine has the last define in position 0)
+                for (int j = 0; j < changedNodeVars.size(); j++) {
+                    Feature literal = changedNodeVars.get(j);
+                    featureImplications = new LinkedList<>();
+                    featureImplication = null;
+                    for (int i = 0; i < allDefines.size(); i++) {
+                        if (arrayDefine[i].getMacroName().contains(literal.getName())) {
+                            if (arrayDefine[i] instanceof Define) {
+                                if (!(((Define) arrayDefine[i]).getMacroExpansion().contains("(") && ((Define) arrayDefine[i]).getMacroExpansion().contains(")"))) {//not add macro function
+                                    featureImplication = new FeatureImplication(arrayDefine[i].getCondition(), arrayDefine[i].getMacroName() + " == " + ((Define) arrayDefine[i]).getMacroExpansion());
+                                }
+                            } else {
+                                featureImplication = new FeatureImplication(arrayDefine[i].getCondition(), arrayDefine[i].getMacroName());
+                            }
+                            if (featureImplication != null) {
+                                featureImplications.add(featureImplication);
+                            }
+                            feature = new Feature(arrayDefine[i].getMacroName()); //feature is the variable of the define or undef
+                            HashSet<Feature> splitDefineVars = (HashSet<Feature>) feature.parseCondition(arrayDefine[i].getCondition());
+                            for (Feature stringVar : splitDefineVars) {
+                                if (!changedNodeVars.contains(stringVar)) {
+                                    changedNodeVars.add(stringVar);
+                                }
+                            }
+                        }
+                    }
+                    if (feature != null && featureImplications.size() != 0)
+                        solver.addClause(feature, featureImplications);
+                }
+                solver.setExpr(changedNode.getLocalCondition());
 
                 //after added all clauses the solver returns a solution
                 Map<Feature, Integer> result = solver.solve();
@@ -177,8 +201,15 @@ public class ChangeConstraint {
                         System.out.println("\nFeatures that has impact on this change:");
                         for (int j = 0; j < getVars.length; j++) {
                             if (featureList.contains(getVars[j].getName())) {
-                                System.out.println("\n" + getVars[j].getName() + " = " + getVars[j].asIntVar().getValue());
+                                featuresVersioned.add(getVars[j].getName());
                             }
+                        }
+                        if(featuresVersioned.size()>0) {
+                            for (String featVersioned : featuresVersioned) {
+                                System.out.println("\n" + featVersioned);
+                            }
+                        }else{
+                            System.out.println("\n No features, just BASE");
                         }
                     }
                     text = "________________________\n";
@@ -186,15 +217,18 @@ public class ChangeConstraint {
                     System.out.println("________________________");
 
                     solver.reset();
-                    //adding clauses
-                    for (Map.Entry<String, Boolean> literal : featureChangedNode.entrySet()) {
+                    solver.setExpr(changedNode.getCondition());
+                    changedNodeVars = feature.parseConditionArray(changedNode.getCondition());
+                    //adding clauses for each literal (in desc order --> the arrayDefine has the last define in position 0)
+                    for (int j = 0; j < changedNodeVars.size(); j++) {
+                        Feature literal = changedNodeVars.get(j);
                         featureImplications = new LinkedList<>();
                         featureImplication = null;
                         for (int i = 0; i < allDefines.size(); i++) {
-                            if (arrayDefine[i].getMacroName().contains(literal.getKey())) {
+                            if (arrayDefine[i].getMacroName().contains(literal.getName())) {
                                 if (arrayDefine[i] instanceof Define) {
                                     if (!(((Define) arrayDefine[i]).getMacroExpansion().contains("(") && ((Define) arrayDefine[i]).getMacroExpansion().contains(")"))) {//not add macro function
-                                        featureImplication = new FeatureImplication(arrayDefine[i].getCondition(), arrayDefine[i].getMacroName() + " == " +((Define) arrayDefine[i]).getMacroExpansion());
+                                        featureImplication = new FeatureImplication(arrayDefine[i].getCondition(), arrayDefine[i].getMacroName() + " == " + ((Define) arrayDefine[i]).getMacroExpansion());
                                     }
                                 } else {
                                     featureImplication = new FeatureImplication(arrayDefine[i].getCondition(), arrayDefine[i].getMacroName());
@@ -203,12 +237,18 @@ public class ChangeConstraint {
                                     featureImplications.add(featureImplication);
                                 }
                                 feature = new Feature(arrayDefine[i].getMacroName()); //feature is the variable of the define or undef
+                                HashSet<Feature> splitDefineVars = (HashSet<Feature>) feature.parseCondition(arrayDefine[i].getCondition());
+                                for (Feature stringVar : splitDefineVars) {
+                                    if (!changedNodeVars.contains(stringVar)) {
+                                        changedNodeVars.add(stringVar);
+                                    }
+                                }
                             }
                         }
                         if (feature != null && featureImplications.size() != 0)
                             solver.addClause(feature, featureImplications);
                     }
-                    solver.setExpr(changedNode.getCondition());
+
                     Map<Feature, Integer> result2 = solver.solve();
                     System.out.println("GLOBAL CONDITION: ");
                     String text2 = "\nBlock: " + changedNode.getCondition() + " Configuration:\n";
@@ -222,7 +262,7 @@ public class ChangeConstraint {
                         Variable[] getVars = solver.getModel().getVars();
                         System.out.println("\nConfiguration that has impact on this change:");
                         for (int j = 0; j < getVars.length; j++) {
-                            if (featureList.contains(getVars[j].getName())) {
+                            if ((featureList.contains(getVars[j].getName()) && changedNodeVars.contains(getVars[j].getName())) || getVars[j].getName().contains("BASE")) {
                                 System.out.println("\n" + getVars[j].getName() + " = " + getVars[j].asIntVar().getValue());
                             }
                         }

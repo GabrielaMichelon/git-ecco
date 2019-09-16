@@ -22,6 +22,11 @@ public final class IFNDEFCondition extends ConditionalNode implements Visitable 
         if (!getLocalCondition().contains("BASE")) {
             ConditionalNode changedNodeParent = getParent().getIfBlock().getParent().getParent();
             ConditionalNode conditionalNode = changedNodeParent;
+            if(conditionalNode.getLocalCondition().contains("BASE")){
+                if(getLineFrom()==1){
+                    return conditionalNode.getLocalCondition();
+                }
+            }
 
             while (conditionalNode.getLocalCondition() != null &&  !(conditionalNode.getLocalCondition().contains("BASE")) ) {
                 if(!(conditionalNode.getParent().getParent().getLocalCondition().contains("BASE"))){
