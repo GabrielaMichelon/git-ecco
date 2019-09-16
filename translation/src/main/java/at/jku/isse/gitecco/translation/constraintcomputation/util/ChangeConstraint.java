@@ -94,6 +94,7 @@ public class ChangeConstraint {
                 ConditionalNode conditionalNode = changedNode.getParent().getParent();
                 String expression = "";
                 expression = changedNode.getCondition();
+                System.out.println(expression);
                 solver.setExpr(expression);
 
 
@@ -229,7 +230,7 @@ public class ChangeConstraint {
                     text = "________________________\n";
                     Files.write(Paths.get(String.valueOf(outputDirectory)), text.getBytes(), new StandardOpenOption[]{StandardOpenOption.APPEND});
                     System.out.println("________________________");
-
+                    solver.reset();
 
                 } catch (IOException e) {
                     e.printStackTrace();
