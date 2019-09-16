@@ -97,7 +97,7 @@ public class ChangeConstraint {
                 ConditionalNode conditionalNode = changedNode.getParent().getParent();
                 String expression = "";
                 expression = changedNode.getCondition();
-                System.out.println(expression);
+                //System.out.println(expression);
                 solver.setExpr(expression);
 
 
