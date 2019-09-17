@@ -196,9 +196,13 @@ public class ChangeConstraint {
                     if (!result.entrySet().isEmpty()) {
                         pph.generateVariants(result, gitFolder, eccoFolder, gitHelper.getDirFiles());
                         System.out.println("Solution ChocoSolver: ");
+                        text = "Solution ChocoSolver: ";
+                        Files.write(Paths.get(String.valueOf(outputDirectory)), text.getBytes(), new StandardOpenOption[]{StandardOpenOption.APPEND});
                         result.entrySet().forEach(x -> System.out.print(x.getKey() + " = " + x.getValue() + "; "));
                         Variable[] getVars = solver.getModel().getVars();
                         System.out.println("\nFeatures that has impact on this change:");
+                        text = "\nFeatures that has impact on this change:";
+                        Files.write(Paths.get(String.valueOf(outputDirectory)), text.getBytes(), new StandardOpenOption[]{StandardOpenOption.APPEND});
                         for (int j = 0; j < getVars.length; j++) {
                             if (featureList.contains(getVars[j].getName())) {
                                 featuresVersioned.add(getVars[j].getName());
@@ -207,8 +211,12 @@ public class ChangeConstraint {
                         if(featuresVersioned.size()>0) {
                             for (String featVersioned : featuresVersioned) {
                                 System.out.println("\n" + featVersioned);
+                                text = "\n" + featVersioned;
+                                Files.write(Paths.get(String.valueOf(outputDirectory)), text.getBytes(), new StandardOpenOption[]{StandardOpenOption.APPEND});
                             }
                         }else{
+                            text = "\n No features, just BASE";
+                            Files.write(Paths.get(String.valueOf(outputDirectory)), text.getBytes(), new StandardOpenOption[]{StandardOpenOption.APPEND});
                             System.out.println("\n No features, just BASE");
                         }
                     }
@@ -258,11 +266,17 @@ public class ChangeConstraint {
                     if (!result.entrySet().isEmpty()) {
                         pph.generateVariants(result2, gitFolder, eccoFolder, gitHelper.getDirFiles());
                         System.out.println("Solution ChocoSolver: ");
+                        text2 = "Solution ChocoSolver: ";
+                        Files.write(Paths.get(String.valueOf(outputDirectory)), text.getBytes(), new StandardOpenOption[]{StandardOpenOption.APPEND});
                         result2.entrySet().forEach(x -> System.out.print(x.getKey() + " = " + x.getValue() + "; "));
                         Variable[] getVars = solver.getModel().getVars();
                         System.out.println("\nConfiguration that has impact on this change:");
+                        text = "\nConfiguration that has impact on this change:";
+                        Files.write(Paths.get(String.valueOf(outputDirectory)), text.getBytes(), new StandardOpenOption[]{StandardOpenOption.APPEND});
                         for (int j = 0; j < getVars.length; j++) {
                             if ((featureList.contains(getVars[j].getName()) && changedNodeVars.contains(getVars[j].getName())) || getVars[j].getName().contains("BASE")) {
+                                text = "\n" + getVars[j].getName() + " = " + getVars[j].asIntVar().getValue();
+                                Files.write(Paths.get(String.valueOf(outputDirectory)), text.getBytes(), new StandardOpenOption[]{StandardOpenOption.APPEND});
                                 System.out.println("\n" + getVars[j].getName() + " = " + getVars[j].asIntVar().getValue());
                             }
                         }
