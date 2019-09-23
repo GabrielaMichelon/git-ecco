@@ -1,4 +1,4 @@
-package at.jku.isse.gitecco.translation.constraintcomputation.util;
+package at.jku.isse.gitecco.translation.visitor;
 
 import at.jku.isse.gitecco.core.tree.nodes.*;
 import at.jku.isse.gitecco.core.tree.visitor.TreeVisitor;
@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class GetAllDefinesVisitorTranslation implements TreeVisitor {
+public class GetAllDefinesVisitor implements TreeVisitor {
 
     private List<DefineNode> defineNodes = new ArrayList<>();
     private Integer lineInformation;
@@ -17,7 +17,7 @@ public class GetAllDefinesVisitorTranslation implements TreeVisitor {
         return defineNodes;
     }
 
-    public GetAllDefinesVisitorTranslation(Integer lineNumber) {
+    public GetAllDefinesVisitor(Integer lineNumber) {
         this.lineInformation = lineNumber;
     }
 
@@ -76,27 +76,6 @@ public class GetAllDefinesVisitorTranslation implements TreeVisitor {
 
     }
 
-   /* public void insertAndSort(DefineNode defineNode){
-        if(this.getDefineNodes().size() == 0){
-            this.getDefineNodes().add(defineNode);
-        }else {
-            List<DefineNode> listSecond = new ArrayList<DefineNode>(this.getDefineNodes().size() + 1);
-            int i = 0;
-            while ((i < this.getDefineNodes().size()) && (this.getDefineNodes().get(i).getLineInfo() < defineNode.getLineInfo())) {
-                listSecond.add(this.getDefineNodes().get(i));
-                i++;
-            }
-            listSecond.add(defineNode);
-            while (i < this.getDefineNodes().size()) {
-                listSecond.add(this.getDefineNodes().get(i));
-                i++;
-            }
-            this.getDefineNodes().clear();
-            this.getDefineNodes().addAll(listSecond);
-        }
-
-    }*/
-
     @Override
     public void visit(Define d) {
         if (this.lineInformation != null) {
@@ -121,6 +100,11 @@ public class GetAllDefinesVisitorTranslation implements TreeVisitor {
 
     @Override
     public void visit(IncludeNode n) {
+
+    }
+
+    @Override
+    public void visit(BaseNode n) {
 
     }
 }

@@ -151,4 +151,15 @@ public abstract class ConditionalNode extends ConditionNode {
      * @return
      */
     public abstract String getLocalCondition();
+
+    /**
+     * Retrieves the filenode that contains this ConditionalNode
+     * @return
+     */
+    public SourceFileNode getContainingFile() {
+        Node n = this;
+        while(!(n instanceof BaseNode)) n = n.getParent();
+
+        return ((BaseNode) n).getFileNode();
+    }
 }

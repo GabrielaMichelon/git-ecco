@@ -7,10 +7,10 @@ import at.jku.isse.gitecco.core.solver.ExpressionSolver;
 import at.jku.isse.gitecco.core.tree.nodes.*;
 import at.jku.isse.gitecco.core.type.Feature;
 import at.jku.isse.gitecco.core.type.FeatureImplication;
-import org.chocosolver.solver.variables.IntVar;
+import at.jku.isse.gitecco.translation.visitor.GetAllDefinesVisitor;
+import at.jku.isse.gitecco.translation.visitor.GetAllIncludesVisitor;
+import at.jku.isse.gitecco.translation.visitor.GetNodesForChangeVisitor;
 import org.chocosolver.solver.variables.Variable;
-import scala.Int;
-import scala.util.parsing.combinator.testing.Str;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,11 +21,12 @@ import java.util.*;
 
 public class ChangeConstraint {
 
-    private ArrayList<String> featureList;
+    //changed:
+    // - used visitor pattern correctly
+    // - removed unused stuff
+    //
 
-    public ArrayList<String> getFeatureList() {
-        return featureList;
-    }
+    private ArrayList<String> featureList;
 
     public void setFeatureList(ArrayList<String> featureList) {
         this.featureList = featureList;
@@ -34,32 +35,48 @@ public class ChangeConstraint {
     public Map<String, Boolean> featureChangedNode = new HashMap<>();
 
     public void constructConstraintPerFeature(ArrayList<ConditionalNode> classUntilChange, Set<ConditionalNode> changedNodes, GitHelper gitHelper, Change change, GetNodesForChangeVisitor visitor, FileNode child, File outputDirectory, RootNode tree) {
+
         Feature feature = null;
+
         ExpressionSolver solver = new ExpressionSolver();
         PreprocessorHelper pph = new PreprocessorHelper();
+
         final File gitFolder = new File(gitHelper.getPath());
         final File eccoFolder = new File(gitFolder.getParent(), "ecco");
-        Queue<FeatureImplication> featureImplications = new LinkedList<>();
+        Queue<FeatureImplication> featureImplications;
         FeatureImplication featureImplication;
-        String elsePartFeature = null;
 
+        //for each changed node execute this process
         for (ConditionalNode changedNode : changedNodes) {
-
-            GetAllIncludesVisitor getAllIncludesVisitor = new GetAllIncludesVisitor(changedNode.getLineFrom());
-            GetAllDefinesVisitorTranslation definesVisitor = new GetAllDefinesVisitorTranslation(changedNode.getLineFrom());
+            //set that will contain all the defines, also the defines from included files. --> treeset for automatic sorting
             Set<DefineNode> allDefines = new TreeSet<>();
 
-            //getting includes before the changedNode inside BASE
-            for (IncludeNode includeNode : ((SourceFileNode) child).getIncludesBase()) {
-                getAllIncludesVisitor.visit(includeNode);
+            //collecting all include statements above the changed node
+            GetAllIncludesVisitor getAllIncludesVisitor = new GetAllIncludesVisitor(changedNode.getLineFrom());
+            //collecting all define statements above the changed node
+            GetAllDefinesVisitor definesVisitor = new GetAllDefinesVisitor(changedNode.getLineFrom());
+
+            //get all include nodes recursively
+            changedNode.getContainingFile().accept(getAllIncludesVisitor);
+            //get all defines of the changed file
+            changedNode.getContainingFile().accept(definesVisitor);
+            allDefines.addAll(definesVisitor.getDefines());
+            //reset clears the collected list of defines and cancels the linenumber limitation
+            definesVisitor.reset();
+
+            //for each found includenode collect all the define nodes
+            for (IncludeNode includeNode : getAllIncludesVisitor.getIncludeNodes()) {
+                //TODO: assign the define the linenumber of the include node
+                //TODO: conditional includes --> include nodes must be walked up (except base. if base is hit stop walking up the condition tree)
+                tree.getChild(includeNode.getFileName()).accept(definesVisitor);
             }
 
-            //getting includes inside each block above changedNode
+            /*//getting includes inside each block above changedNode
             for (ConditionalNode conditionalNode : visitor.getchangedNodes()) {
                 for (IncludeNode includesBlocks : conditionalNode.getIncludeNodes()) {
                     getAllIncludesVisitor.visit(includesBlocks);
                 }
-            }
+            }*/
 
             //getting defineNodes inside includeFiles
             for (IncludeNode includeInsideIncludesChangedNode : getAllIncludesVisitor.getIncludeNodes()) {
@@ -111,7 +128,7 @@ public class ChangeConstraint {
 
                     changedNodeParent = conditionalNode.getParent().getParent();
                 }
-                definesVisitor = new GetAllDefinesVisitorTranslation(changedNode.getLineFrom());
+                definesVisitor = new GetAllDefinesVisitor(changedNode.getLineFrom());
 
                 //getting defines for each BASE children Nodes above the changedNode
                 for (int i = changedNodeParent.getChildren().size() - 1; i >= 0; i--) {

@@ -77,7 +77,7 @@ public class GitCommitList extends ArrayList<GitCommit> {
         final PreprocessorHelper pph = new PreprocessorHelper();
         final File gitFolder = new File(gitHelper.getPath());
         final File cleanFolder = new File(gitFolder.getParent(), "clean");
-        final File outputDirectory = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\Commits\\"+gitCommit.getBranch());
+        final File outputDirectory = new File("C:\\obermanndavid\\git-ecco-test\\test_repo_gabi_log"+gitCommit.getBranch());
 
         //delete the clean directory if it exists:
         if (cleanFolder.exists()) recursiveDelete(cleanFolder.toPath());

@@ -43,7 +43,7 @@ public final class IncludeNode extends ConditionNode implements Visitable {
      * @return
      */
     @Override
-    public Node getParent() {
+    public ConditionalNode getParent() {
         return this.parent;
     }
 }

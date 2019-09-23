@@ -11,7 +11,7 @@ import java.util.Collection;
  */
 public final class SourceFileNode extends FileNode implements Visitable {
     /**The Base feature of this file.*/
-    private ConditionBlockNode base;
+    private BaseNode base;
 
     public SourceFileNode(RootNode parent, String filePath) {
         super(parent, filePath);
@@ -25,13 +25,17 @@ public final class SourceFileNode extends FileNode implements Visitable {
      * @param n
      * @throws IllegalAccessException
      */
-    public void setBase(ConditionBlockNode n) throws IllegalAccessException {
+    public void setBase(BaseNode n) throws IllegalAccessException {
         if(base == null) this.base = n;
         else throw new IllegalAccessException("Cannot set base twice.");
     }
 
+    public BaseNode getBaseNode() {
+        return this.base;
+    }
+
     public Collection<IncludeNode> getIncludesBase(){
-        Collection<IncludeNode> includes = this.base.getIfBlock().getIncludeNodes();
+        Collection<IncludeNode> includes = this.base.getIncludeNodes();
         return includes;
     }
 

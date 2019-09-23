@@ -22,20 +22,14 @@ public class FeatureParser {
      */
     public SourceFileNode parseToTree(IASTPreprocessorStatement[] ppstatements, int linecnt, SourceFileNode srcfilenode) throws Exception {
         //create artificial BASE Node
-        ConditionBlockNode baseNode = new ConditionBlockNode();
-        baseNode.setIfBlock(new IFCondition(baseNode,"BASE"));
-        baseNode.getIfBlock().setLineFrom(0);
-        baseNode.getIfBlock().setLineTo(linecnt);
-
-        //attach artificial base node to the file
-        srcfilenode.setBase(baseNode);
+        srcfilenode.setBase(new BaseNode(srcfilenode, linecnt));
 
         PPStatement pp;
 
         //var for the current block node to which conditionals are added
-        ConditionBlockNode currentBlock = baseNode;
+        ConditionBlockNode currentBlock;
         //var for current Conditional node which gets filled with children etc.
-        ConditionalNode currentConditional = baseNode.getIfBlock();
+        ConditionalNode currentConditional = srcfilenode.getBaseNode();
 
         for(IASTPreprocessorStatement pps : ppstatements) {
             /* starting statements*/

@@ -88,4 +88,9 @@ public class GetAllDefinesVisitor implements TreeVisitor {
     public void visit(IncludeNode n) {
 
     }
+
+    @Override
+    public void visit(BaseNode n) {
+
+    }
 }

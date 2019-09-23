@@ -18,8 +18,6 @@ public final class ConditionBlockNode extends ConditionNode implements Visitable
     private ELSECondition elseBlock;
     private final ConditionalNode parent;
 
-    //TODO: no access to the containing source file yet. --> is it even needed?
-
     public ConditionBlockNode(ConditionalNode parent) {
         this.parent = parent;
         this.elseIfBlocks = new ArrayList<>();

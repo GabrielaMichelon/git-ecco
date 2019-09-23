@@ -26,4 +26,6 @@ public interface TreeVisitor {
     void visit(Undef d);
 
     void visit(IncludeNode n);
+
+    void visit(BaseNode n);
 }

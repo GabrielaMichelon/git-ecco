@@ -1,4 +1,4 @@
-package at.jku.isse.gitecco.translation.constraintcomputation.util;
+package at.jku.isse.gitecco.translation.visitor;
 
 import at.jku.isse.gitecco.core.git.Change;
 import at.jku.isse.gitecco.core.tree.nodes.*;
@@ -106,5 +106,15 @@ public class GetNodesForChangeVisitor implements TreeVisitor {
     @Override
     public void visit(IncludeNode n) {
 
+    }
+
+    @Override
+    public void visit(BaseNode n) {
+        if(change != null && (n.containsChange(change) || change.contains(n))) {
+            this.changedNodes.add(n);
+            //this is necessary to mark newly added features as changed.
+            if(!change.contains(n)) change = null;
+            //change is set to null so that no further nodes will be interpreted as changed.
+        }
     }
 }

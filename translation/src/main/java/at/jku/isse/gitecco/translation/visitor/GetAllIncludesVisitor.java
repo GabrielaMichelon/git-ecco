@@ -1,4 +1,4 @@
-package at.jku.isse.gitecco.translation.constraintcomputation.util;
+package at.jku.isse.gitecco.translation.visitor;
 
 import at.jku.isse.gitecco.core.tree.nodes.*;
 import at.jku.isse.gitecco.core.tree.visitor.TreeVisitor;
@@ -80,9 +80,27 @@ public class GetAllIncludesVisitor implements TreeVisitor {
         if(this.lineInformation != null){
             if(this.lineInformation > n.getLineInfo()){
                 includeNodes.add(n);
+                collectRecursive(n);
             }
         }else{
             includeNodes.add(n);
+            collectRecursive(n);
         }
+    }
+
+    private void collectRecursive(IncludeNode n) {
+        GetAllIndirectIncludesVisitor v = new GetAllIndirectIncludesVisitor(n.getLineInfo());
+        n.getParent().getContainingFile().getBaseNode().accept(v);
+
+        includeNodes.addAll(v.getIncludeNodes());
+
+        for (IncludeNode includeNode : v.getIncludeNodes()) {
+            collectRecursive(includeNode);
+        }
+    }
+
+    @Override
+    public void visit(BaseNode n) {
+
     }
 }

@@ -7,7 +7,7 @@ import at.jku.isse.gitecco.core.tree.nodes.ConditionalNode;
 import at.jku.isse.gitecco.core.tree.nodes.FileNode;
 import at.jku.isse.gitecco.core.tree.nodes.SourceFileNode;
 import at.jku.isse.gitecco.translation.constraintcomputation.util.ChangeConstraint;
-import at.jku.isse.gitecco.translation.constraintcomputation.util.GetNodesForChangeVisitor;
+import at.jku.isse.gitecco.translation.visitor.GetNodesForChangeVisitor;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,8 +27,8 @@ public class App {
         final boolean debug = true;
         //TODO: planned arguments: DEBUG, dispose tree, max commits, repo path, csv path(feature id), outpath for ecco
         //maybe even start commit and/or end commit (hashes or numbers)
-        String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin";
-        //String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\Test31 - Copy";
+        //String repoPath = "C:\\obermanndavid\\git-ecco-test\\test_repo_gabi";
+        String repoPath = "C:\\obermanndavid\\git-ecco-test\\test_featureid\\Marlin";
 
         //optional features of the project obtained by the featureID (chosen that which is in almost cases external feature)
         String[] featuresToAdd = {"BASE","F_FILE_DIR_DIRTY", "F_UNUSED", "F_FILE_UNBUFFERED_READ", "RAMPS_V_1_0", "__AVR_ATmega2560__", "F_CPU", "F_OFLAG", "WATCHPERIOD",
@@ -37,13 +37,13 @@ public class App {
                                   "HEATER_1_USES_THERMISTOR", "THERMISTORHEATER_1", "HEATER_USES_THERMISTOR_1", "HEATER_2_USES_AD595", "HEATER_1_MAXTEMP", "THERMISTORHEATER_0",
                                    "HEATER_1_MINTEMP", "HEATER_0_USES_THERMISTOR", "RESET_MANUAL", "PID_PID"};
         ArrayList<String> featureList = new ArrayList<>();
-        for(String feat : featuresToAdd){
+        for(String feat : featuresToAdd) {
             featureList.add(feat);
         }
         //add directories that we need to include manually to get all the files to create a clean version because "/usr/local/include"
         // and "/usr/include")does not includes files outside the root path
         final List<String> dirFiles = new ArrayList<>();
-        dirFiles.add("C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin\\Marlin");
+        //dirFiles.add("C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin\\Marlin");
         final GitHelper gitHelper = new GitHelper(repoPath, dirFiles);
         final GitCommitList commitList = new GitCommitList(gitHelper);
 
@@ -57,7 +57,7 @@ public class App {
             Set<ConditionalNode> changedNodes = new HashSet<>();
             List<String> changedFiles = gitHelper.getChangedFiles(gc);
             //directory to save the output
-            final File outputDirectory = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\Commits\\"+gcl.getBranch(gc,gcl));
+            final File outputDirectory = new File("C:\\obermanndavid\\git-ecco-test\\test_repo_gabi_log"+gcl.getBranch(gc,gcl));
 
 
             //retrieve changed nodes

@@ -122,4 +122,11 @@ public class GetAllFeaturesDefinesIncludesVisitor implements TreeVisitor {
     public void visit(IncludeNode n) {
         includes.add(n);
     }
+
+    @Override
+    public void visit(BaseNode n) {
+        for (Feature feature : Feature.parseCondition(n.getLocalCondition())) {
+            if(!featureMap.containsKey(feature)) featureMap.put(feature, n.getLineFrom());
+        }
+    }
 }

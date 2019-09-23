@@ -1,21 +1,27 @@
-package at.jku.isse.gitecco.core.tree.visitor;
+package at.jku.isse.gitecco.translation.visitor;
 
 import at.jku.isse.gitecco.core.tree.nodes.*;
-import at.jku.isse.gitecco.core.type.Feature;
+import at.jku.isse.gitecco.core.tree.visitor.TreeVisitor;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
-public class GetAllFeaturesVisitor implements TreeVisitor {
-    private final Set<Feature> features;
+public class GetAllIndirectIncludesVisitor implements TreeVisitor {
 
-    public GetAllFeaturesVisitor() {
-        this.features = new HashSet<>();
+    private List<IncludeNode> includeNodes = new ArrayList<>();
+    private Integer lineInformation;
+
+
+    public List<IncludeNode> getIncludeNodes() {
+        return includeNodes;
     }
 
-    public Set<Feature> getAllFeatures() {
-        return Collections.unmodifiableSet(features);
+    /**
+     * New visitor with the linenumber that the found includes should have
+     * @param lineNumber
+     */
+    public GetAllIndirectIncludesVisitor(Integer lineNumber) {
+        this.lineInformation = lineNumber;
     }
 
     @Override
@@ -40,26 +46,27 @@ public class GetAllFeaturesVisitor implements TreeVisitor {
 
     @Override
     public void visit(IFCondition c) {
-        features.addAll(Feature.parseCondition(c.getCondition()));
+
     }
 
     @Override
     public void visit(IFDEFCondition c) {
-        features.addAll(Feature.parseCondition(c.getCondition()));
+
     }
 
     @Override
     public void visit(IFNDEFCondition c) {
-        features.addAll(Feature.parseCondition(c.getCondition()));
+
     }
 
     @Override
     public void visit(ELSECondition c) {
+
     }
 
     @Override
     public void visit(ELIFCondition c) {
-        features.addAll(Feature.parseCondition(c.getLocalCondition()));
+
     }
 
     @Override
@@ -74,11 +81,11 @@ public class GetAllFeaturesVisitor implements TreeVisitor {
 
     @Override
     public void visit(IncludeNode n) {
-
+        includeNodes.add(new IncludeNode(n.getFileName(), lineInformation, n.getParent()));
     }
 
     @Override
     public void visit(BaseNode n) {
-        features.addAll(Feature.parseCondition(n.getLocalCondition()));
+
     }
 }

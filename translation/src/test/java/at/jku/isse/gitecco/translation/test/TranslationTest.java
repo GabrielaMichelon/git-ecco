@@ -21,6 +21,35 @@ import static org.chocosolver.solver.constraints.nary.cnf.LogOp.*;
 public class TranslationTest {
 
     @Test
+    public void testCorrectedClauseAdding() {
+        String condition = "TESTVAR";
+        ExpressionSolver es = new ExpressionSolver(condition);
+
+        LinkedList<FeatureImplication> impls = new LinkedList<>();
+        impls.add(new FeatureImplication("A","FILE_H == 0"));
+        impls.add(new FeatureImplication("!(FILE_H)","FILE_H == 1"));
+        es.addClause(new Feature("FILE_H"),impls);
+
+        es.solve().entrySet().forEach(x->System.out.println(x.getKey().getName() + " = " + x.getValue()));
+    }
+
+    @Test
+    public void testunsatproblem() {
+        Model model = new Model("test1");
+
+        BoolVar y = model.boolVar("y");
+        BoolVar x = model.boolVar("x");
+        BoolVar b = model.boolVar("b");
+
+        model.addClauses(ifThenElse(x.not(),x,x.not()));
+        //model.addClauses(implies(x.not(),x));
+        model.post(b.extension());
+
+        Solution s = model.getSolver().findSolution();
+        System.out.println(s);
+    }
+
+    @Test
     public void testSolver() {
         String condition = "C>5";
 

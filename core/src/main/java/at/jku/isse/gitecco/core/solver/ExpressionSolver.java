@@ -122,9 +122,9 @@ public class ExpressionSolver {
 
 			if(elsePart == null) {
 				elsePart = LogOp.ifThenElse(ifPart,thenPart, getBoolVarFromExpr(feature.getName()).not());
-            } else {
+			} else {
 				elsePart = LogOp.ifThenElse(ifPart, thenPart, elsePart);
-            }
+			}
         }
         model.addClauses(elsePart);
     }
