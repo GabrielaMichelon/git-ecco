@@ -24,7 +24,9 @@ public class ChangeConstraint {
     //changed:
     // - used visitor pattern correctly
     // - removed unused stuff
-    //
+    // - includes were not collected recursively
+    // - getLocalCondition in IFNDEF node --> return node.getparnet etc. ? why? --> changed to just return cond.
+    // -
 
     private ArrayList<String> featureList;
 
@@ -64,19 +66,22 @@ public class ChangeConstraint {
             //reset clears the collected list of defines and cancels the linenumber limitation
             definesVisitor.reset();
 
-            //for each found includenode collect all the define nodes
+            //collect all includes and defines that are included by some include statement
+            Map<IncludeNode, List<DefineNode>> includedDefines = new HashMap<>();
             for (IncludeNode includeNode : getAllIncludesVisitor.getIncludeNodes()) {
-                //TODO: assign the define the linenumber of the include node
-                //TODO: conditional includes --> include nodes must be walked up (except base. if base is hit stop walking up the condition tree)
                 tree.getChild(includeNode.getFileName()).accept(definesVisitor);
+                includedDefines.put(includeNode,definesVisitor.getModifiedDefines(includeNode.getLineInfo()));
+                definesVisitor.reset();
             }
 
-            /*//getting includes inside each block above changedNode
-            for (ConditionalNode conditionalNode : visitor.getchangedNodes()) {
-                for (IncludeNode includesBlocks : conditionalNode.getIncludeNodes()) {
-                    getAllIncludesVisitor.visit(includesBlocks);
+            //TODO: conditional includes --> include nodes must be walked up (except base. if base is hit stop walking up the condition tree)
+
+            for (Map.Entry<IncludeNode, List<DefineNode>> entry : includedDefines.entrySet()) {
+                for (DefineNode defineNode : entry.getValue()) {
+                    //TODO: add defines to all defines. --> consider conditions
+                    //allDefines.add(new Define())
                 }
-            }*/
+            }
 
             //getting defineNodes inside includeFiles
             for (IncludeNode includeInsideIncludesChangedNode : getAllIncludesVisitor.getIncludeNodes()) {
@@ -108,7 +113,7 @@ public class ChangeConstraint {
                 definesVisitor.reset();
             }
 
-
+            //TODO: ???
             if (!changedNode.getLocalCondition().contains("BASE")) {
                 ConditionalNode changedNodeParent = changedNode.getParent().getIfBlock().getParent().getParent();
                 ConditionalNode conditionalNode = changedNode.getParent().getParent();
@@ -202,6 +207,8 @@ public class ChangeConstraint {
                         solver.addClause(feature, featureImplications);
                 }
                 solver.setExpr(changedNode.getLocalCondition());
+
+                //TODO: down from here should be fine
 
                 //after added all clauses the solver returns a solution
                 Map<Feature, Integer> result = solver.solve();

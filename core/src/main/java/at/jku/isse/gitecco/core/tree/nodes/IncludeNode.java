@@ -10,11 +10,24 @@ public final class IncludeNode extends ConditionNode implements Visitable {
     private final String fileName;
     private final int lineInfo;
     private final ConditionalNode parent;
+    private final String condition;
 
     public IncludeNode(String fileName, int lineInfo, ConditionalNode parent) {
         this.fileName = fileName;
         this.lineInfo = lineInfo;
         this.parent = parent;
+        this.condition = parent.getCondition();
+    }
+
+    public IncludeNode(String fileName, int lineInfo, ConditionalNode parent, String additionalCond) {
+        this.fileName = fileName;
+        this.lineInfo = lineInfo;
+        this.parent = parent;
+        this.condition = "(" + additionalCond + ") && (" + parent.getCondition() + ")";
+    }
+
+    public String getCondition() {
+        return this.condition;
     }
 
     /**
@@ -38,10 +51,7 @@ public final class IncludeNode extends ConditionNode implements Visitable {
         v.visit(this);
     }
 
-    /**
-     * Never used --> always accessed through the parent node.
-     * @return
-     */
+
     @Override
     public ConditionalNode getParent() {
         return this.parent;

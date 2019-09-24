@@ -94,6 +94,9 @@ public class App {
                         //create the constraints for each changed node and generates the variant
                         changeConstraint.constructConstraintPerFeature(classNodes, changedNodes, gitHelper, change, visitor, child, outputDirectory, gc.getTree());
 
+                        //TODO: variant generation
+                        //TODO: Map<Feature, Integer> result --> config for preprocssing
+                        //TODO: ecco stuff
 
                     }
                 }
@@ -109,7 +112,7 @@ public class App {
             //for each changed node:
             for (ConditionalNode changedNode : changedNodes) {
 
-                //TODO: previous constraints and affected constraints
+                //previous constraints and affected constraints
                 //new class that takes a changed node and walks up the tree and build the implication queue.
                 //same for the affected blocks --> tree might need additional methods
                 //for retrieving conjunctive conditions that are affected by a changed block.
@@ -123,7 +126,7 @@ public class App {
                 System.out.println("CONFIG FOR PREPROCESSING:");
                 result.entrySet().forEach(x -> System.out.print(x.getKey() + " = " + x.getValue() + "; "));
 
-                //TODO: ecco commit with solution + marked as changed
+                //ecco commit with solution + marked as changed
             }*/
 
         });

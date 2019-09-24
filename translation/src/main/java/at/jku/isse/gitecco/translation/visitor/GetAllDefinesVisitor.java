@@ -12,7 +12,7 @@ public class GetAllDefinesVisitor implements TreeVisitor {
     private List<DefineNode> defineNodes = new ArrayList<>();
     private Integer lineInformation;
 
-
+    @Deprecated
     public List<DefineNode> getDefineNodes() {
         return defineNodes;
     }
@@ -24,6 +24,19 @@ public class GetAllDefinesVisitor implements TreeVisitor {
 
     public List<DefineNode> getDefines() {
         return Collections.unmodifiableList(defineNodes);
+    }
+
+    public List<DefineNode> getModifiedDefines(int newLineinfo) {
+        List<DefineNode> ret = new ArrayList<>();
+        defineNodes.forEach(node -> {
+           if(node instanceof Define) {
+               ret.add(new Define(node.getMacroName(),((Define) node).getMacroExpansion(),newLineinfo,node.getParent()));
+           } else {
+               //in case of undefine return a new define with macro expansion zero --> heuristic for solver
+               ret.add(new Define(node.getMacroName(),"0",newLineinfo,node.getParent()));
+           }
+        });
+        return Collections.unmodifiableList(ret);
     }
 
     public void reset(){

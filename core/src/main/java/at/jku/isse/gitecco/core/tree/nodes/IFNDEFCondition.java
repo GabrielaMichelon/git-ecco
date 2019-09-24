@@ -47,9 +47,7 @@ public final class IFNDEFCondition extends ConditionalNode implements Visitable 
 
     @Override
     public String getLocalCondition() {
-        //TODO: should not be like this
-        return getParent().getIfBlock().getParent().getParent().getCondition();
-        //return this.condition;
+        return this.condition;
     }
 
     @Override

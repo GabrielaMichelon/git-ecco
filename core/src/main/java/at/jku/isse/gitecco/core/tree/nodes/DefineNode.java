@@ -88,7 +88,7 @@ public abstract class DefineNode extends ConditionNode implements Comparable<Def
      * @return null
      */
     @Override
-    public Node getParent() {
+    public ConditionalNode getParent() {
         return this.parent;
     }
 }

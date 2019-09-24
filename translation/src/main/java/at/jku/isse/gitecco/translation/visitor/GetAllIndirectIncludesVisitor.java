@@ -81,7 +81,7 @@ public class GetAllIndirectIncludesVisitor implements TreeVisitor {
 
     @Override
     public void visit(IncludeNode n) {
-        includeNodes.add(new IncludeNode(n.getFileName(), lineInformation, n.getParent()));
+        includeNodes.add(new IncludeNode(n.getFileName(), lineInformation, n.getParent(),n.getCondition()));
     }
 
     @Override
