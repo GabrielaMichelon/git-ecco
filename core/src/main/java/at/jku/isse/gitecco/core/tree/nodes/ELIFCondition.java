@@ -35,11 +35,8 @@ public final class ELIFCondition extends ConditionalNode {
         for (ConditionBlockNode child : getChildren()) {
             child.accept(v);
         }
-        for (DefineNode defineNode : getDefineNodes()) {
-            defineNode.accept(v);
-        }
-        for (IncludeNode includeNode : getIncludeNodes()) {
-            includeNode.accept(v);
+        for (NonConditionalNode node : getDefinesAndIncludes()) {
+            node.accept(v);
         }
         v.visit(this);
     }

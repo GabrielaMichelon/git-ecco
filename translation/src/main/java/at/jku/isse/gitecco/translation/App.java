@@ -3,10 +3,14 @@ package at.jku.isse.gitecco.translation;
 import at.jku.isse.gitecco.core.git.Change;
 import at.jku.isse.gitecco.core.git.GitCommitList;
 import at.jku.isse.gitecco.core.git.GitHelper;
+import at.jku.isse.gitecco.core.preprocessor.PreprocessorHelper;
 import at.jku.isse.gitecco.core.tree.nodes.ConditionalNode;
 import at.jku.isse.gitecco.core.tree.nodes.FileNode;
 import at.jku.isse.gitecco.core.tree.nodes.SourceFileNode;
-import at.jku.isse.gitecco.translation.constraintcomputation.util.ChangeConstraint;
+import at.jku.isse.gitecco.core.type.Feature;
+import at.jku.isse.gitecco.core.type.FeatureImplication;
+import at.jku.isse.gitecco.translation.constraintcomputation.util.ConstraintComputer;
+import at.jku.isse.gitecco.translation.visitor.BuildImplicationsVisitor;
 import at.jku.isse.gitecco.translation.visitor.GetNodesForChangeVisitor;
 
 import java.io.File;
@@ -15,10 +19,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class App {
 
@@ -50,19 +51,14 @@ public class App {
         commitList.addGitCommitListener((gc, gcl) -> {
 
             //TODO: do the git commit and measure time or whatever
-            //for a guide how to make a git commit with jgit: git-ecco commit a071bdd677d9a7555f60e026a4b0ba975be09792
-            //file GitCommitList.java method: enableAutoCommitConfig()
 
             GetNodesForChangeVisitor visitor = new GetNodesForChangeVisitor();
             Set<ConditionalNode> changedNodes = new HashSet<>();
             List<String> changedFiles = gitHelper.getChangedFiles(gc);
-            //directory to save the output
-            final File outputDirectory = new File("C:\\obermanndavid\\git-ecco-test\\test_repo_gabi_log"+gcl.getBranch(gc,gcl));
-
 
             //retrieve changed nodes
             for (FileNode child : gc.getTree().getChildren()) {
-                if (child instanceof SourceFileNode && changedFiles.contains(child.getFilePath().replace("/", "\\"))) {
+                if(child instanceof SourceFileNode && changedFiles.contains(child.getFilePath().replace("/","\\"))) {
                     Change[] changes = null;
                     try {
                         changes = gitHelper.getFileDiffs(gc, child);
@@ -70,64 +66,36 @@ public class App {
                         System.err.println("error while executing the file diff: " + child.getFilePath());
                         e.printStackTrace();
                     }
-                    String fileContent = null;
-                    Path path = Paths.get(gitHelper.getPath() + File.separator + child.getFilePath());
-                    try {
-                        fileContent = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
 
                     for (Change change : changes) {
                         visitor.setChange(change);
                         child.accept(visitor);
                         changedNodes.addAll(visitor.getchangedNodes());
-
-                        Change allClass = new Change(0, change.getTo());
-                        visitor.setChange(allClass);
-                        child.accept(visitor);
-                        ArrayList<ConditionalNode> classNodes = new ArrayList<>();
-
-                        classNodes.addAll(visitor.getchangedNodes());
-                        ChangeConstraint changeConstraint = new ChangeConstraint();
-                        changeConstraint.setFeatureList(featureList);
-                        //create the constraints for each changed node and generates the variant
-                        changeConstraint.constructConstraintPerFeature(classNodes, changedNodes, gitHelper, change, visitor, child, outputDirectory, gc.getTree());
-
-                        //TODO: variant generation
-                        //TODO: Map<Feature, Integer> result --> config for preprocssing
-                        //TODO: ecco stuff
-
                     }
                 }
-
             }
-/*
-            //compute assignment for preprocessing and generate variants
-            ExpressionSolver solver = new ExpressionSolver();
-            PreprocessorHelper pph = new PreprocessorHelper();
+
+
             final File gitFolder = new File(gitHelper.getPath());
             final File eccoFolder = new File(gitFolder.getParent(), "ecco");
+            final ConstraintComputer constraintComputer = new ConstraintComputer(featureList);
+            final PreprocessorHelper pph = new PreprocessorHelper();
+            Map<Feature, Integer> config;
 
             //for each changed node:
+            //compute config
+            //compute changed
+            //do preprocessing/variant gen
+            //ecco commit
             for (ConditionalNode changedNode : changedNodes) {
-
-                //previous constraints and affected constraints
-                //new class that takes a changed node and walks up the tree and build the implication queue.
-                //same for the affected blocks --> tree might need additional methods
-                //for retrieving conjunctive conditions that are affected by a changed block.
-
-
-
-                solver.setExpr(changedNode.getCondition());
-                Map<Feature, Integer> result = solver.solve();
-                solver.reset();
-                pph.generateVariants(result, gitFolder, eccoFolder);
-                System.out.println("CONFIG FOR PREPROCESSING:");
-                result.entrySet().forEach(x -> System.out.print(x.getKey() + " = " + x.getValue() + "; "));
-
-                //ecco commit with solution + marked as changed
-            }*/
+                //compute the config for the var gen
+                config = constraintComputer.computeConfig(changedNode, gc.getTree());
+                //generate the variant for this config
+                pph.generateVariants(config, gitFolder, eccoFolder, gitHelper.getDirFiles());
+                //TODO: compute the marked as changed features.
+                //TODO: test
+                //TODO: ecco commit with solution + marked as changed
+            }
 
         });
 

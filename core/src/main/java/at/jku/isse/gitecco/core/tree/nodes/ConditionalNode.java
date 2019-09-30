@@ -5,6 +5,8 @@ import at.jku.isse.gitecco.core.git.Change;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Abstract class for representing a conditional expression.
@@ -15,8 +17,9 @@ public abstract class ConditionalNode extends ConditionNode {
     private int lineTo = -1;
     private final List<ConditionBlockNode> children;
     private final ConditionBlockNode parent;
-    private List<DefineNode> defineNodes = new ArrayList();
-    private final List<IncludeNode> includeNodes = new ArrayList<>();
+    private final List<NonConditionalNode> definesAndIncludes = new ArrayList<>();
+    //private List<DefineNode> defineNodes = new ArrayList();
+    //private final List<IncludeNode> includeNodes = new ArrayList<>();
 
     public ConditionalNode(ConditionBlockNode parent) {
         children = new ArrayList<ConditionBlockNode>();
@@ -28,7 +31,7 @@ public abstract class ConditionalNode extends ConditionNode {
      * @param n the IncludeNode
      */
     public void addInclude(IncludeNode n) {
-        this.includeNodes.add(n);
+        this.definesAndIncludes.add(n);
     }
 
     /**
@@ -36,19 +39,11 @@ public abstract class ConditionalNode extends ConditionNode {
      * @return list of all includes in the conditional node.
      */
     public List<IncludeNode> getIncludeNodes() {
-        return Collections.unmodifiableList(includeNodes);
-    }
-
-    /**
-     * Adds a new define to the node.
-     * @param d
-     */
-    public void addDefineNode(DefineNode d) {
-        this.defineNodes.add(d);
-    }
-
-    public void deleteDefineNode(DefineNode d){
-        this.defineNodes.remove(d);
+        return definesAndIncludes
+                .stream()
+                .filter(x -> x instanceof IncludeNode)
+                .map(x -> (IncludeNode) x)
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     /**
@@ -56,7 +51,27 @@ public abstract class ConditionalNode extends ConditionNode {
      * @return
      */
     public List<DefineNode> getDefineNodes() {
-        return Collections.unmodifiableList(defineNodes);
+        return definesAndIncludes
+                .stream()
+                .filter(x -> x instanceof DefineNode)
+                .map(x -> (DefineNode) x)
+                .collect(Collectors.toCollection(ArrayList::new));
+    }
+
+    public List<NonConditionalNode> getDefinesAndIncludes () {
+        return definesAndIncludes;
+    }
+
+    /**
+     * Adds a new define to the node.
+     * @param d
+     */
+    public void addDefineNode(DefineNode d) {
+        this.definesAndIncludes.add(d);
+    }
+
+    public void deleteDefineNode(DefineNode d){
+        this.definesAndIncludes.remove(d);
     }
 
     /**

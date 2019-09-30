@@ -7,43 +7,16 @@ import java.util.Objects;
 /**
  * SuperClass for all define nodes (define, undef)
  */
-public abstract class DefineNode extends ConditionNode implements Comparable<DefineNode>, Visitable {
+public abstract class DefineNode extends NonConditionalNode implements Comparable<DefineNode>, Visitable {
     private final String macroName;
-    private final int lineInfo;
-    private final ConditionalNode parent;
-    private final String condition;
 
     public DefineNode(String name, int lineInfo, ConditionalNode parent) {
-        this.lineInfo = lineInfo;
+        super(lineInfo, parent);
         this.macroName = name;
-        this.parent = parent;
-        condition = parent.getLocalCondition();
-    }
-
-    public DefineNode(String name, int lineInfo, ConditionalNode includeParent, Node defineNodeParent) {
-        this.lineInfo = lineInfo;
-        this.macroName = name;
-        ConditionalNode condParent = (ConditionalNode) includeParent;
-        this.parent = condParent;
-        ConditionalNode cond = (ConditionalNode) defineNodeParent;
-        if (condParent.getLocalCondition() != null) {
-            this.condition = "(" + condParent.getCondition() + ") && (" + ((ConditionalNode) defineNodeParent).getLocalCondition() + ")";
-        }else{
-            this.condition =  ((ConditionalNode) defineNodeParent).getLocalCondition();
-        }
-
-    }
-
-    public String getCondition() {
-        return condition;
     }
 
     public String getMacroName() {
         return macroName;
-    }
-
-    public int getLineInfo() {
-        return this.lineInfo;
     }
 
     /**
@@ -55,7 +28,7 @@ public abstract class DefineNode extends ConditionNode implements Comparable<Def
      * @return
      */
     public boolean isIdentical(DefineNode n) {
-        return this.equals(n) && this.lineInfo == n.lineInfo;
+        return this.equals(n) && this.getLineInfo() == n.getLineInfo();
     }
 
 
@@ -72,23 +45,13 @@ public abstract class DefineNode extends ConditionNode implements Comparable<Def
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         DefineNode that = (DefineNode) o;
-        return lineInfo == that.lineInfo &&
+        return getLineInfo() == that.getLineInfo() &&
                 macroName.equals(that.macroName) &&
-                Objects.equals(parent, that.parent);
+                Objects.equals(getParent(), that.getParent());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(macroName, lineInfo);
-    }
-
-    /**
-     * Never needed for define nodes. Will always be accessed through parent.
-     *
-     * @return null
-     */
-    @Override
-    public ConditionalNode getParent() {
-        return this.parent;
+        return Objects.hash(macroName, getLineInfo());
     }
 }
