@@ -3,7 +3,7 @@ package at.jku.isse.gitecco.core.tree.nodes;
 import at.jku.isse.gitecco.core.tree.visitor.TreeVisitor;
 import at.jku.isse.gitecco.core.tree.visitor.Visitable;
 
-public class BaseNode extends ConditionalNode implements Visitable {
+public final class BaseNode extends ConditionalNode implements Visitable {
     private final SourceFileNode file;
 
     public BaseNode(SourceFileNode file,int linecnt) {
@@ -36,11 +36,8 @@ public class BaseNode extends ConditionalNode implements Visitable {
         for (ConditionBlockNode child : getChildren()) {
             child.accept(v);
         }
-        for (DefineNode defineNode : getDefineNodes()) {
-            defineNode.accept(v);
-        }
-        for (IncludeNode includeNode : getIncludeNodes()) {
-            includeNode.accept(v);
+        for (NonConditionalNode node : getDefinesAndIncludes()) {
+            node.accept(v);
         }
         v.visit(this);
     }

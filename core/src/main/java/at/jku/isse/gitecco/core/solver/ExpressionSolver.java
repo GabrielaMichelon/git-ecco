@@ -126,7 +126,7 @@ public class ExpressionSolver {
 				elsePart = LogOp.ifThenElse(ifPart, thenPart, elsePart);
 			}
         }
-        model.addClauses(elsePart);
+        if(elsePart != null) model.addClauses(elsePart);
     }
 
     /**

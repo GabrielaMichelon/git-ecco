@@ -2,6 +2,7 @@ package at.jku.isse.gitecco.translation.constraintcomputation.util;
 
 import at.jku.isse.gitecco.core.git.GitHelper;
 import at.jku.isse.gitecco.core.solver.ExpressionSolver;
+import at.jku.isse.gitecco.core.tree.nodes.BaseNode;
 import at.jku.isse.gitecco.core.tree.nodes.ConditionalNode;
 import at.jku.isse.gitecco.core.tree.nodes.RootNode;
 import at.jku.isse.gitecco.core.type.Feature;
@@ -68,7 +69,29 @@ public class ConstraintComputer {
      * @return
      */
     public Set<Feature> computeChangedFeatures (ConditionalNode changedNode) {
-        return null;
+        ExpressionSolver solver = new ExpressionSolver();
+        boolean repeat = false;
+        Set<Feature> ret = null;
+
+        while(!(changedNode instanceof BaseNode) && repeat) {
+            solver.setExpr(changedNode.getLocalCondition());
+            ret = solver.solve()
+                    .entrySet()
+                    .stream()
+                    .filter(entry -> featureList.contains(entry.getKey()) && entry.getValue()!=0)
+                    .map(entry -> entry.getKey())
+                    .collect(Collectors.toSet());
+
+            repeat = ret.size() < 1 ? true : false;
+            if(repeat) changedNode = changedNode.getParent().getParent();
+        }
+
+        if(ret == null || repeat) {
+            ret = new HashSet<>();
+            ret.add(new Feature("BASE"));
+        }
+
+        return ret;
     }
 }
 

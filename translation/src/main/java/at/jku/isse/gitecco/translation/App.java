@@ -8,17 +8,10 @@ import at.jku.isse.gitecco.core.tree.nodes.ConditionalNode;
 import at.jku.isse.gitecco.core.tree.nodes.FileNode;
 import at.jku.isse.gitecco.core.tree.nodes.SourceFileNode;
 import at.jku.isse.gitecco.core.type.Feature;
-import at.jku.isse.gitecco.core.type.FeatureImplication;
 import at.jku.isse.gitecco.translation.constraintcomputation.util.ConstraintComputer;
-import at.jku.isse.gitecco.translation.visitor.BuildImplicationsVisitor;
 import at.jku.isse.gitecco.translation.visitor.GetNodesForChangeVisitor;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 
 public class App {
@@ -44,7 +37,7 @@ public class App {
         //add directories that we need to include manually to get all the files to create a clean version because "/usr/local/include"
         // and "/usr/include")does not includes files outside the root path
         final List<String> dirFiles = new ArrayList<>();
-        //dirFiles.add("C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin\\Marlin");
+        dirFiles.add("C:\\obermanndavid\\git-ecco-test\\test_featureid\\Marlin\\Marlin");
         final GitHelper gitHelper = new GitHelper(repoPath, dirFiles);
         final GitCommitList commitList = new GitCommitList(gitHelper);
 
@@ -57,7 +50,7 @@ public class App {
             List<String> changedFiles = gitHelper.getChangedFiles(gc);
 
             //retrieve changed nodes
-            for (FileNode child : gc.getTree().getChildren()) {
+            for (FileNode child : gc.getTree().getChildren()) { //TODO: remove changed only
                 if(child instanceof SourceFileNode && changedFiles.contains(child.getFilePath().replace("/","\\"))) {
                     Change[] changes = null;
                     try {
@@ -81,6 +74,7 @@ public class App {
             final ConstraintComputer constraintComputer = new ConstraintComputer(featureList);
             final PreprocessorHelper pph = new PreprocessorHelper();
             Map<Feature, Integer> config;
+            Set<Feature> changed;
 
             //for each changed node:
             //compute config
@@ -92,11 +86,18 @@ public class App {
                 config = constraintComputer.computeConfig(changedNode, gc.getTree());
                 //generate the variant for this config
                 pph.generateVariants(config, gitFolder, eccoFolder, gitHelper.getDirFiles());
-                //TODO: compute the marked as changed features.
-                //TODO: test
+                //compute the marked as changed features.
+                changed = constraintComputer.computeChangedFeatures(changedNode);
+
+                //output for test
+                System.out.println("Changed node: " + changedNode.getLocalCondition() + " @" + changedNode.getLineFrom());
+                config.entrySet().forEach(x-> System.out.println(x.getKey() + " = " + x.getValue()));
+                System.out.println("");
+                changed.forEach(x->System.out.print(x.getName() + "' "));
+                System.out.println("\n------------------------------------------------------");
+
                 //TODO: ecco commit with solution + marked as changed
             }
-
         });
 
         gitHelper.getAllCommits(commitList);

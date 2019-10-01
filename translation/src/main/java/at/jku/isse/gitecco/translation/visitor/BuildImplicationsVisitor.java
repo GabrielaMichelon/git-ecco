@@ -115,7 +115,9 @@ public class BuildImplicationsVisitor implements TreeVisitor {
     @Override
     public void visit(IncludeNode n) {
         BuildImplicationsVisitor v = new BuildImplicationsVisitor(implMap, root, n);
-        root.getChild(n.getFileName()).accept(v);
+        FileNode sfn = root.getChild(n.getFileName());
+        if(sfn != null) sfn.accept(v);
+        else System.out.println(n.getFileName() + " cannot be found in the repository");
     }
 
     @Override
