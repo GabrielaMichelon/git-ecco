@@ -1,5 +1,5 @@
 dependencies {
 	compile project(':core')
-
+	implementation files('core/libs/ecco/ecco-service-0.1.8-2019-10-01.jar')
 	testCompile project(':featureid')
 }

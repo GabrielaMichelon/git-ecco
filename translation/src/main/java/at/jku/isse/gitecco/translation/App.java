@@ -1,5 +1,6 @@
 package at.jku.isse.gitecco.translation;
 
+import at.jku.isse.ecco.service.EccoService;
 import at.jku.isse.gitecco.core.git.Change;
 import at.jku.isse.gitecco.core.git.GitCommitList;
 import at.jku.isse.gitecco.core.git.GitHelper;
@@ -10,9 +11,15 @@ import at.jku.isse.gitecco.core.tree.nodes.SourceFileNode;
 import at.jku.isse.gitecco.core.type.Feature;
 import at.jku.isse.gitecco.translation.constraintcomputation.util.ConstraintComputer;
 import at.jku.isse.gitecco.translation.visitor.GetNodesForChangeVisitor;
+import org.testng.annotations.Test;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class App {
 
@@ -22,7 +29,7 @@ public class App {
         //TODO: planned arguments: DEBUG, dispose tree, max commits, repo path, csv path(feature id), outpath for ecco
         //maybe even start commit and/or end commit (hashes or numbers)
         //String repoPath = "C:\\obermanndavid\\git-ecco-test\\test_repo_gabi";
-        String repoPath = "C:\\obermanndavid\\git-ecco-test\\test_featureid\\Marlin";
+        String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin";
 
         //optional features of the project obtained by the featureID (chosen that which is in almost cases external feature)
         String[] featuresToAdd = {"BASE","F_FILE_DIR_DIRTY", "F_UNUSED", "F_FILE_UNBUFFERED_READ", "RAMPS_V_1_0", "__AVR_ATmega2560__", "F_CPU", "F_OFLAG", "WATCHPERIOD",
@@ -37,9 +44,15 @@ public class App {
         //add directories that we need to include manually to get all the files to create a clean version because "/usr/local/include"
         // and "/usr/include")does not includes files outside the root path
         final List<String> dirFiles = new ArrayList<>();
-        dirFiles.add("C:\\obermanndavid\\git-ecco-test\\test_featureid\\Marlin\\Marlin");
+        dirFiles.add("C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin");
         final GitHelper gitHelper = new GitHelper(repoPath, dirFiles);
         final GitCommitList commitList = new GitCommitList(gitHelper);
+
+        //creating ecco repository for each commit
+        //set this path to where the results should be stored
+        final Path OUTPUT_DIR = Paths.get("C:\\Users\\gabil\\Desktop\\ECCO_Work\\variant_result");
+        EccoService service = new EccoService();
+        service.setRepositoryDir(OUTPUT_DIR.resolve("repo"));
 
         commitList.addGitCommitListener((gc, gcl) -> {
 
@@ -97,7 +110,38 @@ public class App {
                 System.out.println("\n------------------------------------------------------");
 
                 //TODO: ecco commit with solution + marked as changed
+                //map with the name of the feature and version and a boolean to set true when it is already incremented in the analysed commit
+                String configourationVariant = "";
+                for (Map.Entry<Feature, Integer> configFeature: config.entrySet()){
+                    if(configFeature.getValue() !=0) {
+                        configourationVariant += ","+ configFeature.getKey().toString();
+                    }
+                }
+                configourationVariant.replaceFirst(",", "");
+
+                //folder where the variant is stored
+                final Path VARIANT_DIR = Paths.get(String.valueOf(eccoFolder));
+
+                //initializing repo
+                service.init();
+                System.out.println("Repository initialized.");
+
+                //ecco commit
+                System.out.println("Committing: " + VARIANT_DIR);
+                if (configourationVariant.isEmpty())
+                    configourationVariant = "BASE.1";
+                System.out.println("CONFIG: " + configourationVariant);
+
+                service.setBaseDir(VARIANT_DIR);
+                service.commit(configourationVariant);
+                System.out.println("Committed: " + VARIANT_DIR);
+
+                // close ecco repository
+                service.close();
+                System.out.println("Repository closed.");
+                //end ecco commit
             }
+
         });
 
         gitHelper.getAllCommits(commitList);
