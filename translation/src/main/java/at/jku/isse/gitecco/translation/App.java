@@ -104,8 +104,8 @@ public class App {
                 System.out.println("\n------------------------------------------------------");
 
                 //TODO: ecco commit with solution + marked as changed
-
-                Set<Map.Entry<Feature, Integer>> configuration;
+                //map with the name of the feature and version and a boolean to set true when it is already incremented in the analysed commit
+                //see if we create a new variant for each changedNode - VARIANT_DIR and a new repository for each changedNode?
                 String configourationVariant = "";
                 for (Map.Entry<Feature, Integer> configFeature: config.entrySet()){
                     if(configFeature.getValue() !=0) {
@@ -114,16 +114,13 @@ public class App {
                 }
                 configourationVariant.replaceFirst(",", "");
                 //folder where the variant is stored
-                final Path BENCHMARK_DIR = Paths.get(String.valueOf(eccoFolder));
+                final Path VARIANT_DIR = Paths.get(String.valueOf(eccoFolder));
                 //set this path to where the results should be stored
                 final Path OUTPUT_DIR = Paths.get("C:\\Users\\gabil\\Desktop\\ECCO_Work\\variant_result");
 
-                /**
-                 * Creates repository and computes results and stores them in OUTPUT_DIR for every scenario in BENCHMARK_DIR.
-                 */
                 CommitOperation commitOperation = new CommitOperation();
 
-                commitOperation.createRepo(BENCHMARK_DIR,OUTPUT_DIR,configourationVariant);
+                commitOperation.createRepo(VARIANT_DIR,OUTPUT_DIR,configourationVariant);
             }
         });
 

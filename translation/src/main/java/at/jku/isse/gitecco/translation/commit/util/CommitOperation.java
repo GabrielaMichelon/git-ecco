@@ -32,8 +32,7 @@ public class CommitOperation {
         service.commit(configurationString);
 
         System.out.println("Committed: " + variantDir);
-
-
+        
         // close repository
         service.close();
         System.out.println("Repository closed.");
