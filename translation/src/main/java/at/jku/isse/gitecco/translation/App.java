@@ -29,7 +29,7 @@ public class App {
         //TODO: planned arguments: DEBUG, dispose tree, max commits, repo path, csv path(feature id), outpath for ecco
         //maybe even start commit and/or end commit (hashes or numbers)
         //String repoPath = "C:\\obermanndavid\\git-ecco-test\\test_repo_gabi";
-        String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin";
+        String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\libssh-mirror\\libssh-mirror";
 
         //optional features of the project obtained by the featureID (chosen that which is in almost cases external feature)
         String[] featuresToAdd = {"BASE","F_FILE_DIR_DIRTY", "F_UNUSED", "F_FILE_UNBUFFERED_READ", "RAMPS_V_1_0", "__AVR_ATmega2560__", "F_CPU", "F_OFLAG", "WATCHPERIOD",
@@ -44,7 +44,7 @@ public class App {
         //add directories that we need to include manually to get all the files to create a clean version because "/usr/local/include"
         // and "/usr/include")does not includes files outside the root path
         final List<String> dirFiles = new ArrayList<>();
-        dirFiles.add("C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin");
+        dirFiles.add("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\libssh-mirror\\libssh-mirror");
         final GitHelper gitHelper = new GitHelper(repoPath, dirFiles);
         final GitCommitList commitList = new GitCommitList(gitHelper);
 
