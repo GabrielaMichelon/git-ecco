@@ -11,15 +11,11 @@ import at.jku.isse.gitecco.core.tree.nodes.SourceFileNode;
 import at.jku.isse.gitecco.core.type.Feature;
 import at.jku.isse.gitecco.translation.constraintcomputation.util.ConstraintComputer;
 import at.jku.isse.gitecco.translation.visitor.GetNodesForChangeVisitor;
-import org.testng.annotations.Test;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class App {
 
@@ -28,31 +24,33 @@ public class App {
         final boolean debug = true;
         //TODO: planned arguments: DEBUG, dispose tree, max commits, repo path, csv path(feature id), outpath for ecco
         //maybe even start commit and/or end commit (hashes or numbers)
-        //String repoPath = "C:\\obermanndavid\\git-ecco-test\\test_repo_gabi";
-        String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin";
+        String repoPath = "C:\\obermanndavid\\git-ecco-test\\test_featureid\\Marlin";
 
         //optional features of the project obtained by the featureID (chosen that which is in almost cases external feature)
-        String[] featuresToAdd = {"BASE","F_FILE_DIR_DIRTY", "F_UNUSED", "F_FILE_UNBUFFERED_READ", "RAMPS_V_1_0", "__AVR_ATmega2560__", "F_CPU", "F_OFLAG", "WATCHPERIOD",
-                                  "THERMISTORHEATER","THERMISTORBED", "TSd2PinMap_hHERMISTORHEATER", "PID_DEBUG", "HEATER_USES_THERMISTOR", "__AVR_ATmega328P__", "__AVR_ATmega1280__", "__AVR_ATmega168__",
-                                  "ADVANCE", "PID_OPENLOOP", "SDSUPPORT", "BED_USES_THERMISTOR", "SIMPLE_LCD", "NEWPANEL", "DEBUG_STEPS", "BED_USES_AD595", "ARDUINO",
-                                  "HEATER_1_USES_THERMISTOR", "THERMISTORHEATER_1", "HEATER_USES_THERMISTOR_1", "HEATER_2_USES_AD595", "HEATER_1_MAXTEMP", "THERMISTORHEATER_0",
-                                   "HEATER_1_MINTEMP", "HEATER_0_USES_THERMISTOR", "RESET_MANUAL", "PID_PID"};
+        String[] featuresToAdd = {"BASE", "F_FILE_DIR_DIRTY", "F_UNUSED", "F_FILE_UNBUFFERED_READ", "RAMPS_V_1_0", "__AVR_ATmega2560__", "F_CPU", "F_OFLAG", "WATCHPERIOD",
+                "THERMISTORHEATER", "THERMISTORBED", "TSd2PinMap_hHERMISTORHEATER", "PID_DEBUG", "HEATER_USES_THERMISTOR", "__AVR_ATmega328P__", "__AVR_ATmega1280__", "__AVR_ATmega168__",
+                "ADVANCE", "PID_OPENLOOP", "SDSUPPORT", "BED_USES_THERMISTOR", "SIMPLE_LCD", "NEWPANEL", "DEBUG_STEPS", "BED_USES_AD595", "ARDUINO",
+                "HEATER_1_USES_THERMISTOR", "THERMISTORHEATER_1", "HEATER_USES_THERMISTOR_1", "HEATER_2_USES_AD595", "HEATER_1_MAXTEMP", "THERMISTORHEATER_0",
+                "HEATER_1_MINTEMP", "HEATER_0_USES_THERMISTOR", "RESET_MANUAL", "PID_PID"};
         ArrayList<String> featureList = new ArrayList<>();
-        for(String feat : featuresToAdd) {
+        for (String feat : featuresToAdd) {
             featureList.add(feat);
         }
         //add directories that we need to include manually to get all the files to create a clean version because "/usr/local/include"
         // and "/usr/include")does not includes files outside the root path
         final List<String> dirFiles = new ArrayList<>();
-        dirFiles.add("C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin");
+        dirFiles.add("C:\\obermanndavid\\git-ecco-test\\test_featureid\\Marlin\\Marlin");
         final GitHelper gitHelper = new GitHelper(repoPath, dirFiles);
         final GitCommitList commitList = new GitCommitList(gitHelper);
 
         //creating ecco repository for each commit
         //set this path to where the results should be stored
-        final Path OUTPUT_DIR = Paths.get("C:\\Users\\gabil\\Desktop\\ECCO_Work\\variant_result");
+        final Path OUTPUT_DIR = Paths.get("C:\\obermanndavid\\git-ecco-test\\test_featureid\\test_trans\\variant_results");
         EccoService service = new EccoService();
         service.setRepositoryDir(OUTPUT_DIR.resolve("repo"));
+        //initializing repo
+        service.init();
+        System.out.println("Repository initialized.");
 
         commitList.addGitCommitListener((gc, gcl) -> {
 
@@ -63,13 +61,13 @@ public class App {
             List<String> changedFiles = gitHelper.getChangedFiles(gc);
 
             //retrieve changed nodes
-            for (FileNode child : gc.getTree().getChildren()) { //TODO: remove changed only
-                if(child instanceof SourceFileNode && changedFiles.contains(child.getFilePath().replace("/","\\"))) {
+            for (FileNode child : gc.getTree().getChildren()) {
+                if (child instanceof SourceFileNode) {
                     Change[] changes = null;
                     try {
                         changes = gitHelper.getFileDiffs(gc, child);
                     } catch (Exception e) {
-                        System.err.println("error while executing the file diff: " + child.getFilePath());
+                        System.err.println("error while executing the file diff: "+child.getFilePath());
                         e.printStackTrace();
                     }
 
@@ -89,62 +87,57 @@ public class App {
             Map<Feature, Integer> config;
             Set<Feature> changed;
 
-            //for each changed node:
-            //compute config
-            //compute changed
-            //do preprocessing/variant gen
-            //ecco commit
+
             for (ConditionalNode changedNode : changedNodes) {
                 //compute the config for the var gen
                 config = constraintComputer.computeConfig(changedNode, gc.getTree());
-                //generate the variant for this config
-                pph.generateVariants(config, gitFolder, eccoFolder, gitHelper.getDirFiles());
-                //compute the marked as changed features.
-                changed = constraintComputer.computeChangedFeatures(changedNode);
+                if (!config.isEmpty()) {
+                    //generate the variant for this config
+                    pph.generateVariants(config, gitFolder, eccoFolder, gitHelper.getDirFiles());
+                    //compute the marked as changed features.
+                    changed = constraintComputer.computeChangedFeatures(changedNode, config);
 
-                //output for test
-                System.out.println("Changed node: " + changedNode.getLocalCondition() + " @" + changedNode.getLineFrom());
-                config.entrySet().forEach(x-> System.out.println(x.getKey() + " = " + x.getValue()));
-                System.out.println("");
-                changed.forEach(x->System.out.print(x.getName() + "' "));
-                System.out.println("\n------------------------------------------------------");
+                    //TODO: remove
+                    //output for test
+                    System.out.println("Changed node: "+changedNode.getLocalCondition()+" @"+changedNode.getLineFrom());
+                    config.entrySet().forEach(x -> System.out.println(x.getKey()+" = "+x.getValue()));
+                    System.out.println("");
+                    changed.forEach(x -> System.out.print(x.getName()+"' "));
+                    System.out.println("\n------------------------------------------------------");
 
-                //TODO: ecco commit with solution + marked as changed
-                //map with the name of the feature and version and a boolean to set true when it is already incremented in the analysed commit
-                String configourationVariant = "";
-                for (Map.Entry<Feature, Integer> configFeature: config.entrySet()){
-                    if(configFeature.getValue() !=0) {
-                        configourationVariant += ","+ configFeature.getKey().toString();
+
+                    //map with the name of the feature and version and a boolean to set true when it is already incremented in the analysed commit
+                    String eccoConfig = "";
+                    for (Map.Entry<Feature, Integer> configFeature : config.entrySet()) {
+                        if (configFeature.getValue() != 0) {
+                            eccoConfig += ","+configFeature.getKey().toString();
+                        }
                     }
+                    eccoConfig.replaceFirst(",", "");
+
+                    //folder where the variant is stored
+                    final Path variant_dir = Paths.get(String.valueOf(eccoFolder));
+
+                    //ecco commit
+                    System.out.println("Committing: "+variant_dir);
+                    System.out.println("CONFIG: "+eccoConfig);
+
+                    service.setBaseDir(variant_dir);
+                    //actual commit
+                    service.commit(eccoConfig);
+                    System.out.println("Committed: "+variant_dir);
+
+
+                    //end ecco commit
                 }
-                configourationVariant.replaceFirst(",", "");
-
-                //folder where the variant is stored
-                final Path VARIANT_DIR = Paths.get(String.valueOf(eccoFolder));
-
-                //initializing repo
-                service.init();
-                System.out.println("Repository initialized.");
-
-                //ecco commit
-                System.out.println("Committing: " + VARIANT_DIR);
-                if (configourationVariant.isEmpty())
-                    configourationVariant = "BASE.1";
-                System.out.println("CONFIG: " + configourationVariant);
-
-                service.setBaseDir(VARIANT_DIR);
-                service.commit(configourationVariant);
-                System.out.println("Committed: " + VARIANT_DIR);
-
-                // close ecco repository
-                service.close();
-                System.out.println("Repository closed.");
-                //end ecco commit
             }
-
         });
 
         gitHelper.getAllCommits(commitList);
+
+        //close ecco repository
+        service.close();
+        System.out.println("Repository closed.");
 
     }
 

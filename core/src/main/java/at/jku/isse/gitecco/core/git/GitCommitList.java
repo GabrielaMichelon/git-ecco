@@ -161,7 +161,7 @@ public class GitCommitList extends ArrayList<GitCommit> {
 
                     });
         } catch (IOException e) {
-            e.printStackTrace();
+            if (this.size() != 0) e.printStackTrace();
         }
 
         gitCommit.setTree(tree);

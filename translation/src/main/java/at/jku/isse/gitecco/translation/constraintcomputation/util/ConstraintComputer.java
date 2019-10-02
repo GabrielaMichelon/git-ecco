@@ -56,7 +56,7 @@ public class ConstraintComputer {
         return solver.solve()
                 .entrySet()
                 .stream()
-                .filter(entry -> featureList.contains(entry.getKey()))
+                .filter(entry -> featureList.contains(entry.getKey().getName()))
                 .collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue()));
     }
 
@@ -68,17 +68,22 @@ public class ConstraintComputer {
      * @param changedNode
      * @return
      */
-    public Set<Feature> computeChangedFeatures (ConditionalNode changedNode) {
+    public Set<Feature> computeChangedFeatures (ConditionalNode changedNode, Map<Feature, Integer> config) {
         ExpressionSolver solver = new ExpressionSolver();
         boolean repeat = false;
         Set<Feature> ret = null;
 
-        while(!(changedNode instanceof BaseNode) && repeat) {
-            solver.setExpr(changedNode.getLocalCondition());
+        StringBuilder configString = new StringBuilder();
+        config.entrySet().forEach(x -> configString.append(" || ( " + x.getKey().getName() + "==" + x.getValue() + " )"));
+        String configClause = configString.toString().replaceFirst("||", "");
+        configClause = " && ( " + configClause + ")";
+
+        while(changedNode != null && !(changedNode instanceof BaseNode) && repeat) {
+            solver.setExpr(changedNode.getLocalCondition() + configClause);
             ret = solver.solve()
                     .entrySet()
                     .stream()
-                    .filter(entry -> featureList.contains(entry.getKey()) && entry.getValue()!=0)
+                    .filter(entry -> featureList.contains(entry.getKey().getName()) && entry.getValue()!=0)
                     .map(entry -> entry.getKey())
                     .collect(Collectors.toSet());
 
