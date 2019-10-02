@@ -45,7 +45,8 @@ public class App {
 
         //creating ecco repository for each commit
         //set this path to where the results should be stored
-        final Path OUTPUT_DIR = Paths.get("C:\\obermanndavid\\git-ecco-test\\test_featureid\\test_trans\\variant_results");
+        final Path OUTPUT_DIR = Paths.get("C:\\obermanndavid\\git-ecco-test\\test_featureid\\test_trans");
+        if (OUTPUT_DIR.resolve("repo").toFile().exists()) GitCommitList.recursiveDelete(OUTPUT_DIR.resolve("repo"));
         EccoService service = new EccoService();
         service.setRepositoryDir(OUTPUT_DIR.resolve("repo"));
         //initializing repo
@@ -97,23 +98,18 @@ public class App {
                     //compute the marked as changed features.
                     changed = constraintComputer.computeChangedFeatures(changedNode, config);
 
-                    //TODO: remove
-                    //output for test
-                    System.out.println("Changed node: "+changedNode.getLocalCondition()+" @"+changedNode.getLineFrom());
-                    config.entrySet().forEach(x -> System.out.println(x.getKey()+" = "+x.getValue()));
-                    System.out.println("");
-                    changed.forEach(x -> System.out.print(x.getName()+"' "));
-                    System.out.println("\n------------------------------------------------------");
-
 
                     //map with the name of the feature and version and a boolean to set true when it is already incremented in the analysed commit
                     String eccoConfig = "";
+                    int count = 0;
                     for (Map.Entry<Feature, Integer> configFeature : config.entrySet()) {
-                        if (configFeature.getValue() != 0) {
-                            eccoConfig += ","+configFeature.getKey().toString();
+                        if (configFeature.getValue() != 0 && count != 0) {
+                            eccoConfig += ","+configFeature.getKey().toString()+".1";
+                        }else if(configFeature.getValue() != 0 && count == 0){
+                            eccoConfig += configFeature.getKey().toString()+".1";
                         }
+                        count++;
                     }
-                    eccoConfig.replaceFirst(",", "");
 
                     //folder where the variant is stored
                     final Path variant_dir = Paths.get(String.valueOf(eccoFolder));
@@ -126,8 +122,6 @@ public class App {
                     //actual commit
                     service.commit(eccoConfig);
                     System.out.println("Committed: "+variant_dir);
-
-
                     //end ecco commit
                 }
             }
