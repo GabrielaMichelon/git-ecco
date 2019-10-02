@@ -1,5 +1,6 @@
 package at.jku.isse.gitecco.translation;
 
+import at.jku.isse.ecco.service.EccoService;
 import at.jku.isse.gitecco.core.git.Change;
 import at.jku.isse.gitecco.core.git.GitCommitList;
 import at.jku.isse.gitecco.core.git.GitHelper;
@@ -8,7 +9,6 @@ import at.jku.isse.gitecco.core.tree.nodes.ConditionalNode;
 import at.jku.isse.gitecco.core.tree.nodes.FileNode;
 import at.jku.isse.gitecco.core.tree.nodes.SourceFileNode;
 import at.jku.isse.gitecco.core.type.Feature;
-import at.jku.isse.gitecco.translation.commit.util.CommitOperation;
 import at.jku.isse.gitecco.translation.constraintcomputation.util.ConstraintComputer;
 import at.jku.isse.gitecco.translation.visitor.GetNodesForChangeVisitor;
 import org.testng.annotations.Test;
@@ -47,6 +47,12 @@ public class App {
         dirFiles.add("C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin");
         final GitHelper gitHelper = new GitHelper(repoPath, dirFiles);
         final GitCommitList commitList = new GitCommitList(gitHelper);
+
+        //creating ecco repository for each commit
+        //set this path to where the results should be stored
+        final Path OUTPUT_DIR = Paths.get("C:\\Users\\gabil\\Desktop\\ECCO_Work\\variant_result");
+        EccoService service = new EccoService();
+        service.setRepositoryDir(OUTPUT_DIR.resolve("repo"));
 
         commitList.addGitCommitListener((gc, gcl) -> {
 
@@ -105,7 +111,6 @@ public class App {
 
                 //TODO: ecco commit with solution + marked as changed
                 //map with the name of the feature and version and a boolean to set true when it is already incremented in the analysed commit
-                //see if we create a new variant for each changedNode - VARIANT_DIR and a new repository for each changedNode?
                 String configourationVariant = "";
                 for (Map.Entry<Feature, Integer> configFeature: config.entrySet()){
                     if(configFeature.getValue() !=0) {
@@ -113,15 +118,30 @@ public class App {
                     }
                 }
                 configourationVariant.replaceFirst(",", "");
+
                 //folder where the variant is stored
                 final Path VARIANT_DIR = Paths.get(String.valueOf(eccoFolder));
-                //set this path to where the results should be stored
-                final Path OUTPUT_DIR = Paths.get("C:\\Users\\gabil\\Desktop\\ECCO_Work\\variant_result");
 
-                CommitOperation commitOperation = new CommitOperation();
+                //initializing repo
+                service.init();
+                System.out.println("Repository initialized.");
 
-                commitOperation.createRepo(VARIANT_DIR,OUTPUT_DIR,configourationVariant);
+                //ecco commit
+                System.out.println("Committing: " + VARIANT_DIR);
+                if (configourationVariant.isEmpty())
+                    configourationVariant = "BASE.1";
+                System.out.println("CONFIG: " + configourationVariant);
+
+                service.setBaseDir(VARIANT_DIR);
+                service.commit(configourationVariant);
+                System.out.println("Committed: " + VARIANT_DIR);
+
+                // close ecco repository
+                service.close();
+                System.out.println("Repository closed.");
+                //end ecco commit
             }
+
         });
 
         gitHelper.getAllCommits(commitList);
