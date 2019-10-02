@@ -24,7 +24,7 @@ public class App {
         final boolean debug = true;
         //TODO: planned arguments: DEBUG, dispose tree, max commits, repo path, csv path(feature id), outpath for ecco
         //maybe even start commit and/or end commit (hashes or numbers)
-        String repoPath = "C:\\obermanndavid\\git-ecco-test\\test_featureid\\Marlin";
+        String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin";
 
         //optional features of the project obtained by the featureID (chosen that which is in almost cases external feature)
         String[] featuresToAdd = {"BASE", "F_FILE_DIR_DIRTY", "F_UNUSED", "F_FILE_UNBUFFERED_READ", "RAMPS_V_1_0", "__AVR_ATmega2560__", "F_CPU", "F_OFLAG", "WATCHPERIOD",
@@ -39,13 +39,13 @@ public class App {
         //add directories that we need to include manually to get all the files to create a clean version because "/usr/local/include"
         // and "/usr/include")does not includes files outside the root path
         final List<String> dirFiles = new ArrayList<>();
-        dirFiles.add("C:\\obermanndavid\\git-ecco-test\\test_featureid\\Marlin\\Marlin");
+        dirFiles.add("C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin");
         final GitHelper gitHelper = new GitHelper(repoPath, dirFiles);
         final GitCommitList commitList = new GitCommitList(gitHelper);
 
         //creating ecco repository for each commit
         //set this path to where the results should be stored
-        final Path OUTPUT_DIR = Paths.get("C:\\obermanndavid\\git-ecco-test\\test_featureid\\test_trans\\variant_results");
+        final Path OUTPUT_DIR = Paths.get("C:\\Users\\gabil\\Desktop\\ECCO_Work\\variant_result");
         EccoService service = new EccoService();
         service.setRepositoryDir(OUTPUT_DIR.resolve("repo"));
         //initializing repo
@@ -108,12 +108,15 @@ public class App {
 
                     //map with the name of the feature and version and a boolean to set true when it is already incremented in the analysed commit
                     String eccoConfig = "";
+                    int count = 0;
                     for (Map.Entry<Feature, Integer> configFeature : config.entrySet()) {
-                        if (configFeature.getValue() != 0) {
-                            eccoConfig += ","+configFeature.getKey().toString();
+                        if (configFeature.getValue() != 0 && count != 0) {
+                            eccoConfig += ","+configFeature.getKey().toString()+".1";
+                        }else if(configFeature.getValue() != 0 && count == 0){
+                            eccoConfig += configFeature.getKey().toString()+".1";
                         }
+                        count++;
                     }
-                    eccoConfig.replaceFirst(",", "");
 
                     //folder where the variant is stored
                     final Path variant_dir = Paths.get(String.valueOf(eccoFolder));
@@ -126,8 +129,6 @@ public class App {
                     //actual commit
                     service.commit(eccoConfig);
                     System.out.println("Committed: "+variant_dir);
-
-
                     //end ecco commit
                 }
             }
