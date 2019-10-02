@@ -53,7 +53,10 @@ public class App {
         service.init();
         System.out.println("Repository initialized.");
 
+        Map<Feature, Integer> featureVersions = new HashMap<>();
+
         commitList.addGitCommitListener((gc, gcl) -> {
+            System.out.println(gc.getCommitName() + ":");
 
             //TODO: do the git commit and measure time or whatever
 
@@ -87,6 +90,7 @@ public class App {
             final PreprocessorHelper pph = new PreprocessorHelper();
             Map<Feature, Integer> config;
             Set<Feature> changed;
+            Set<Feature> alreadyComitted = new HashSet<>();
 
 
             for (ConditionalNode changedNode : changedNodes) {
@@ -101,15 +105,25 @@ public class App {
 
                     //map with the name of the feature and version and a boolean to set true when it is already incremented in the analysed commit
                     String eccoConfig = "";
-                    int count = 0;
                     for (Map.Entry<Feature, Integer> configFeature : config.entrySet()) {
-                        if (configFeature.getValue() != 0 && count != 0) {
-                            eccoConfig += ","+configFeature.getKey().toString()+".1";
-                        }else if(configFeature.getValue() != 0 && count == 0){
-                            eccoConfig += configFeature.getKey().toString()+".1";
+                        int version = 0;
+                        if (configFeature.getValue() != 0) {
+                            if(featureVersions.containsKey(configFeature.getKey())) {
+                                version = featureVersions.get(configFeature.getKey());
+                            }
+                            if(!alreadyComitted.contains(configFeature.getKey())) {
+                                alreadyComitted.add(configFeature.getKey());
+                                //for marlin: first commit is empty, thus we need the < 2. otherwise <1 should be enough.
+                                if(gcl.size() < 2 || changed.contains(configFeature.getKey())) {
+                                    version++;
+                                }
+                                featureVersions.put(configFeature.getKey(), version);
+                            }
+                            eccoConfig += ","+configFeature.getKey().toString()+"."+version;
                         }
-                        count++;
                     }
+
+                    eccoConfig = eccoConfig.replaceFirst(",","");
 
                     //folder where the variant is stored
                     final Path variant_dir = Paths.get(String.valueOf(eccoFolder));
@@ -120,7 +134,7 @@ public class App {
 
                     service.setBaseDir(variant_dir);
                     //actual commit
-                    service.commit(eccoConfig);
+                    //service.commit(eccoConfig);
                     System.out.println("Committed: "+variant_dir);
                     //end ecco commit
                 }
