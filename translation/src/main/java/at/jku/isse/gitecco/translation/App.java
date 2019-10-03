@@ -16,7 +16,6 @@ import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class App {
 
@@ -96,10 +95,12 @@ public class App {
             //changedNodes = changedNodes.stream().filter(x -> x.getLocalCondition().equals("Z_MIN_PIN > -1")).collect(Collectors.toSet());
             for (ConditionalNode changedNode : changedNodes) {
                 //compute the config for the var gen
+                //TODO: print every condition that should be solved.
                 config = constraintComputer.computeConfig(changedNode, gc.getTree());
-                if (!config.isEmpty()) {
+                if (config != null && !config.isEmpty()) {
                     //generate the variant for this config
-                    pph.generateVariants(config, gitFolder, eccoFolder, gitHelper.getDirFiles());
+                    //TODO: add binary files to the generated variant
+                    //pph.generateVariants(config, gitFolder, eccoFolder, gitHelper.getDirFiles());
                     //compute the marked as changed features.
                     changed = constraintComputer.computeChangedFeatures(changedNode, config);
 

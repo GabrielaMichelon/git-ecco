@@ -99,8 +99,8 @@ public class ExpressionSolver {
 				assignments.put(new Feature(var.getName()), solution.getIntVal(var));
 			}
 		} else {
-			//TODO: issue dead code warning at some other point. --> otherwise this will fire every time there is no solution.
-			System.err.println("DEAD CODE: No solution found for " + expr);
+			//System.err.println("DEAD CODE: No solution found for " + expr);
+			return null;
 		}
 
 		return Collections.unmodifiableMap(assignments);

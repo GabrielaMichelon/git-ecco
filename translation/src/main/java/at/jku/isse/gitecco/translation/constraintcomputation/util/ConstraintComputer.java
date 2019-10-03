@@ -1,6 +1,6 @@
 package at.jku.isse.gitecco.translation.constraintcomputation.util;
 
-import at.jku.isse.gitecco.core.git.GitHelper;
+
 import at.jku.isse.gitecco.core.solver.ExpressionSolver;
 import at.jku.isse.gitecco.core.tree.nodes.BaseNode;
 import at.jku.isse.gitecco.core.tree.nodes.ConditionalNode;
@@ -11,14 +11,6 @@ import at.jku.isse.gitecco.translation.visitor.BuildImplicationsVisitor;
 
 import java.util.*;
 import java.util.stream.Collectors;
-
-//changed:
-// - used visitor pattern correctly
-// - removed unused stuff
-// - includes were not collected recursively
-// - getLocalCondition in IFNDEF node --> return node.getparnet etc. ? why? --> changed to just return cond.
-// - removed weird stuff at the bottom
-// - now: traversing the tree,
 
 public class ConstraintComputer {
 
@@ -53,11 +45,21 @@ public class ConstraintComputer {
 
         //solve, filter for global features only and return the solution/configuration.
         //filtering should be optional because if a correct constraint is built we already get only global features.
-        return solver.solve()
-                .entrySet()
-                .stream()
-                .filter(entry -> featureList.contains(entry.getKey().getName()))
-                .collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue()));
+        Map<Feature, Integer> ret = solver.solve();
+        if(ret != null) {
+            ret = ret
+                    .entrySet()
+                    .stream()
+                    .filter(entry -> featureList.contains(entry.getKey().getName()))
+                    .collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue()));
+        } else {
+            System.err.println("DEAD CODE: No solution found for "
+                    + changedNode.getLocalCondition()
+                    + " @ " + changedNode.getLineFrom()
+                    + " in " + changedNode.getContainingFile().getFilePath());
+        }
+
+        return ret;
     }
 
     /**
@@ -80,14 +82,19 @@ public class ConstraintComputer {
 
         while(changedNode != null && !(changedNode instanceof BaseNode) && repeat) {
             solver.setExpr(changedNode.getLocalCondition() + configClause);
-            ret = solver.solve()
-                    .entrySet()
-                    .stream()
-                    .filter(entry -> featureList.contains(entry.getKey().getName()) && entry.getValue()!=0)
-                    .map(entry -> entry.getKey())
-                    .collect(Collectors.toSet());
+            Map<Feature, Integer> result = solver.solve();
+            if(result != null) {
+                ret = result
+                        .entrySet()
+                        .stream()
+                        .filter(entry -> featureList.contains(entry.getKey().getName()) && entry.getValue()!=0)
+                        .map(entry -> entry.getKey())
+                        .collect(Collectors.toSet());
 
-            repeat = ret.size() < 1 ? true : false;
+                repeat = ret.size() < 1 ? true : false;
+            } else {
+                repeat = true;
+            }
             if(repeat) changedNode = changedNode.getParent().getParent();
         }
 
