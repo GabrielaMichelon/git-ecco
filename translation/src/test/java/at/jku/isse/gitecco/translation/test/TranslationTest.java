@@ -42,6 +42,23 @@ public class TranslationTest {
     }
 
     @Test
+    public void asdf() {
+        //(BASE) && ((MOTHERBOARD == 62) && (!(PINS_H)) && (BASE)) -> MOTHERBOARD == 1
+        ExpressionSolver es = new ExpressionSolver();
+        BoolVar ifc = es.getBoolVarFromExpr("(BASE) && ((MOTHERBOARD == 62) && (!(PINS_H)) && (BASE))");
+        Model model = es.getModel();
+
+        BoolVar y = model.boolVar("MOTHERBOARD").eq(1).boolVar();
+
+        model.addClauses(ifThenElse(ifc,y,y.not()));
+        BoolVar b = model.boolVar("b");
+        model.post(b.extension());
+
+        Solution s = model.getSolver().findSolution();
+        System.out.println(s);
+    }
+
+    @Test
     public void testunsatproblem() {
         Model model = new Model("test1");
 

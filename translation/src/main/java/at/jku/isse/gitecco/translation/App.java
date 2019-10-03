@@ -93,7 +93,7 @@ public class App {
             Set<Feature> changed;
             Set<Feature> alreadyComitted = new HashSet<>();
 
-            changedNodes = changedNodes.stream().filter(x -> x.getLocalCondition().equals("Z_MIN_PIN > -1")).collect(Collectors.toSet());
+            //changedNodes = changedNodes.stream().filter(x -> x.getLocalCondition().equals("Z_MIN_PIN > -1")).collect(Collectors.toSet());
             for (ConditionalNode changedNode : changedNodes) {
                 //compute the config for the var gen
                 config = constraintComputer.computeConfig(changedNode, gc.getTree());

@@ -84,6 +84,10 @@ public class BuildImplicationsVisitor implements TreeVisitor {
     public void visit(Define d) {
         if( line != null && d.getLineInfo() > line) return;
 
+        if((d.getParent() instanceof IFNDEFCondition) && (d.getLineInfo()-1 == d.getParent().getLineFrom())) {
+            if(d.getParent().getLocalCondition().contains(d.getMacroName())) return;
+        }
+
         String cond = precondition == null ? d.getCondition() : "(" + precondition + ") && (" + d.getCondition() + ")";
         FeatureImplication impl = new FeatureImplication(cond, d.getMacroName() + " == " + d.getMacroExpansion());
 
