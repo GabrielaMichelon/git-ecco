@@ -153,7 +153,7 @@ public class ExpressionSolver {
 	 *
 	 * @param expr the expression tree to be parsed.
 	 */
-	public void traverse(FeatureExpression expr) throws EmptyStackException{
+	public void traverse(FeatureExpression expr) throws EmptyStackException {
 		if (expr == null) return;
 		ExpressionSolver ex = new ExpressionSolver();
 		BoolVar boolVar;
@@ -181,7 +181,17 @@ public class ExpressionSolver {
 		} else if (expr instanceof AssignExpr) {
 			System.err.println("AssignExpr should not appear in a normal condition!");
 		} else if (expr instanceof NumberLiteral) {
-			stack.push(model.intVar(Double.valueOf((((NumberLiteral) expr).getToken().getText())).intValue()));
+			try {
+				//contains little workaround for marlin Long number notation 160000L
+				stack.push(model.intVar(Double.valueOf((((NumberLiteral) expr).getToken().getText().replaceAll("L",""))).intValue()));
+			} catch (NumberFormatException e) {
+				try {
+					stack.push(model.intVar(Long.decode((((NumberLiteral) expr).getToken().getText().replaceAll("L",""))).intValue()));
+				} catch (NumberFormatException e1) {
+					System.err.println("the given number format is not compatible with the solver!" +
+							"\n number: " + ((NumberLiteral) expr).getToken().getText());
+				}
+			}
 			isIntVar = true;
 		} else if (expr instanceof SingleTokenExpr) {
 			IntVar right;

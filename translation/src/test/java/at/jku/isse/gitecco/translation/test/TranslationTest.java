@@ -4,6 +4,7 @@ import at.jku.isse.gitecco.core.preprocessor.PreprocessorHelper;
 import at.jku.isse.gitecco.core.solver.ExpressionSolver;
 import at.jku.isse.gitecco.core.type.Feature;
 import at.jku.isse.gitecco.core.type.FeatureImplication;
+import org.anarres.cpp.featureExpr.FeatureExpressionParser;
 import org.chocosolver.solver.Model;
 import org.chocosolver.solver.Solution;
 import org.chocosolver.solver.variables.BoolVar;
@@ -19,6 +20,13 @@ import java.util.Queue;
 import static org.chocosolver.solver.constraints.nary.cnf.LogOp.*;
 
 public class TranslationTest {
+
+    @Test
+    public void testNumberFormat() {
+        String s = "F_CPU >= 16000000L";
+        ExpressionSolver es = new ExpressionSolver();
+        es.traverse(new FeatureExpressionParser(s).parse());
+    }
 
     @Test
     public void testCorrectedClauseAdding() {
