@@ -24,7 +24,10 @@ public class App {
         final boolean debug = true;
         //TODO: planned arguments: DEBUG, dispose tree, max commits, repo path, csv path(feature id), outpath for ecco
         //maybe even start commit and/or end commit (hashes or numbers)
-        String repoPath = "C:\\obermanndavid\\git-ecco-test\\test_featureid\\Marlin";
+        //String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\testpidtemp";
+        String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin";
+        //String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\libssh-mirror\\libssh-mirror";
+        //String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite\\sqlite";
 
         //optional features of the project obtained by the featureID (chosen that which is in almost cases external feature)
         String[] featuresToAdd = {"BASE", "F_FILE_DIR_DIRTY", "F_UNUSED", "F_FILE_UNBUFFERED_READ", "RAMPS_V_1_0", "__AVR_ATmega2560__", "F_CPU", "F_OFLAG", "WATCHPERIOD",
@@ -32,6 +35,17 @@ public class App {
                 "ADVANCE", "PID_OPENLOOP", "SDSUPPORT", "BED_USES_THERMISTOR", "SIMPLE_LCD", "NEWPANEL", "DEBUG_STEPS", "BED_USES_AD595", "ARDUINO",
                 "HEATER_1_USES_THERMISTOR", "THERMISTORHEATER_1", "HEATER_USES_THERMISTOR_1", "HEATER_2_USES_AD595", "HEATER_1_MAXTEMP", "THERMISTORHEATER_0",
                 "HEATER_1_MINTEMP", "HEATER_0_USES_THERMISTOR", "RESET_MANUAL", "PID_PID"};
+        /*String[] featuresToAdd = {"BASE", "WITH_SERVER", "HAVE_LIBZ", "WORDS_BIGENDIAN", "DEBUG_CRYPTO",
+                "HAVE_OPENSSL_AES_H","HAVE_GETHOSTBYNAME", "OPENSSL_VERSION_NUMBER","HAVE_SYS_POLL_H",
+                "HAVE_OPENSSL_BLOWFISH_H", "HAVE_SYS_TIME_H", "HAVE_POLL", "HAVE_SELECT", "HAVE_GETHOSTBYADDR",
+                "__cplusplus", "HAVE_SSH1", "NO_SERVER", "HAVE_PTY_H", "HAVE_STDINT_H", "HAVE_MEMORY_H", "HAVE_LIBWSOCK32",
+                "HAVE_GETPWUID", "DEBUG", "HAVE_ERRNO_H", "HAVE_CTYPE_H", "HAVE_NETINET_IN_H", "__CYGWIN_","HAVE_STRSEP",
+                "HAVE_GETUID", "HAVE_STDIO_H", "HAVE_CONFIG_H","HAVE_STRING_H","HAVE_ARPA_INET_H","HAVE_STRINGS_H",
+                "HAVE_SYS_SOCKET_H", "HAVE_SYS_TYPES_H","HAVE_STRTOLL","HAVE_PWD_H","HAVE_FCNTL_H","HAVE_OPENNET_H",
+                "TIME_WITH_SYS_TIME","HAVE_DIRENT_H","HAVE_NETDB_H","__WIN32__","HAVE_INTTYPES_H","HAVE_LIBOPENNET",
+                "HAVE_SYS_STAT_H","__MINGW32__"};
+        /*String[] featuresToAdd = {"BASE", "YYERRORSYMBOL","TEST_COMPARE","_WIN32","WIN32",
+                "TEST","NDEBUG","NO_READLINE","TCLSH","MEMORY_DEBUG"};*/
         ArrayList<String> featureList = new ArrayList<>();
         for (String feat : featuresToAdd) {
             featureList.add(feat);
@@ -39,13 +53,16 @@ public class App {
         //add directories that we need to include manually to get all the files to create a clean version because "/usr/local/include"
         // and "/usr/include")does not includes files outside the root path
         final List<String> dirFiles = new ArrayList<>();
-        dirFiles.add("C:\\obermanndavid\\git-ecco-test\\test_featureid\\Marlin\\Marlin");
+        //dirFiles.add("C:\\Users\\gabil\\Desktop\\ECCO_Work\\testpidtemp");
+        dirFiles.add("C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin");
+        //dirFiles.add("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\libssh-mirror\\libssh-mirror");
+        //dirFiles.add("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite\\sqlite");
         final GitHelper gitHelper = new GitHelper(repoPath, dirFiles);
         final GitCommitList commitList = new GitCommitList(gitHelper);
 
         //creating ecco repository for each commit
         //set this path to where the results should be stored
-        final Path OUTPUT_DIR = Paths.get("C:\\obermanndavid\\git-ecco-test\\test_featureid\\test_trans");
+        final Path OUTPUT_DIR = Paths.get("C:\\Users\\gabil\\Desktop\\ECCO_Work\\variant_result");
         if (OUTPUT_DIR.resolve("repo").toFile().exists()) GitCommitList.recursiveDelete(OUTPUT_DIR.resolve("repo"));
         EccoService service = new EccoService();
         service.setRepositoryDir(OUTPUT_DIR.resolve("repo"));
@@ -54,6 +71,7 @@ public class App {
         System.out.println("Repository initialized.");
 
         Map<Feature, Integer> featureVersions = new HashMap<>();
+        final int[] countFeaturesChanged = {0};
 
         commitList.addGitCommitListener((gc, gcl) -> {
             System.out.println(gc.getCommitName() + ":");
@@ -118,6 +136,7 @@ public class App {
                                 //for marlin: first commit is empty, thus we need the < 2. otherwise <1 should be enough.
                                 if(gcl.size() < 2 || changed.contains(configFeature.getKey())) {
                                     version++;
+                                    countFeaturesChanged[0]++;
                                 }
                                 featureVersions.put(configFeature.getKey(), version);
                             }
@@ -132,15 +151,18 @@ public class App {
 
                     //ecco commit
                     System.out.println("Committing: "+variant_dir);
+                    System.out.println("changed node: "+changedNode.getLocalCondition());
                     System.out.println("CONFIG: "+eccoConfig);
 
                     service.setBaseDir(variant_dir);
                     //actual commit
-                    //service.commit(eccoConfig);
+                    service.commit(eccoConfig);
                     System.out.println("Committed: "+variant_dir);
                     //end ecco commit
                 }
             }
+            System.out.println("Feature changed per commit: "+countFeaturesChanged[0]);
+            countFeaturesChanged[0]=0;
         });
 
         gitHelper.getAllCommits(commitList);
