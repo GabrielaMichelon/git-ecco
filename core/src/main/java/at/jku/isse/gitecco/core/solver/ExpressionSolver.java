@@ -115,6 +115,7 @@ public class ExpressionSolver {
 	 */
 	public void addClause(Feature feature, Queue<FeatureImplication> implications) {
         LogOp elsePart = null;
+		//String constraint = "";
 
         while (!implications.isEmpty()) {
             FeatureImplication im = implications.remove();
@@ -123,11 +124,15 @@ public class ExpressionSolver {
 
 			if(elsePart == null) {
 				elsePart = LogOp.ifThenElse(ifPart,thenPart, getBoolVarFromExpr(feature.getName()).not());
+				//constraint += "if " + im.getCondition() + " then " + thenPart + " else (" ;
 			} else {
 				elsePart = LogOp.ifThenElse(ifPart, thenPart, elsePart);
+				//constraint += "if " + im.getCondition() + " then " + im.getValue() + " else !( " + im.getValue() + ")";
+
 			}
         }
         if(elsePart != null) model.addClauses(elsePart);
+		//System.out.println(constraint);
     }
 
     /**

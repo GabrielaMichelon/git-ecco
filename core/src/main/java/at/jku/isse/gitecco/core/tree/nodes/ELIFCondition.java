@@ -14,13 +14,25 @@ public final class ELIFCondition extends ConditionalNode {
     @Override
     public String getCondition() {
         StringBuilder ret = new StringBuilder();
-        ret.append("!(" + getParent().getIfBlock().getCondition()+")");
+        ret.append("!(" + getParent().getIfBlock().getLocalCondition()+")");
         for (ELIFCondition elseIfBlock : getParent().getElseIfBlocks()) {
             if(this.equals(elseIfBlock)) {
                 break;
             }
             ret.append(" && !(" + elseIfBlock.getLocalCondition()+")");
         }
+        ret.append("&& ("+this.condition+")");
+
+        if (!getLocalCondition().contains("BASE")) {
+            ConditionalNode changedNodeParent = getParent().getIfBlock().getParent().getParent();
+            ConditionalNode conditionalNode = changedNodeParent;
+            while (conditionalNode.getLocalCondition() != null && !(conditionalNode.getLocalCondition().contains("BASE"))) {
+                ret.append(" && (" + conditionalNode.getLocalCondition() + ")");
+                conditionalNode = conditionalNode.getParent().getParent();
+            }
+            ret.append(" && (" + conditionalNode.getLocalCondition() + ")");
+        }
+
         return ret.toString();
     }
 
