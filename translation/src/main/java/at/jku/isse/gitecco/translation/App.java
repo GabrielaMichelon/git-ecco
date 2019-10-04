@@ -72,8 +72,10 @@ public class App {
 
         Map<Feature, Integer> featureVersions = new HashMap<>();
         final int[] countFeaturesChanged = {0};
+        List<Long> runtimes = new ArrayList<>();
 
         commitList.addGitCommitListener((gc, gcl) -> {
+            List<String> configurations = new ArrayList<>();
             System.out.println(gc.getCommitName() + ":");
 
             //TODO: do the git commit and measure time or whatever
@@ -116,12 +118,8 @@ public class App {
                 //TODO: print every condition that should be solved.
                 config = constraintComputer.computeConfig(changedNode, gc.getTree());
                 if (config != null && !config.isEmpty()) {
-                    //generate the variant for this config
-                    //TODO: add binary files to the generated variant
-                    //pph.generateVariants(config, gitFolder, eccoFolder, gitHelper.getDirFiles());
                     //compute the marked as changed features.
                     changed = constraintComputer.computeChangedFeatures(changedNode, config);
-
 
                     //map with the name of the feature and version and a boolean to set true when it is already incremented in the analysed commit
                     String eccoConfig = "";
@@ -143,22 +141,46 @@ public class App {
                             eccoConfig += ","+configFeature.getKey().toString()+"."+version;
                         }
                     }
-
                     eccoConfig = eccoConfig.replaceFirst(",","");
 
-                    //folder where the variant is stored
-                    final Path variant_dir = Paths.get(String.valueOf(eccoFolder));
+                    if(configurations.contains(eccoConfig)){
+                        System.out.println("Config already commited on ecco: "+eccoConfig);
+                        //don't need to generate variant and commit it again at the same commit of the project git repository
+                    }else{
+                        long before = System.currentTimeMillis();
 
-                    //ecco commit
-                    System.out.println("Committing: "+variant_dir);
-                    System.out.println("changed node: "+changedNode.getLocalCondition());
-                    System.out.println("CONFIG: "+eccoConfig);
+                        //generate the variant for this config
+                        //TODO: add binary files to the generated variant
+                        pph.generateVariants(config, gitFolder, eccoFolder, gitHelper.getDirFiles());
 
-                    service.setBaseDir(variant_dir);
-                    //actual commit
-                    service.commit(eccoConfig);
-                    System.out.println("Committed: "+variant_dir);
-                    //end ecco commit
+
+                        long after = System.currentTimeMillis();
+                        long runtime = after - before;
+                        runtimes.add(runtime);
+                        System.out.println("TIME TO GENERATE VARIANT: " + runtime + "ms");
+
+                        configurations.add(eccoConfig);
+                        //folder where the variant is stored
+                        final Path variant_dir = Paths.get(String.valueOf(eccoFolder));
+
+                        //ecco commit
+                        System.out.println("Committing: "+variant_dir);
+                        System.out.println("changed node: "+changedNode.getLocalCondition());
+                        System.out.println("CONFIG: "+eccoConfig);
+
+                        service.setBaseDir(variant_dir);
+
+                        before = System.currentTimeMillis();
+                        //actual commit
+                        service.commit(eccoConfig);
+                        System.out.println("Committed: "+variant_dir);
+                        //end ecco commit
+
+                        after = System.currentTimeMillis();
+                        runtime = after - before;
+                        runtimes.add(runtime);
+                        System.out.println("TIME TO COMMIT VARIANT: " + runtime + "ms");
+                    }
                 }
             }
             System.out.println("Feature changed per commit: "+countFeaturesChanged[0]);
