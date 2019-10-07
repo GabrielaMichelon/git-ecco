@@ -9,9 +9,11 @@ import java.util.List;
 
 public class GetAllDefinesVisitor implements TreeVisitor {
     private final List<DefineNode> defines;
+    private final RootNode tree;
 
-    public GetAllDefinesVisitor() {
+    public GetAllDefinesVisitor(RootNode tree) {
         defines = new ArrayList<>();
+        this.tree = tree;
     }
 
     /**
@@ -86,7 +88,10 @@ public class GetAllDefinesVisitor implements TreeVisitor {
 
     @Override
     public void visit(IncludeNode n) {
-
+        FileNode file = tree.getChild(n.getFileName());
+        if(file != null) {
+            file.accept(this);
+        }
     }
 
     @Override

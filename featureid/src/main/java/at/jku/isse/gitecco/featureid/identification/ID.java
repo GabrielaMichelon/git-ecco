@@ -39,9 +39,9 @@ public class ID {
          */
         Map<Feature, FeatureType> featureMap = new HashMap<>();
         GetAllFeaturesDefinesIncludesVisitor allincVisitor = new GetAllFeaturesDefinesIncludesVisitor();
-        GetAllDefinesVisitor definesVisitor = new GetAllDefinesVisitor();
+        GetAllDefinesVisitor definesVisitor = new GetAllDefinesVisitor(tree);
         List<DefineNode> allDefines = new ArrayList<>();
-        FeatureType type = null;
+        FeatureType type;
 
         for (FileNode child : tree.getChildren()) {
             allincVisitor.reset();
