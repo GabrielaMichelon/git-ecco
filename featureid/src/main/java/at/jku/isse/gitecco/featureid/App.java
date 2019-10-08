@@ -31,8 +31,8 @@ public class App extends Thread{
     private final static boolean DISPOSE = true;
     private final static boolean DEBUG = true;
     private final static int MAX_COMMITS = 500;
-    private final static boolean EVERYCOMMIT = false;
-    private final static int STARTCOMMIT = 0;
+    private final static boolean EVERYCOMMIT = true;
+    private final static int STARTCOMMIT = 10;
     private final static int ENDCOMMIT = 15;
     private final static int EVERY_NTH_COMMIT = 1;
     private final static boolean MAX_COMMITS_ENA = true;

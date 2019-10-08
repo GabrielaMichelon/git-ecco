@@ -39,6 +39,9 @@ public class GitHelper {
     private final String pathUrl;
     private final List<String> dirFiles;
 
+    //when having problems with repo --> following line checks out the latest commit
+    //git checkout $(git log --branches -1 --pretty=format:"%H")
+
     /**
      * Creates a new instance of GitHelper and clones the specified
      * repo form the url String to the path String.
@@ -283,7 +286,6 @@ public class GitHelper {
      */
     public GitCommitList getAllCommits(GitCommitList commits) throws Exception {
         final boolean FASTMODE = false;
-        final List<GitCommitType> types = new ArrayList<>();
         final Repository repository = git.getRepository();
         final Collection<Ref> allRefs = repository.getRefDatabase().getRefs();
 
@@ -321,7 +323,6 @@ public class GitHelper {
      */
     public GitCommitList getEveryNthCommit(GitCommitList commits, int startcommit, int endcommit, int n) throws Exception {
         final boolean FASTMODE = false;
-        final List<GitCommitType> types = new ArrayList<>();
         final Repository repository = git.getRepository();
         final Collection<Ref> allRefs = repository.getRefDatabase().getRefs();
 

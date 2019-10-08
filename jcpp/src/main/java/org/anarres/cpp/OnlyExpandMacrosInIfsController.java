@@ -8,6 +8,8 @@ import org.anarres.cpp.featureExpr.PostOrderTraversal;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class OnlyExpandMacrosInIfsController extends PreprocessorControlListener {
 
