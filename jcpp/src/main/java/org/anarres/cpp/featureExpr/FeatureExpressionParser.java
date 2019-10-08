@@ -24,7 +24,7 @@ public class FeatureExpressionParser {
     }
 
     public FeatureExpressionParser(String expression){
-        this(new StringLexerSource(expression.replace("defined","")));
+        this(new StringLexerSource(expression));
     }
 
     public FeatureExpression parse(){
