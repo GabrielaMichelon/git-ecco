@@ -19,17 +19,21 @@ import java.util.concurrent.Future;
 
 public class App extends Thread{
 
-    private final static String REPO_PATH = "C:\\obermanndavid\\git-ecco-test\\test_featureid\\Marlin";
+    //private final static String REPO_PATH = "C:\\obermanndavid\\git-ecco-test\\test_featureid\\Marlin";
+    //private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin";
+    private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite\\sqlite";
+    //private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\libssh-mirror\\libssh-mirror";
     // "C:\\obermanndavid\\git-to-ecco\\test_repo5"
     // "C:\\obermanndavid\\git-ecco-test\\test_featureid\\betaflight"
     // "C:\\obermanndavid\\git-ecco-test\\test_featureid\\Marlin"
-    //private final static String CSV_PATH = "C:\\Users\\gabil\\Desktop\\results\\results.csv";
-    private final static String CSV_PATH = "C:\\obermanndavid\\git-ecco-test\\results\\results_new_test.csv";
+    private final static String CSV_PATH = "C:\\Users\\gabil\\Desktop\\results\\results.csv";
+    //private final static String CSV_PATH = "C:\\obermanndavid\\git-ecco-test\\results\\results_ marlin_30.csv";
     private final static boolean DISPOSE = true;
     private final static boolean DEBUG = true;
-    private final static int MAX_COMMITS = 100;
+    private final static int MAX_COMMITS = 500;
     private final static boolean MAX_COMMITS_ENA = true;
-    private final static boolean PARALLEL = false;
+    private final static boolean PARALLEL = true;
+
 
     public static void main(String... args) throws Exception {
         long measure = System.currentTimeMillis();
@@ -87,6 +91,7 @@ public class App extends Thread{
         );
         String[] dirFiles = null;
         //gitHelper.getAllCommits(commitList);
+        //to run all we can also use getEveryNthCommit (0,-1,1)
         gitHelper.getEveryNthCommit(commitList, 5, 55, 10);
 
         while(PARALLEL && !isDone(tasks)) sleep(100);

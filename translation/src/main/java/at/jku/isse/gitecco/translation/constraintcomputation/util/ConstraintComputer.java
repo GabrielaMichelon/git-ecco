@@ -72,15 +72,15 @@ public class ConstraintComputer {
      */
     public Set<Feature> computeChangedFeatures (ConditionalNode changedNode, Map<Feature, Integer> config) {
         ExpressionSolver solver = new ExpressionSolver();
-        boolean repeat = false;
+        boolean repeat = true;
         Set<Feature> ret = null;
 
         StringBuilder configString = new StringBuilder();
         config.entrySet().forEach(x -> configString.append(" || ( " + x.getKey().getName() + "==" + x.getValue() + " )"));
-        String configClause = configString.toString().replaceFirst("||", "");
+        String configClause = configString.toString().replaceFirst("\\|\\|", "");
         configClause = " && ( " + configClause + ")";
 
-        while(changedNode != null && !(changedNode instanceof BaseNode) && repeat) {
+        while((changedNode != null || !(changedNode instanceof BaseNode)) && repeat) {
             solver.setExpr(changedNode.getLocalCondition() + configClause);
             Map<Feature, Integer> result = solver.solve();
             if(result != null) {

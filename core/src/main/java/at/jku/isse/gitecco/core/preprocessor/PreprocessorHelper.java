@@ -35,9 +35,9 @@ public class PreprocessorHelper {
      * @param src input folder
      * @param target output folder
      */
-    public void generateVariants(Map<Feature, Integer> configuration,File src, File target, List<String> dirFiles) {
+    public void generateVariants(Map<Feature, Integer> configuration,File src, File target, List<String> dirFiles, String commitInformation) {
 
-        if(target.exists()) GitCommitList.recursiveDelete(target.toPath());
+        //if(target.exists()) GitCommitList.recursiveDelete(target.toPath());
 
         PreprocessorAPI pp = new PreprocessorAPI();
 
@@ -48,7 +48,8 @@ public class PreprocessorHelper {
         for (Map.Entry<Feature, Integer> entry : configuration.entrySet()) {
             pp.addMacro(entry.getKey().getName(),entry.getValue().toString());
         }
-
+        File variantFolder = new File(target.getName()+commitInformation+configuration);
+        target = variantFolder;
         pp.preprocess(src, target, dirFiles);
 
     }
