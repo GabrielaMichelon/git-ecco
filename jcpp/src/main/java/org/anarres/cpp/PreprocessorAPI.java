@@ -4,6 +4,7 @@ import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -202,7 +203,7 @@ public class PreprocessorAPI {
      * @param src       - source file or directory
      * @param targetDir - target directory for output
      */
-    public void preprocess(File src, File targetDir, List<String> dirFiles) {
+    public void preprocess(File src, File targetDir, List<String> dirFiles, String commitInformation) {
         //add directories that we need to include manually to get all the files to create a clean version because the
         // pp.getSystemIncludePath().add("/usr/local/include"); pp.getSystemIncludePath().add("/usr/include"); does not includes
         //files outside the root path
@@ -218,7 +219,13 @@ public class PreprocessorAPI {
 
         List<File> files = new LinkedList<File>();
         getFilesToProcess(src, files);
-
+        File target;
+        target = new File(targetDir, commitInformation);
+        target.getParentFile().mkdir();
+        if(commitInformation!=""){
+            File file = new File(targetDir, commitInformation);
+            targetDir= file;
+        }
         for (File f : files) {
 
             this.fileCurrentlyProcessed = f;
@@ -231,7 +238,7 @@ public class PreprocessorAPI {
 
                 String sourcePath = f.getCanonicalPath();
                 String relativePath = sourcePath.substring(src.getCanonicalPath().length());
-                File target;
+
                 if (relativePath.length() == 0) {
                     target = new File(targetDir, f.getName());
                 } else {
