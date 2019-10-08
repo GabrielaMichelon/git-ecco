@@ -219,13 +219,11 @@ public class PreprocessorAPI {
 
         List<File> files = new LinkedList<File>();
         getFilesToProcess(src, files);
-        File target;
-        target = new File(targetDir, commitInformation);
+        File target = new File(targetDir, commitInformation);
         target.getParentFile().mkdir();
-        if(commitInformation!=""){
-            File file = new File(targetDir, commitInformation);
-            targetDir= file;
-        }
+        File file = new File(targetDir, commitInformation);
+        targetDir= file;
+
         for (File f : files) {
 
             this.fileCurrentlyProcessed = f;

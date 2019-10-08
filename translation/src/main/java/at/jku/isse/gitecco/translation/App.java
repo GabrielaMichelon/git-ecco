@@ -77,6 +77,10 @@ public class App {
         final int[] countFeaturesChanged = {0};
         List<Long> runtimes = new ArrayList<>();
 
+        File gitRepositoryFolder = new File(gitHelper.getPath());
+        File eccoVariantsFolder = new File(gitRepositoryFolder.getParent(), "ecco");
+        if(eccoVariantsFolder.exists()) GitCommitList.recursiveDelete(eccoVariantsFolder.toPath());
+
         commitList.addGitCommitListener((gc, gcl) -> {
             List<String> configurations = new ArrayList<>();
             System.out.println(gc.getCommitName() + ":");
@@ -105,7 +109,6 @@ public class App {
                     }
                 }
             }
-
 
             final File gitFolder = new File(gitHelper.getPath());
             final File eccoFolder = new File(gitFolder.getParent(), "ecco");
@@ -189,8 +192,8 @@ public class App {
             System.out.println("Feature changed per commit: "+countFeaturesChanged[0]);
             countFeaturesChanged[0]=0;
         });
-        gitHelper.getEveryNthCommit(commitList,4,-1,1);
-        //gitHelper.getAllCommits(commitList);
+        //gitHelper.getEveryNthCommit(commitList,4,-1,1);
+        gitHelper.getAllCommits(commitList);
 
         //close ecco repository
         service.close();
