@@ -311,7 +311,7 @@ public class GitHelper {
     }
 
     /**
-     * Method to retrieve every nth commit form a repository and put it to a GitCommitList.
+     * Method to retrieve every nth commit from a repository and put it to a GitCommitList.
      * starts with a certain commit number and ends with a certain commit number
      *
      * @param commits the GitCommitList to which the commits a re saved to.
@@ -335,13 +335,13 @@ public class GitHelper {
         long number = startcommit;
         String parent = "NULLCOMMIT";
         for(RevCommit rc : revWalk) {
-            if(number == endcommit) break;
-            if(number%n == 0) {
-                String branch = FASTMODE ? null : getBranchOfCommit(rc.getName());
-                commits.add(new GitCommit(rc.getName(), number, parent, branch, rc));
-                parent = rc.getName();
-            }
-            number++;
+            if(number >= endcommit) break;
+
+            String branch = FASTMODE ? null : getBranchOfCommit(rc.getName());
+            commits.add(new GitCommit(rc.getName(), number, parent, branch, rc));
+            parent = rc.getName();
+
+            number += n;
         }
 
         return commits;

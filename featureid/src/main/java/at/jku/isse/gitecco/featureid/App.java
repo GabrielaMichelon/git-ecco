@@ -31,6 +31,10 @@ public class App extends Thread{
     private final static boolean DISPOSE = true;
     private final static boolean DEBUG = true;
     private final static int MAX_COMMITS = 500;
+    private final static boolean EVERYCOMMIT = false;
+    private final static int STARTCOMMIT = 5;
+    private final static int ENDCOMMIT = 10;
+    private final static int EVERY_NTH_COMMIT = 2;
     private final static boolean MAX_COMMITS_ENA = true;
     private final static boolean PARALLEL = true;
 
@@ -90,9 +94,12 @@ public class App extends Thread{
                 }
         );
         String[] dirFiles = null;
-        //gitHelper.getAllCommits(commitList);
-        //to run all we can also use getEveryNthCommit (0,-1,1)
-        gitHelper.getEveryNthCommit(commitList, 5, 55, 10);
+
+        if(EVERYCOMMIT) {
+            gitHelper.getAllCommits(commitList);
+        } else {
+            gitHelper.getEveryNthCommit(commitList, STARTCOMMIT, ENDCOMMIT, EVERY_NTH_COMMIT);
+        }
 
         while(PARALLEL && !isDone(tasks)) sleep(100);
         executorService.shutdownNow();
