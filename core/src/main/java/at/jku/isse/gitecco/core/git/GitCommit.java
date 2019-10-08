@@ -3,9 +3,6 @@ package at.jku.isse.gitecco.core.git;
 import at.jku.isse.gitecco.core.tree.nodes.RootNode;
 import org.eclipse.jgit.revwalk.RevCommit;
 
-import java.util.Collections;
-import java.util.List;
-
 /**
  * Class for handling commits and be able to
  * distinguish between normal commits, branch points and merges.
@@ -14,23 +11,28 @@ public class GitCommit {
     private RootNode tree;
     private final String commitName;
     private final String diffCommit;
-    private final List<GitCommitType> types;
     private final String branch;
     private final RevCommit revCommit;
+    private final long number;
 
     /**
      * Creates a new GitCommit
-     *
      * @param commitName
-     * @param types
+     * @param number
+     * @param diffCommit
      * @param branch
+     * @param rc
      */
-    public GitCommit(String commitName, String diffCommit, List<GitCommitType> types, String branch, RevCommit rc) {
+    public GitCommit(String commitName, long number,String diffCommit, String branch, RevCommit rc) {
         this.commitName = commitName;
-        this.types = types;
         this.branch = branch;
         this.diffCommit = diffCommit;
         this.revCommit = rc;
+        this.number = number;
+    }
+
+    public long getNumber() {
+        return number;
     }
 
     /**
@@ -82,14 +84,5 @@ public class GitCommit {
      */
     public String getCommitName() {
         return commitName;
-    }
-
-    /**
-     * Gets the types of the commit: commit/branch/merge
-     *
-     * @return
-     */
-    public List<GitCommitType> getType() {
-        return Collections.unmodifiableList(types);
     }
 }

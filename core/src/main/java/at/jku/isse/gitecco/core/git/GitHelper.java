@@ -291,8 +291,9 @@ public class GitHelper {
         revWalk.sort(RevSort.TOPO, true);
         revWalk.sort(RevSort.REVERSE, true);
 
-        for(Ref ref : allRefs) revWalk.markStart(revWalk.parseCommit(ref.getObjectId()));
+        revWalk.markStart(revWalk.parseCommit(((List<Ref>) allRefs).get(0).getObjectId()));
 
+        long number = 0;
         for(RevCommit rc : revWalk) {
             String branch = FASTMODE ? null : getBranchOfCommit(rc.getName());
             String parent;
@@ -302,7 +303,45 @@ public class GitHelper {
             }catch (ArrayIndexOutOfBoundsException e) {
                 parent = "NULLCOMMIT";
             }
-            commits.add(new GitCommit(rc.getName(), parent, null/*new ArrayList<GitCommitType>(types)*/, branch, rc));
+            commits.add(new GitCommit(rc.getName(), number, parent, branch, rc));
+            number++;
+        }
+
+        return commits;
+    }
+
+    /**
+     * Method to retrieve every nth commit form a repository and put it to a GitCommitList.
+     * starts with a certain commit number and ends with a certain commit number
+     *
+     * @param commits the GitCommitList to which the commits a re saved to.
+     * @return The GitCommitList which was passed to the method.
+     * @throws GitAPIException
+     * @throws IOException
+     */
+    public GitCommitList getEveryNthCommit(GitCommitList commits, int startcommit, int endcommit, int n) throws Exception {
+        final boolean FASTMODE = false;
+        final List<GitCommitType> types = new ArrayList<>();
+        final Repository repository = git.getRepository();
+        final Collection<Ref> allRefs = repository.getRefDatabase().getRefs();
+
+        RevWalk revWalk = new RevWalk(repository);
+        revWalk.sort(RevSort.TOPO, true);
+        revWalk.sort(RevSort.REVERSE, true);
+
+
+        revWalk.markStart(revWalk.parseCommit(((List<Ref>) allRefs).get(startcommit).getObjectId()));
+
+        long number = startcommit;
+        String parent = "NULLCOMMIT";
+        for(RevCommit rc : revWalk) {
+            if(number == endcommit) break;
+            if(number%n == 0) {
+                String branch = FASTMODE ? null : getBranchOfCommit(rc.getName());
+                commits.add(new GitCommit(rc.getName(), number, parent, branch, rc));
+                parent = rc.getName();
+            }
+            number++;
         }
 
         return commits;

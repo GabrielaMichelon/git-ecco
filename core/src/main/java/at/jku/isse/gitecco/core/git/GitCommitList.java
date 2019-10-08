@@ -98,14 +98,14 @@ public class GitCommitList extends ArrayList<GitCommit> {
             // If file doesn't exists, then create it
             if (!file.exists()) {
                 file.createNewFile();
-                String text = "commit nr.: "+this.size() + "\n";
+                String text = "commit nr.: "+gitCommit.getNumber() + "\n";
                 FileWriter fw = new FileWriter(file.getAbsoluteFile());
                 BufferedWriter bw = new BufferedWriter(fw);
                 // Write in file
                 bw.write(text + "\n");
                 bw.close();
             } else {
-                String text = "commit nr.: "+this.size() + "\n";
+                String text = "commit nr.: "+gitCommit.getNumber() + "\n";
                 FileWriter fw = new FileWriter(file.getAbsoluteFile());
                 BufferedWriter bw = new BufferedWriter(fw);
                 bw.write(text + "\n");
@@ -168,7 +168,7 @@ public class GitCommitList extends ArrayList<GitCommit> {
 
         //trigger listeners, etc.
         notifyObservers(gitCommit);
-        System.out.println("commit nr.:"+this.size()+" branch: "+gitCommit.getBranch());
+        System.out.println("commit nr.:"+gitCommit.getNumber()+" branch: "+gitCommit.getBranch());
         return super.add(gitCommit);
     }
 

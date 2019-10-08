@@ -29,7 +29,7 @@ public class App extends Thread{
     private final static boolean DEBUG = true;
     private final static int MAX_COMMITS = 100;
     private final static boolean MAX_COMMITS_ENA = true;
-    private final static boolean PARALLEL = true;
+    private final static boolean PARALLEL = false;
 
     public static void main(String... args) throws Exception {
         long measure = System.currentTimeMillis();
@@ -86,7 +86,8 @@ public class App extends Thread{
                 }
         );
         String[] dirFiles = null;
-        gitHelper.getAllCommits(commitList);
+        //gitHelper.getAllCommits(commitList);
+        gitHelper.getEveryNthCommit(commitList, 5, 55, 10);
 
         while(PARALLEL && !isDone(tasks)) sleep(100);
         executorService.shutdownNow();
