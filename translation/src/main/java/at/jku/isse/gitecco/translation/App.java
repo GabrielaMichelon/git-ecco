@@ -10,6 +10,7 @@ import at.jku.isse.gitecco.core.tree.nodes.FileNode;
 import at.jku.isse.gitecco.core.tree.nodes.SourceFileNode;
 import at.jku.isse.gitecco.core.type.Feature;
 import at.jku.isse.gitecco.translation.constraintcomputation.util.ConstraintComputer;
+import at.jku.isse.gitecco.translation.variantscomparison.util.CompareVariants;
 import at.jku.isse.gitecco.translation.visitor.GetNodesForChangeVisitor;
 
 import java.io.File;
@@ -35,7 +36,7 @@ public class App {
                 "THERMISTORHEATER", "THERMISTORBED", "TSd2PinMap_hHERMISTORHEATER", "PID_DEBUG", "HEATER_USES_THERMISTOR", "__AVR_ATmega328P__", "__AVR_ATmega1280__", "__AVR_ATmega168__",
                 "ADVANCE", "PID_OPENLOOP", "SDSUPPORT", "BED_USES_THERMISTOR", "SIMPLE_LCD", "NEWPANEL", "DEBUG_STEPS", "BED_USES_AD595", "ARDUINO",
                 "HEATER_1_USES_THERMISTOR", "THERMISTORHEATER_1", "HEATER_USES_THERMISTOR_1", "HEATER_2_USES_AD595", "HEATER_1_MAXTEMP", "THERMISTORHEATER_0",
-                "HEATER_1_MINTEMP", "HEATER_0_USES_THERMISTOR", "RESET_MANUAL", "PID_PID"};
+                "HEATER_1_MINTEMP", "HEATER_0_USES_THERMISTOR", "RESET_MANUAL", "PID_PID"};/*
         String[] featuresToAdd = {"BASE", "WITH_SERVER", "HAVE_LIBZ", "WORDS_BIGENDIAN", "DEBUG_CRYPTO",
                 "HAVE_OPENSSL_AES_H","HAVE_GETHOSTBYNAME", "OPENSSL_VERSION_NUMBER","HAVE_SYS_POLL_H",
                 "HAVE_OPENSSL_BLOWFISH_H", "HAVE_SYS_TIME_H", "HAVE_POLL", "HAVE_SELECT", "HAVE_GETHOSTBYADDR",
@@ -157,7 +158,7 @@ public class App {
 
                         //generate the variant for this config
                         //TODO: add binary files to the generated variant
-                        pph.generateVariants(config, gitFolder, eccoFolder, gitHelper.getDirFiles(), Long.toString(gc.getNumber()));
+                        pph.generateVariants(config, gitFolder, eccoFolder, gitHelper.getDirFiles(), Long.toString(gc.getNumber())+eccoConfig);
 
 
                         long after = System.currentTimeMillis();
@@ -186,13 +187,34 @@ public class App {
                         runtime = after - before;
                         runtimes.add(runtime);
                         System.out.println("TIME TO COMMIT VARIANT: " + runtime + "ms");
+
+                        //checkout
+                        Path pathcheckout = Paths.get("C:\\Users\\gabil\\Desktop\\ECCO_Work\\variant_result\\checkout\\"+gc.getNumber()+eccoConfig);
+                        File checkoutfile = new File(String.valueOf(pathcheckout));
+                        if(checkoutfile.exists()) GitCommitList.recursiveDelete(checkoutfile.toPath());
+                        checkoutfile.mkdir();
+                        service.setBaseDir(pathcheckout);
+
+                        before = System.currentTimeMillis();
+
+                        service.checkout(eccoConfig);
+
+                        after = System.currentTimeMillis();
+                        runtime = after - before;
+                        runtimes.add(runtime);
+                        System.out.println("TIME TO ECCO CHECKOUT VARIANT: " + runtime + "ms");
+                        //end checkout
+                        File variantfile = new File(eccoFolder, gc.getNumber()+eccoConfig);
+                        CompareVariants cV = new CompareVariants();
+                        cV.compareVariant(variantfile,checkoutfile);
+
                     }
                 }
             }
             System.out.println("Feature changed per commit: "+countFeaturesChanged[0]);
             countFeaturesChanged[0]=0;
         });
-        //gitHelper.getEveryNthCommit(commitList,4,-1,1);
+        //gitHelper.getEveryNthCommit(commitList,4,Integer.MAX_VALUE,1);
         gitHelper.getAllCommits(commitList);
 
         //close ecco repository

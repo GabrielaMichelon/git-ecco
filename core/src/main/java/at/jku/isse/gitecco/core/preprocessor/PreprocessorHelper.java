@@ -51,7 +51,6 @@ public class PreprocessorHelper {
             pp.addMacro(entry.getKey().getName(),entry.getValue().toString());
         }
 
-        commitInformation +=configuration;
         pp.preprocess(src, target, dirFiles, commitInformation);
 
     }
