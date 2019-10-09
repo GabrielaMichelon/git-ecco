@@ -20,14 +20,18 @@ public class PreprocessorHelper {
      * @param src
      * @param target
      */
-    public void generateCleanVersion(File src, File target, List<String> dirFiles) {
+    public Long generateCleanVersion(File src, File target, List<String> dirFiles) {
         PreprocessorAPI pp = new PreprocessorAPI(new OnlyExpandMacrosInIfsController());
         pp.setInlineIncludes(false);
         pp.setKeepIncludes(true);
         pp.setKeepDefines(true);
 
-
+        Long timeBefore, timeAfter, runtimePPCommit;
+        timeBefore = System.currentTimeMillis();
         pp.preprocess(src, target, dirFiles,"");
+        timeAfter = System.currentTimeMillis();
+        runtimePPCommit = timeAfter - timeBefore;
+        return runtimePPCommit;
     }
 
     /**

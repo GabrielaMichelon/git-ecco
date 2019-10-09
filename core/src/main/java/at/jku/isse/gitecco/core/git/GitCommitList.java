@@ -34,6 +34,15 @@ public class GitCommitList extends ArrayList<GitCommit> {
     private final List<GitCommitListener> observersC = new ArrayList();
     private final List<GitBranchListener> observersB = new ArrayList();
     private final List<GitMergeListener> observersM = new ArrayList();
+    private Long runtimePPCommit;
+
+    public Long getRuntimePPCommit() {
+        return runtimePPCommit;
+    }
+
+    public void setRuntimePPCommit(Long runtimePPCommit) {
+        this.runtimePPCommit = runtimePPCommit;
+    }
 
     public GitCommitList(GitHelper gh) throws IOException {
         super();
@@ -83,7 +92,7 @@ public class GitCommitList extends ArrayList<GitCommit> {
         if (cleanFolder.exists()) recursiveDelete(cleanFolder.toPath());
 
         //generate clean version
-        pph.generateCleanVersion(gitFolder, cleanFolder, gitHelper.getDirFiles());
+        setRuntimePPCommit(pph.generateCleanVersion(gitFolder, cleanFolder, gitHelper.getDirFiles()));
 
         //creates a folder to each branch and if it is the first commit delete the folder in case of it already exists
         if (!outputDirectory.exists()) {

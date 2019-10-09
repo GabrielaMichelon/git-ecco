@@ -12,8 +12,9 @@ import at.jku.isse.gitecco.core.type.Feature;
 import at.jku.isse.gitecco.translation.constraintcomputation.util.ConstraintComputer;
 import at.jku.isse.gitecco.translation.variantscomparison.util.CompareVariants;
 import at.jku.isse.gitecco.translation.visitor.GetNodesForChangeVisitor;
+import org.glassfish.grizzly.http.server.accesslog.FileAppender;
 
-import java.io.File;
+import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -74,9 +75,15 @@ public class App {
         service.init();
         System.out.println("Repository initialized.");
 
+        final File gitFolder = new File(gitHelper.getPath());
+        final File eccoFolder = new File(gitFolder.getParent(), "ecco");
+        final File checkoutFolder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\variant_result\\checkout\\");
+        ArrayList<String> configsToCheckout = new ArrayList<>();
+
+
+
         Map<Feature, Integer> featureVersions = new HashMap<>();
         final int[] countFeaturesChanged = {0};
-        List<Long> runtimes = new ArrayList<>();
 
         File gitRepositoryFolder = new File(gitHelper.getPath());
         File eccoVariantsFolder = new File(gitRepositoryFolder.getParent(), "ecco");
@@ -111,8 +118,7 @@ public class App {
                 }
             }
 
-            final File gitFolder = new File(gitHelper.getPath());
-            final File eccoFolder = new File(gitFolder.getParent(), "ecco");
+
             final ConstraintComputer constraintComputer = new ConstraintComputer(featureList);
             final PreprocessorHelper pph = new PreprocessorHelper();
             Map<Feature, Integer> config;
@@ -121,6 +127,8 @@ public class App {
 
             //changedNodes = changedNodes.stream().filter(x -> x.getLocalCondition().equals("__AVR_ATmega644P__ || __AVR_ATmega644__")).collect(Collectors.toSet());
             for (ConditionalNode changedNode : changedNodes) {
+                Long runtimeEccoCommit, runtimeEccoCheckout = Long.valueOf(0), runtimePPCheckout, timeBefore, timeAfter;
+                Long runtimeGitCommit =  Long.valueOf(0), runtimeGitCheckout =  Long.valueOf(0), runtimePPCommit = commitList.getRuntimePPCommit();
                 //compute the config for the var gen
                 //TODO: print every condition that should be solved.
                 config = constraintComputer.computeConfig(changedNode, gc.getTree());
@@ -154,59 +162,51 @@ public class App {
                         System.out.println("Config already commited on ecco: "+eccoConfig);
                         //don't need to generate variant and commit it again at the same commit of the project git repository
                     }else{
-                        long before = System.currentTimeMillis();
-
+                        timeBefore = System.currentTimeMillis();
                         //generate the variant for this config
                         //TODO: add binary files to the generated variant
-                        pph.generateVariants(config, gitFolder, eccoFolder, gitHelper.getDirFiles(), Long.toString(gc.getNumber())+eccoConfig);
-
-
-                        long after = System.currentTimeMillis();
-                        long runtime = after - before;
-                        runtimes.add(runtime);
-                        System.out.println("TIME TO GENERATE VARIANT: " + runtime + "ms");
+                        pph.generateVariants(config, gitFolder, eccoFolder, gitHelper.getDirFiles(), eccoConfig);
+                        timeAfter = System.currentTimeMillis();
+                        runtimePPCheckout = timeAfter - timeBefore;
 
                         configurations.add(eccoConfig);
                         //folder where the variant is stored
-                        final Path variant_dir = Paths.get(String.valueOf(eccoFolder));
+                        File variantsrc = new File(eccoFolder, eccoConfig);
+                        String outputCSV = variantsrc.getParentFile().getParentFile().getAbsolutePath();
+                        final Path variant_dir = Paths.get(String.valueOf(variantsrc));
 
                         //ecco commit
                         System.out.println("Committing: "+variant_dir);
                         System.out.println("changed node: "+changedNode.getLocalCondition());
                         System.out.println("CONFIG: "+eccoConfig);
-
                         service.setBaseDir(variant_dir);
-
-                        before = System.currentTimeMillis();
-                        //actual commit
+                        timeBefore = System.currentTimeMillis();
                         service.commit(eccoConfig);
                         System.out.println("Committed: "+variant_dir);
+                        timeAfter = System.currentTimeMillis();
+                        runtimeEccoCommit = timeAfter - timeBefore;
                         //end ecco commit
 
-                        after = System.currentTimeMillis();
-                        runtime = after - before;
-                        runtimes.add(runtime);
-                        System.out.println("TIME TO COMMIT VARIANT: " + runtime + "ms");
+                        //add config to checkout after all project commits
+                        configsToCheckout.add(eccoConfig);
 
-                        //checkout
-                        Path pathcheckout = Paths.get("C:\\Users\\gabil\\Desktop\\ECCO_Work\\variant_result\\checkout\\"+gc.getNumber()+eccoConfig);
-                        File checkoutfile = new File(String.valueOf(pathcheckout));
-                        if(checkoutfile.exists()) GitCommitList.recursiveDelete(checkoutfile.toPath());
-                        checkoutfile.mkdir();
-                        service.setBaseDir(pathcheckout);
 
-                        before = System.currentTimeMillis();
-
-                        service.checkout(eccoConfig);
-
-                        after = System.currentTimeMillis();
-                        runtime = after - before;
-                        runtimes.add(runtime);
-                        System.out.println("TIME TO ECCO CHECKOUT VARIANT: " + runtime + "ms");
-                        //end checkout
-                        File variantfile = new File(eccoFolder, gc.getNumber()+eccoConfig);
-                        CompareVariants cV = new CompareVariants();
-                        cV.compareVariant(variantfile,checkoutfile);
+                        try {
+                            String fileStr = outputCSV+File.separator+eccoConfig+".csv";
+                            FileWriter csvWriter = new FileWriter(fileStr);
+                            List<List<String>> headerRows = Arrays.asList(
+                                    Arrays.asList("runtimeEccoCommit","runtimeEccoCheckout","runtimeCommitPP","runtimeChceckoutPP","runtimeGitCommit","runtimeGitCheckout"),
+                                    Arrays.asList(runtimeEccoCommit.toString(), runtimeEccoCheckout.toString(), runtimePPCommit.toString(), runtimePPCheckout.toString(), runtimeGitCommit.toString(), runtimeGitCheckout.toString())
+                            );
+                            for (List<String> rowData : headerRows) {
+                                csvWriter.append(String.join(",", rowData));
+                                csvWriter.append("\n");
+                            }
+                            csvWriter.flush();
+                            csvWriter.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
 
                     }
                 }
@@ -214,11 +214,72 @@ public class App {
             System.out.println("Feature changed per commit: "+countFeaturesChanged[0]);
             countFeaturesChanged[0]=0;
         });
-        //gitHelper.getEveryNthCommit(commitList,4,Integer.MAX_VALUE,1);
-        gitHelper.getAllCommits(commitList);
+        gitHelper.getEveryNthCommit(commitList,1,3,1);
+        //gitHelper.getAllCommits(commitList);
+
+        //checkout
+        Long runtimeEccoCommit, runtimeEccoCheckout, runtimePPCheckout, timeBefore, timeAfter;
+        Long runtimeGitCommit =  Long.valueOf(0), runtimeGitCheckout =  Long.valueOf(0), runtimePPCommit = commitList.getRuntimePPCommit();
+        for (String config:configsToCheckout) {
+            Path pathcheckout = Paths.get(OUTPUT_DIR.resolve("checkout")+File.separator+config);
+            File checkoutfile = new File(String.valueOf(pathcheckout));
+            if(checkoutfile.exists()) GitCommitList.recursiveDelete(checkoutfile.toPath());
+            checkoutfile.mkdir();
+            service.setBaseDir(pathcheckout);
+            timeBefore = System.currentTimeMillis();
+            service.checkout(config);
+            timeAfter = System.currentTimeMillis();
+            runtimeEccoCheckout = timeAfter - timeBefore;
+            String outputCSV = eccoFolder.getParentFile().getAbsolutePath();
+            String fileStr = outputCSV+File.separator+config+".csv";
+            BufferedReader csvReader = null;
+            try {
+                csvReader = new BufferedReader(new FileReader(fileStr));
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+            String row = null;
+            ArrayList<String> listHeader = new ArrayList<>();
+            ArrayList<String> listRuntimeData = new ArrayList<>();
+            Boolean header = true;
+            while ((row = csvReader.readLine()) != null) {
+                String[] data = row.split(",");
+                if (header) {
+                    for (int i =0; i<data.length; i++) {
+                        listHeader.add(data[i]);
+                    }
+                    header = false;
+                } else {
+                    for (int i =0; i<data.length; i++) {
+                        if(i==1){
+                            listRuntimeData.add(String.valueOf(runtimeEccoCheckout));
+                        }else{
+                            listRuntimeData.add(data[i]);
+                        }
+                    }
+                }
+            }
+            csvReader.close();
+            File fwriter = new File(fileStr);
+            FileWriter csvWriter = new FileWriter(fwriter);
+            csvWriter.append(String.join(",", listHeader));
+            csvWriter.append("\n");
+            csvWriter.append(String.join(",", listRuntimeData));
+            csvWriter.flush();
+            csvWriter.close();
+        }
+        //end checkout
 
         //close ecco repository
         service.close();
+
+        //compare variant with ecco checkout
+        for (File path: eccoFolder.listFiles()) {
+            CompareVariants cV = new CompareVariants();
+            cV.compareVariant(path, new File(checkoutFolder + File.separator + path.getName()));
+        }
+
+
         System.out.println("Repository closed.");
 
     }
