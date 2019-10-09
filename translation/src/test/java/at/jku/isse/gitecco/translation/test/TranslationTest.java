@@ -1,7 +1,6 @@
 package at.jku.isse.gitecco.translation.test;
 
-import at.jku.isse.ecco.service.EccoService;
-import at.jku.isse.gitecco.core.git.GitCommit;
+
 import at.jku.isse.gitecco.core.git.GitHelper;
 import at.jku.isse.gitecco.core.preprocessor.PreprocessorHelper;
 import at.jku.isse.gitecco.core.solver.ExpressionSolver;

@@ -31,14 +31,6 @@ public class GitCommit {
         this.number = number;
     }
 
-    public GitCommit(String branch) {
-        this.branch = branch;
-        this.commitName = null;
-        this.diffCommit = null;
-        this.revCommit = null;
-        this.number = 0;
-    }
-
     public long getNumber() {
         return number;
     }

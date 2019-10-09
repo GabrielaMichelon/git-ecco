@@ -2,10 +2,8 @@ package at.jku.isse.gitecco.core.git;
 
 import at.jku.isse.gitecco.core.tree.nodes.BinaryFileNode;
 import at.jku.isse.gitecco.core.tree.nodes.FileNode;
-import org.apache.tools.ant.util.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ResetCommand;
-import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffFormatter;
@@ -29,9 +27,6 @@ import java.nio.file.Paths;
 import java.util.*;
 
 import static java.nio.file.Files.copy;
-import static java.nio.file.Files.isWritable;
-import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
-import static java.util.stream.Collectors.toList;
 
 /**
  * HelperClass for working with JGit.
@@ -110,14 +105,18 @@ public class GitHelper {
             // run the add-call
             git.add().addFilepattern(localPath.toString()).call();
 
+            //git commit
             Long timeBefore = System.currentTimeMillis();
             git.commit().setMessage("Initial commit").call();
             Long timeAfter = System.currentTimeMillis();
             setRuntimeGitCommit(timeAfter - timeBefore);
+            //end git commit
 
             // Find the head for the repository
             lastCommitId = git.getRepository().resolve(Constants.HEAD);
             git.close();
+
+            //git checkout
             timeBefore = System.currentTimeMillis();
             git.open(git.getRepository().getDirectory())
                     .checkout()
@@ -127,6 +126,7 @@ public class GitHelper {
             ;
             timeAfter = System.currentTimeMillis();
             setRuntimeGitCheckout(timeAfter - timeBefore);
+            //end git checkout
 
         } catch (GitAPIException e) {
             e.printStackTrace();
