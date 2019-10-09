@@ -2,16 +2,15 @@ package at.jku.isse.gitecco.core.git;
 
 import at.jku.isse.gitecco.core.tree.nodes.BinaryFileNode;
 import at.jku.isse.gitecco.core.tree.nodes.FileNode;
+import org.apache.tools.ant.util.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ResetCommand;
+import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffFormatter;
 import org.eclipse.jgit.errors.MissingObjectException;
-import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.ObjectReader;
-import org.eclipse.jgit.lib.Ref;
-import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevSort;
 import org.eclipse.jgit.revwalk.RevTree;
@@ -22,13 +21,17 @@ import org.eclipse.jgit.treewalk.EmptyTreeIterator;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.treewalk.filter.PathFilter;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+
+import static java.nio.file.Files.copy;
+import static java.nio.file.Files.isWritable;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+import static java.util.stream.Collectors.toList;
 
 /**
  * HelperClass for working with JGit.
@@ -38,6 +41,25 @@ public class GitHelper {
     private final Git git;
     private final String pathUrl;
     private final List<String> dirFiles;
+    private Long runtimeGitCommit;
+    private Long runtimeGitCheckout;
+
+    public Long getRuntimeGitCommit() {
+        return runtimeGitCommit;
+    }
+
+    public void setRuntimeGitCommit(Long runtimeGitCommit) {
+        this.runtimeGitCommit = runtimeGitCommit;
+    }
+
+    public Long getRuntimeGitCheckout() {
+        return runtimeGitCheckout;
+    }
+
+    public void setRuntimeGitCheckout(Long runtimeGitCheckout) {
+        this.runtimeGitCheckout = runtimeGitCheckout;
+    }
+
 
     //when having problems with repo --> following line checks out the latest commit
     //git checkout $(git log --branches -1 --pretty=format:"%H")
@@ -54,6 +76,62 @@ public class GitHelper {
         git = cloneRepo(url, path);
         pathUrl = path;
         this.dirFiles = dirFiles;
+    }
+
+    public GitHelper() {
+        git = null;
+        pathUrl = null;
+        this.dirFiles = null;
+    }
+
+    public void gitCommitAndCheckout(String srcpathFiles, String destpathFiles) throws IOException {
+        Path sourcepath = Paths.get(srcpathFiles);
+        Path destpath = Paths.get(destpathFiles);
+        Files.setAttribute(destpath, "dos:readonly", false);
+        if (destpath.toFile().exists()) GitCommitList.recursiveDelete(destpath);
+        File dest = new File(String.valueOf(destpath));
+        dest.mkdir();
+
+        Files.walk(sourcepath)
+                .forEach(source -> {
+                    try {
+                        copy(source, destpath.resolve(sourcepath.relativize(source)));
+                    } catch (IOException e) {
+
+                    }
+                });
+
+        File localPath = new File(destpathFiles);
+        ObjectId lastCommitId = null;
+
+        // Create the git repository with init
+        try (Git git = Git.init().setDirectory(localPath).call()) {
+
+            // run the add-call
+            git.add().addFilepattern(localPath.toString()).call();
+
+            Long timeBefore = System.currentTimeMillis();
+            git.commit().setMessage("Initial commit").call();
+            Long timeAfter = System.currentTimeMillis();
+            setRuntimeGitCommit(timeAfter - timeBefore);
+
+            // Find the head for the repository
+            lastCommitId = git.getRepository().resolve(Constants.HEAD);
+            git.close();
+            timeBefore = System.currentTimeMillis();
+            git.open(git.getRepository().getDirectory())
+                    .checkout()
+                    .setCreateBranch(true)
+                    .setName("new-branch")
+                    .call();
+            ;
+            timeAfter = System.currentTimeMillis();
+            setRuntimeGitCheckout(timeAfter - timeBefore);
+
+        } catch (GitAPIException e) {
+            e.printStackTrace();
+        }
+
     }
 
     /**
@@ -89,12 +167,12 @@ public class GitHelper {
      * All the changes will be returned as an Array.
      *
      * @param newCommit The commit which should be diffed --> also contains the parent to diff with
-     * @param sfn the source file node which should be examined
+     * @param sfn       the source file node which should be examined
      * @return An Array of Changes which contains all the changes between the commits.
      * @throws Exception
      */
     public Change[] getFileDiffs(GitCommit newCommit, FileNode sfn) throws Exception {
-        if(sfn instanceof BinaryFileNode) throw new IllegalArgumentException("cannot diff a binary file node");
+        if (sfn instanceof BinaryFileNode) throw new IllegalArgumentException("cannot diff a binary file node");
         return getFileDiffs(newCommit, sfn.getFilePath());
     }
 
@@ -135,7 +213,7 @@ public class GitHelper {
                 e.printStackTrace();
             }
 
-            if (diffStream.size()>0) {
+            if (diffStream.size() > 0) {
                 if (fileDiffParser.parse(diffStream.toString())) {
                     for (Change r : fileDiffParser.getplusRanges()) {
                         changes.add(r);
@@ -147,7 +225,8 @@ public class GitHelper {
 
         filePath = pathUrl + "\\" + filePath;
 
-        if (changes.size() == 0) changes.add(new Change(0, Files.readAllLines(Paths.get(filePath), StandardCharsets.ISO_8859_1).size()));
+        if (changes.size() == 0)
+            changes.add(new Change(0, Files.readAllLines(Paths.get(filePath), StandardCharsets.ISO_8859_1).size()));
 
         return changes.toArray(new Change[changes.size()]);
     }
@@ -166,7 +245,7 @@ public class GitHelper {
                     setNewTree(prepareTreeParser(git.getRepository(), newCommit.getCommitName())).
                     call();
             for (DiffEntry entry : diffs) {
-                if(entry.getChangeType() != DiffEntry.ChangeType.DELETE) {
+                if (entry.getChangeType() != DiffEntry.ChangeType.DELETE) {
                     //if needed prepend pathURL + "\\" to get the absolute path
                     paths.add(entry.getNewPath().replace('/', '\\'));
                 }
@@ -219,7 +298,7 @@ public class GitHelper {
 
     private Git cloneRepo(String url, String dirPath) {
         File dir = new File(dirPath);
-        System.out.println("Cloning from "+url+" to "+dir);
+        System.out.println("Cloning from " + url + " to " + dir);
 
         Git git = null;
         try {
@@ -232,7 +311,7 @@ public class GitHelper {
             e.printStackTrace();
         }
 
-        System.out.println("Having repository: "+git.getRepository().getDirectory()+"\n");
+        System.out.println("Having repository: " + git.getRepository().getDirectory() + "\n");
 
         return git;
     }
@@ -250,10 +329,10 @@ public class GitHelper {
                 .setNewTree(prepareTreeParser(git.getRepository(), newCommit.getCommitName()))
                 .call();
 
-        System.out.println("Found: "+diffs.size()+" differences");
+        System.out.println("Found: " + diffs.size() + " differences");
         for (DiffEntry diff : diffs) {
-            System.out.println("Diff: "+diff.getChangeType()+": "+
-                    (diff.getOldPath().equals(diff.getNewPath()) ? diff.getNewPath() : diff.getOldPath()+" -> "+diff.getNewPath()));
+            System.out.println("Diff: " + diff.getChangeType() + ": " +
+                    (diff.getOldPath().equals(diff.getNewPath()) ? diff.getNewPath() : diff.getOldPath() + " -> " + diff.getNewPath()));
         }
     }
 
@@ -296,13 +375,13 @@ public class GitHelper {
         revWalk.markStart(revWalk.parseCommit(((List<Ref>) allRefs).get(0).getObjectId()));
 
         long number = 0;
-        for(RevCommit rc : revWalk) {
+        for (RevCommit rc : revWalk) {
             String branch = FASTMODE ? null : getBranchOfCommit(rc.getName());
             String parent;
 
             try {
                 parent = rc.getParent(0).getName();
-            }catch (ArrayIndexOutOfBoundsException e) {
+            } catch (ArrayIndexOutOfBoundsException e) {
                 parent = "NULLCOMMIT";
             }
             commits.add(new GitCommit(rc.getName(), number, parent, branch, rc));
@@ -335,8 +414,8 @@ public class GitHelper {
 
         long number = startcommit;
         String parent = "NULLCOMMIT";
-        for(RevCommit rc : revWalk) {
-            if(number >= endcommit) break;
+        for (RevCommit rc : revWalk) {
+            if (number >= endcommit) break;
 
             String branch = FASTMODE ? null : getBranchOfCommit(rc.getName());
             commits.add(new GitCommit(rc.getName(), number, parent, branch, rc));
@@ -350,6 +429,7 @@ public class GitHelper {
 
     /**
      * Retrieves the file paths of the files in the repository for a given commit
+     *
      * @param commit
      * @return List of paths as Strings
      * @throws IOException
@@ -380,6 +460,7 @@ public class GitHelper {
     /**
      * Retrieves the first branch of a commit.
      * Actually not very useful. --> disabled through the fastmode in getAllCommits.
+     *
      * @param commit
      * @return
      * @throws MissingObjectException

@@ -1,6 +1,8 @@
 package at.jku.isse.gitecco.translation.test;
 
 import at.jku.isse.ecco.service.EccoService;
+import at.jku.isse.gitecco.core.git.GitCommit;
+import at.jku.isse.gitecco.core.git.GitHelper;
 import at.jku.isse.gitecco.core.preprocessor.PreprocessorHelper;
 import at.jku.isse.gitecco.core.solver.ExpressionSolver;
 import at.jku.isse.gitecco.core.type.Feature;
@@ -34,6 +36,18 @@ public class TranslationTest {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    @Test
+    public void JGitCommitAndCheckout() throws IOException {
+        GitHelper gh = new GitHelper();
+        try {
+            gh.gitCommitAndCheckout("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite\\ecco\\BASE.1","C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite\\testeCommitJGit");
+            System.out.println("time git checkout"+gh.getRuntimeGitCheckout());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
     @Test

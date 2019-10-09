@@ -192,6 +192,7 @@ public class GitCommitList extends ArrayList<GitCommit> {
             Files.walkFileTree(directory, new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    Files.setAttribute(file, "dos:readonly", false);
                     Files.delete(file);
                     return FileVisitResult.CONTINUE;
                 }
