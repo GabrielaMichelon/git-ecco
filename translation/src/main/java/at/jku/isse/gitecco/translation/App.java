@@ -305,7 +305,7 @@ public class App {
                         if (i == 1) {
                             listRuntimeData.add(String.valueOf(runtimeEccoCheckout));
                         } else {
-                            listRuntimeData.add(data[i]);
+                            listRuntimeData.add(String.valueOf(data[i]));
                         }
                     }
                 }

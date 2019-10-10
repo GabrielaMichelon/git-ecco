@@ -45,13 +45,12 @@ public class CompareVariants{
             Boolean fileExistsInEcco = false;
             Integer accLineDiff = 0;
             Boolean matchFiles = false;
+            List<String> original =  original = Files.readAllLines(f.toPath());
+            List<String> revised = null;
             //compare text files
             for (File fEcco : filesEcco) {
                 if(f.getName().equals(fEcco.getName())){
-                    List<String> original = null;
-                    List<String> revised = null;
                     try {
-                        original = Files.readAllLines(f.toPath());
                         revised = Files.readAllLines(fEcco.toPath());
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -83,7 +82,7 @@ public class CompareVariants{
             }
             if(!fileExistsInEcco){
                 List<List<String>> resultRows = Arrays.asList(
-                        Arrays.asList(f.getName(),"not","not")
+                        Arrays.asList(f.getName(),"not",Integer.toString(original.size()-1),Integer.toString(original.size()-1))
                 );
                 for (List<String> rowData : resultRows) {
                     csvWriter.append(String.join(",", rowData));
