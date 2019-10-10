@@ -29,7 +29,7 @@ public class CompareVariants{
         getFilesToProcess(srcEcco, filesEcco);
         String outputCSV = srcOriginal.getParentFile().getParentFile().getAbsolutePath();
         String fileStr = outputCSV+File.separator+srcOriginal.getName()+".csv";
-        File fAppend = new File(fileStr);
+               File fAppend = new File(fileStr);
         FileAppender  csvWriter = new  FileAppender(fAppend);
 
         List<List<String>> headerRows = Arrays.asList(

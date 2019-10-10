@@ -12,6 +12,8 @@ import at.jku.isse.gitecco.core.type.Feature;
 import at.jku.isse.gitecco.translation.constraintcomputation.util.ConstraintComputer;
 import at.jku.isse.gitecco.translation.variantscomparison.util.CompareVariants;
 import at.jku.isse.gitecco.translation.visitor.GetNodesForChangeVisitor;
+import com.sun.org.apache.xpath.internal.operations.Bool;
+import org.glassfish.grizzly.http.server.accesslog.FileAppender;
 
 import java.io.*;
 import java.nio.file.Path;
@@ -79,13 +81,31 @@ public class App {
         final File destGitCommitAndCheckout = new  File ("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite\\testeCommitJGit");
         ArrayList<String> configsToCheckout = new ArrayList<>();
 
-
         Map<Feature, Integer> featureVersions = new HashMap<>();
-        final int[] countFeaturesChanged = {0};
+        final Integer[] countFeaturesChanged = {0}; //COUNT PER GIT COMMIT
+        final Integer[] newFeatures = {0}; //COUNT PER GIT COMMIT
 
         File gitRepositoryFolder = new File(gitHelper.getPath());
         File eccoVariantsFolder = new File(gitRepositoryFolder.getParent(), "ecco");
         if (eccoVariantsFolder.exists()) GitCommitList.recursiveDelete(eccoVariantsFolder.toPath());
+        String fileReportFeature = "features_report_each_project_commit.csv";
+
+        //csv to report new features and features changed per git commit of the project
+        try {
+            FileWriter csvWriter = new FileWriter(gitRepositoryFolder.getParent() + File.separator +fileReportFeature);
+            List<List<String>> headerRows = Arrays.asList(
+                    Arrays.asList( "CommitNumber", "NewFeatures", "ChangedFeatures")
+            );
+            for (List<String> rowData : headerRows) {
+                csvWriter.append(String.join(",", rowData));
+                csvWriter.append("\n");
+            }
+            csvWriter.flush();
+            csvWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        // end csv to report new features and features changed
 
         commitList.addGitCommitListener((gc, gcl) -> {
             List<String> configurations = new ArrayList<>();
@@ -147,7 +167,10 @@ public class App {
                                 //for marlin: first commit is empty, thus we need the < 2. otherwise <1 should be enough.
                                 if (gcl.size() < 2 || changed.contains(configFeature.getKey())) {
                                     version++;
-                                    countFeaturesChanged[0]++;
+                                    if(version==1)
+                                        newFeatures[0]++;
+                                    else
+                                        countFeaturesChanged[0]++;
                                 }
                                 featureVersions.put(configFeature.getKey(), version);
                             }
@@ -200,6 +223,7 @@ public class App {
                         configsToCheckout.add(eccoConfig);
 
 
+                        //creating a new csv for each variant to store the results later
                         try {
                             String fileStr = outputCSV + File.separator + eccoConfig + ".csv";
                             FileWriter csvWriter = new FileWriter(fileStr);
@@ -216,12 +240,30 @@ public class App {
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
+                        //end creating new csv
 
                     }
                 }
             }
-            System.out.println("Feature changed per commit: " + countFeaturesChanged[0]);
+
+            //append results to the feature report csv
+            try {
+                FileAppender csvAppender = new FileAppender(new File(gitRepositoryFolder.getParent() + File.separator + fileReportFeature));
+                List<List<String>> contentRows = Arrays.asList(
+                        Arrays.asList(Long.toString(gc.getNumber()),newFeatures[0].toString(),countFeaturesChanged[0].toString())
+                );
+                for (List<String> rowData : contentRows) {
+                    csvAppender.append(String.join(",", rowData));
+                }
+                csvAppender.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            //end append results to the feature report csv
+
             countFeaturesChanged[0] = 0;
+            newFeatures[0] = 0;
+
         });
         gitHelper.getEveryNthCommit(commitList, 1, 3, 1);
         //gitHelper.getAllCommits(commitList);
