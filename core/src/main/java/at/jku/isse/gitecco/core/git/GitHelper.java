@@ -359,7 +359,8 @@ public class GitHelper {
         revWalk.sort(RevSort.TOPO, true);
         revWalk.sort(RevSort.REVERSE, true);
 
-        revWalk.markStart(revWalk.parseCommit(((List<Ref>) allRefs).get(0).getObjectId()));
+        //revWalk.markStart(revWalk.parseCommit(((List<Ref>) allRefs).get(0).getObjectId()));
+        for(Ref ref : allRefs) revWalk.markStart(revWalk.parseCommit(ref.getObjectId()));
 
         long number = 0;
         for (RevCommit rc : revWalk) {

@@ -28,6 +28,13 @@ public class ConstraintComputer {
      * @return
      */
     public Map<Feature, Integer> computeConfig (ConditionalNode changedNode, RootNode tree) {
+        //if the changed node is a base node just return BASE as solution
+        if(changedNode instanceof BaseNode) {
+            Map<Feature, Integer> ret = new HashMap<>();
+            ret.put(new Feature("BASE"), 1);
+            return ret;
+        }
+
         ExpressionSolver solver = new ExpressionSolver();
         Map<Feature, Queue<FeatureImplication>> implMap = new HashMap<>();
 
@@ -71,6 +78,13 @@ public class ConstraintComputer {
      * @return
      */
     public Set<Feature> computeChangedFeatures (ConditionalNode changedNode, Map<Feature, Integer> config) {
+        //if the changed node is a base node just return BASE as solution
+        if(changedNode instanceof BaseNode) {
+            Set<Feature> ret = new HashSet<>();
+            ret.add(new Feature("BASE"));
+            return ret;
+        }
+
         ExpressionSolver solver = new ExpressionSolver();
         boolean repeat = true;
         Set<Feature> ret = null;
