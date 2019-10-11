@@ -31,6 +31,21 @@ import static org.chocosolver.solver.constraints.nary.cnf.LogOp.*;
 
 public class TranslationTest {
 
+    //git checkout $(git log --branches -1 --pretty=format:"%H")
+
+    @Test
+    public void resetGitRepo() {
+        //does not work
+        String path = "C:\\obermanndavid\\git-ecco-test\\test_featureid\\Marlin";
+        Process p;
+        try {
+            p = Runtime.getRuntime().exec("git " + path + " checkout $(git "+ path + " log --branches -1 --pretty=format:\"%H\")");
+            p.waitFor();
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Test
     public void getCSVInformation() throws IOException {
         File folder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite");

@@ -4,9 +4,13 @@ import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 public class PreprocessorAPI {
 
@@ -218,11 +222,33 @@ public class PreprocessorAPI {
         }
 
         List<File> files = new LinkedList<File>();
+        Set<File> binaryFiles = new HashSet<>();
         getFilesToProcess(src, files);
+        getFilesToCopy(src, binaryFiles);
         File target = new File(targetDir, commitInformation);
         target.getParentFile().mkdir();
         File file = new File(targetDir, commitInformation);
         targetDir= file;
+
+        for (File f : binaryFiles) {
+            try {
+                String sourcePath = f.getCanonicalPath();
+                String relativePath = sourcePath.substring(src.getCanonicalPath().length());
+
+                if (relativePath.length() == 0) {
+                    target = new File(targetDir, f.getName());
+                } else {
+                    target = new File(targetDir, relativePath);
+                }
+
+                target.getParentFile().mkdirs();
+
+                Files.copy(f.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            } catch (IOException e) {
+                System.err.println("Error copying non source files to target dir");
+                e.printStackTrace();
+            }
+        }
 
         for (File f : files) {
 
@@ -292,6 +318,21 @@ public class PreprocessorAPI {
                     files.add(f);
                 }
             }
+        }
+    }
+
+    private void getFilesToCopy(File f, Set<File> files) {
+        if (f.isDirectory()) {
+            for (File file : f.listFiles()) {
+                //application specific condition: f.getName().endsWith(".git") is for ignoring the .git folder
+                if(!file.getName().endsWith(".git")) getFilesToCopy(file, files);
+            }
+        } else if (f.isFile()) {
+            boolean add = true;
+            for (String ext : this.fileTypes) {
+                if(f.getName().endsWith("." + ext)) add = false;
+            }
+            if(add) files.add(f);
         }
     }
 }
