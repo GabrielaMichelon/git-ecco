@@ -47,8 +47,8 @@ public class App {
                 "HAVE_SYS_SOCKET_H", "HAVE_SYS_TYPES_H","HAVE_STRTOLL","HAVE_PWD_H","HAVE_FCNTL_H","HAVE_OPENNET_H",
                 "TIME_WITH_SYS_TIME","HAVE_DIRENT_H","HAVE_NETDB_H","__WIN32__","HAVE_INTTYPES_H","HAVE_LIBOPENNET",
                 "HAVE_SYS_STAT_H","__MINGW32__", "GCRYPT", "HAVE_LIBCRYPTO", "HAVE_PAM_PAM_APPL_H", "HAVE_LIBCRYPT", "HAVE_OPENSSL_DES_H",
-                "_WIN32", "_MSC_VER", "__GNUC__","EWOULDBLOCK","uid_t","gid_t", "WITH_LIBZ"};*/
-        String[] featuresToAdd = {"BASE", "YYERRORSYMBOL", "TEST_COMPARE", "_WIN32", "WIN32", "TEST", "NDEBUG", "NO_READLINE", "TCLSH", "MEMORY_DEBUG", "HAVE_USLEEP", "HAVE_READLINE", "OS_WIN", "NO_TCL",
+                "_WIN32", "_MSC_VER", "__GNUC__","EWOULDBLOCK","uid_t","gid_t", "WITH_LIBZ"};
+       */ String[] featuresToAdd = {"BASE", "YYERRORSYMBOL", "TEST_COMPARE", "_WIN32", "WIN32", "TEST", "NDEBUG", "NO_READLINE", "TCLSH", "MEMORY_DEBUG", "HAVE_USLEEP", "HAVE_READLINE", "OS_WIN", "NO_TCL",
                 "COMPATIBILITY", "etCOMPATIBILITY", "DEBUG", "__cplusplus", "__STDC__", "SIGINT", "BIG_ENDIAN", "DISABLE_GDBM", "SQLITE_TEST", "SQLITE_UTF8", "TCL_UTF_MAX", "USE_TCL_STUBS", "__CYGWIN__",
                 "THREADSAFE", "__MINGW32__", "__BORLANDC__", "NDEEBUG", "NDEBUG2"};
         ArrayList<String> featureList = new ArrayList<>();
@@ -145,8 +145,8 @@ public class App {
 
             //changedNodes = changedNodes.stream().filter(x -> x.getLocalCondition().equals("__AVR_ATmega644P__ || __AVR_ATmega644__")).collect(Collectors.toSet());
             for (ConditionalNode changedNode : changedNodes) {
-                Long runtimeEccoCommit, runtimeEccoCheckout = Long.valueOf(0), runtimePPCheckout, timeBefore, timeAfter;
-                Long runtimeGitCommit = Long.valueOf(0), runtimeGitCheckout = Long.valueOf(0), runtimePPCommit = commitList.getRuntimePPCommit();
+                Long runtimeEccoCommit, runtimeEccoCheckout = Long.valueOf(0), runtimePPCheckoutGenerateVariant, timeBefore, timeAfter;
+                Long runtimeGitCommit = Long.valueOf(0), runtimeGitCheckout = commitList.getRuntimePPCheckoutCleanVersion(), runtimePPCheckoutCleanVersion = commitList.getRuntimePPCheckoutCleanVersion();
                 //compute the config for the var gen
                 //TODO: print every condition that should be solved.
                 config = constraintComputer.computeConfig(changedNode, gc.getTree());
@@ -188,7 +188,8 @@ public class App {
                         //TODO: add binary files to the generated variant
                         pph.generateVariants(config, gitFolder, eccoFolder, gitHelper.getDirFiles(), eccoConfig);
                         timeAfter = System.currentTimeMillis();
-                        runtimePPCheckout = timeAfter - timeBefore;
+                        runtimePPCheckoutGenerateVariant = timeAfter - timeBefore;
+                        runtimeGitCheckout += runtimePPCheckoutGenerateVariant;
 
                         configurations.add(eccoConfig);
                         //folder where the variant is stored
@@ -211,9 +212,9 @@ public class App {
                         //computing the git commit and checkout runtime of the variant
                         GitHelper gh = new GitHelper();
                         try {
-                            gh.gitCommitAndCheckout(variantsrc.getAbsolutePath(), destGitCommitAndCheckout.getAbsolutePath());
+                            File srcGitProject = new File(repoPath);
+                            gh.gitCommitAndCheckout(srcGitProject.getAbsolutePath(), destGitCommitAndCheckout.getAbsolutePath(), gc.getCommitName());
                             runtimeGitCommit = gh.getRuntimeGitCommit();
-                            runtimeGitCheckout = gh.getRuntimeGitCheckout();
                         } catch (IOException e) {
 
                         }
@@ -228,8 +229,8 @@ public class App {
                             String fileStr = outputCSV + File.separator + eccoConfig + ".csv";
                             FileWriter csvWriter = new FileWriter(fileStr);
                             List<List<String>> headerRows = Arrays.asList(
-                                    Arrays.asList("runtimeEccoCommit", "runtimeEccoCheckout", "runtimeCommitPP", "runtimeChceckoutPP", "runtimeGitCommit", "runtimeGitCheckout"),
-                                    Arrays.asList(runtimeEccoCommit.toString(), runtimeEccoCheckout.toString(), runtimePPCommit.toString(), runtimePPCheckout.toString(), runtimeGitCommit.toString(), runtimeGitCheckout.toString())
+                                    Arrays.asList("runtimeEccoCommit", "runtimeEccoCheckout", "runtimeCleanVersionPP", "runtimeGenerateVariantPP", "runtimeGitCommit", "runtimeGitCheckout"),
+                                    Arrays.asList(runtimeEccoCommit.toString(), runtimeEccoCheckout.toString(), runtimePPCheckoutCleanVersion.toString(), runtimePPCheckoutGenerateVariant.toString(), runtimeGitCommit.toString(), runtimeGitCheckout.toString())
                             );
                             for (List<String> rowData : headerRows) {
                                 csvWriter.append(String.join(",", rowData));
@@ -265,12 +266,11 @@ public class App {
             newFeatures[0] = 0;
 
         });
-        gitHelper.getEveryNthCommit(commitList, 1, 3, 1);
+        gitHelper.getEveryNthCommit(commitList, 3, 5, 1);
         //gitHelper.getAllCommits(commitList);
 
         //checkout
-        Long runtimeEccoCommit, runtimeEccoCheckout, runtimePPCheckout, timeBefore, timeAfter;
-        Long runtimeGitCommit = Long.valueOf(0), runtimeGitCheckout = Long.valueOf(0), runtimePPCommit = commitList.getRuntimePPCommit();
+        Long runtimeEccoCheckout, timeBefore, timeAfter;
         for (String config : configsToCheckout) {
             Path pathcheckout = Paths.get(OUTPUT_DIR.resolve("checkout") + File.separator + config);
             File checkoutfile = new File(String.valueOf(pathcheckout));

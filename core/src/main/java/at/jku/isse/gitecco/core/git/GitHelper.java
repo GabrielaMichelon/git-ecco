@@ -37,7 +37,6 @@ public class GitHelper {
     private final String pathUrl;
     private final List<String> dirFiles;
     private Long runtimeGitCommit;
-    private Long runtimeGitCheckout;
 
     public Long getRuntimeGitCommit() {
         return runtimeGitCommit;
@@ -46,15 +45,6 @@ public class GitHelper {
     public void setRuntimeGitCommit(Long runtimeGitCommit) {
         this.runtimeGitCommit = runtimeGitCommit;
     }
-
-    public Long getRuntimeGitCheckout() {
-        return runtimeGitCheckout;
-    }
-
-    public void setRuntimeGitCheckout(Long runtimeGitCheckout) {
-        this.runtimeGitCheckout = runtimeGitCheckout;
-    }
-
 
     //when having problems with repo --> following line checks out the latest commit
     //git checkout $(git log --branches -1 --pretty=format:"%H")
@@ -79,13 +69,25 @@ public class GitHelper {
         this.dirFiles = null;
     }
 
-    public void gitCommitAndCheckout(String srcpathFiles, String destpathFiles) throws IOException {
+    public void gitCommitAndCheckout(String srcpathFiles, String destpathFiles, String commitName) throws IOException {
         Path sourcepath = Paths.get(srcpathFiles);
         Path destpath = Paths.get(destpathFiles);
         Files.setAttribute(destpath, "dos:readonly", false);
         if (destpath.toFile().exists()) GitCommitList.recursiveDelete(destpath);
         File dest = new File(String.valueOf(destpath));
         dest.mkdir();
+        File srcPath = new File(srcpathFiles);
+
+        //checkout of the specif commit of the original git project to copy the files that we need to simulate the GIT commit with the variant
+        try {
+            Ref git = Git.open(srcPath)
+                .checkout()
+                .setName(commitName)
+                .call();
+        } catch (GitAPIException e) {
+            e.printStackTrace();
+        }
+        //end checkout of the specif commit of the original git project to copy the files that we need to simulate the GIT commit with the variant
 
         Files.walk(sourcepath)
                 .forEach(source -> {
@@ -112,22 +114,7 @@ public class GitHelper {
             setRuntimeGitCommit(timeAfter - timeBefore);
             //end git commit
 
-            // Find the head for the repository
-            lastCommitId = git.getRepository().resolve(Constants.HEAD);
             git.close();
-
-            //git checkout
-            timeBefore = System.currentTimeMillis();
-            git.open(git.getRepository().getDirectory())
-                    .checkout()
-                    .setCreateBranch(true)
-                    .setName("new-branch")
-                    .call();
-            ;
-            timeAfter = System.currentTimeMillis();
-            setRuntimeGitCheckout(timeAfter - timeBefore);
-            //end git checkout
-
         } catch (GitAPIException e) {
             e.printStackTrace();
         }

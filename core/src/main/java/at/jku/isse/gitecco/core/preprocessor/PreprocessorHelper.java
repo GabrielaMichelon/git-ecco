@@ -26,12 +26,12 @@ public class PreprocessorHelper {
         pp.setKeepIncludes(true);
         pp.setKeepDefines(true);
 
-        Long timeBefore, timeAfter, runtimePPCommit;
+        Long timeBefore, timeAfter, runtimePPCheckoutCleanVersion;
         timeBefore = System.currentTimeMillis();
         pp.preprocess(src, target, dirFiles,"");
         timeAfter = System.currentTimeMillis();
-        runtimePPCommit = timeAfter - timeBefore;
-        return runtimePPCommit;
+        runtimePPCheckoutCleanVersion = timeAfter - timeBefore;
+        return runtimePPCheckoutCleanVersion;
     }
 
     /**

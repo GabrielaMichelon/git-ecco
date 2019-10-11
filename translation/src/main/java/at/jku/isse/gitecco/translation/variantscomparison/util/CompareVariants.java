@@ -2,14 +2,18 @@ package at.jku.isse.gitecco.translation.variantscomparison.util;
 
 
 
+import at.jku.isse.ecco.service.EccoService;
+import at.jku.isse.gitecco.core.git.GitCommitList;
 import difflib.Delta;
 import difflib.DiffUtils;
 import difflib.Patch;
 import org.glassfish.grizzly.http.server.accesslog.FileAppender;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -33,7 +37,7 @@ public class CompareVariants{
         FileAppender  csvWriter = new  FileAppender(fAppend);
 
         List<List<String>> headerRows = Arrays.asList(
-                Arrays.asList("fileName","matchFile","difLines", "totalLines")
+                Arrays.asList("fileName","matchFile","truepositiveLines", "falsepositiveLines","falsenegativeLines", "originaltotalLines", "eccototalLines")
         );
         for (List<String> rowData : headerRows) {
             csvWriter.append("\n");
@@ -43,7 +47,7 @@ public class CompareVariants{
 
         for (File f : filesVariant) {
             Boolean fileExistsInEcco = false;
-            Integer accLineDiff = 0;
+            Integer truepositiveLines=0, falsepositiveLines=0,falsenegativeLines=0, originaltotalLines=0, eccototalLines=0;
             Boolean matchFiles = false;
             List<String> original =  original = Files.readAllLines(f.toPath());
             List<String> revised = null;
@@ -68,11 +72,19 @@ public class CompareVariants{
                         for (Delta delta : patch.getDeltas()) {
                             Integer difLines = Math.abs(delta.getOriginal().getLines().size() - delta.getRevised().getLines().size());
                             //List<String> unifiedDiff = DiffUtils.generateUnifiedDiff(f.getName(), fEcco.getName(), original, patch, original.size());
-                            accLineDiff += difLines;
+                            System.out.println(delta.getType().toString());
+                            if(delta.getType().toString().equals("INSERT"))
+                               falsepositiveLines += difLines;
+                            else
+                                falsenegativeLines += difLines;
                         }
                     }
+                    eccototalLines = (revised.size()-1);
+                    originaltotalLines = original.size()-1;
+                    truepositiveLines = eccototalLines - (falsenegativeLines);
+
                     List<List<String>> resultRows = Arrays.asList(
-                            Arrays.asList( f.getName(),matchFiles.toString(),accLineDiff.toString(),Integer.toString(original.size()-1))
+                            Arrays.asList( f.getName(),matchFiles.toString(),truepositiveLines.toString(), falsepositiveLines.toString(), falsenegativeLines.toString(), originaltotalLines.toString(), eccototalLines.toString())
                     );
                     for (List<String> rowData : resultRows) {
                         csvWriter.append(String.join(",", rowData));
@@ -82,7 +94,7 @@ public class CompareVariants{
             }
             if(!fileExistsInEcco){
                 List<List<String>> resultRows = Arrays.asList(
-                        Arrays.asList(f.getName(),"not",Integer.toString(original.size()-1),Integer.toString(original.size()-1))
+                        Arrays.asList(f.getName(),"not",  "0", "0", originaltotalLines.toString(), originaltotalLines.toString(), eccototalLines.toString())
                 );
                 for (List<String> rowData : resultRows) {
                     csvWriter.append(String.join(",", rowData));
@@ -109,5 +121,73 @@ public class CompareVariants{
         }
     }
 
+
+    public void eccoCheckout(ArrayList<String> configsToCheckout, Path OUTPUT_DIR, File eccoFolder, File checkoutFolder) throws IOException {
+
+        EccoService service = new EccoService();
+        service.setRepositoryDir(OUTPUT_DIR.resolve("repo"));
+        service.open();
+        //checkout
+        Long runtimeEccoCheckout, timeBefore, timeAfter;
+        for (String config : configsToCheckout) {
+            Path pathcheckout = Paths.get(OUTPUT_DIR.resolve("checkout") + File.separator + config);
+            File checkoutfile = new File(String.valueOf(pathcheckout));
+            if (checkoutfile.exists()) GitCommitList.recursiveDelete(checkoutfile.toPath());
+            checkoutfile.mkdir();
+            service.setBaseDir(pathcheckout);
+            timeBefore = System.currentTimeMillis();
+            service.checkout(config);
+            timeAfter = System.currentTimeMillis();
+            runtimeEccoCheckout = timeAfter - timeBefore;
+            String outputCSV = eccoFolder.getParentFile().getAbsolutePath();
+            String fileStr = outputCSV + File.separator + config + ".csv";
+            BufferedReader csvReader = null;
+            try {
+                csvReader = new BufferedReader(new FileReader(fileStr));
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+            String row = null;
+            ArrayList<String> listHeader = new ArrayList<>();
+            ArrayList<String> listRuntimeData = new ArrayList<>();
+            Boolean header = true;
+            while ((row = csvReader.readLine()) != null) {
+                String[] data = row.split(",");
+                if (header) {
+                    for (int i = 0; i < data.length; i++) {
+                        listHeader.add(data[i]);
+                    }
+                    header = false;
+                } else {
+                    for (int i = 0; i < data.length; i++) {
+                        if (i == 1) {
+                            listRuntimeData.add(String.valueOf(runtimeEccoCheckout));
+                        } else {
+                            listRuntimeData.add(String.valueOf(data[i]));
+                        }
+                    }
+                }
+            }
+            csvReader.close();
+            File fwriter = new File(fileStr);
+            FileWriter csvWriter = new FileWriter(fwriter);
+            csvWriter.append(String.join(",", listHeader));
+            csvWriter.append("\n");
+            csvWriter.append(String.join(",", listRuntimeData));
+            csvWriter.flush();
+            csvWriter.close();
+        }
+        //end checkout
+
+        //close ecco repository
+        service.close();
+
+        //compare variant with ecco checkout
+        for (File path : eccoFolder.listFiles()) {
+            CompareVariants cV = new CompareVariants();
+            cV.compareVariant(path, new File(checkoutFolder + File.separator + path.getName()));
+        }
+
+    }
 
 }
