@@ -12,7 +12,6 @@ import at.jku.isse.gitecco.core.type.Feature;
 import at.jku.isse.gitecco.translation.constraintcomputation.util.ConstraintComputer;
 import at.jku.isse.gitecco.translation.variantscomparison.util.CompareVariants;
 import at.jku.isse.gitecco.translation.visitor.GetNodesForChangeVisitor;
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.glassfish.grizzly.http.server.accesslog.FileAppender;
 
 import java.io.*;
