@@ -32,8 +32,8 @@ public class App extends Thread{
     private final static boolean DEBUG = true;
     private final static int MAX_COMMITS = 100;
     private final static boolean EVERYCOMMIT = true;
-    private final static int STARTCOMMIT = 0;
-    private final static int ENDCOMMIT = 100;
+    private final static int STARTCOMMIT = 1;
+    private final static int ENDCOMMIT = 30;
     private final static int EVERY_NTH_COMMIT = 1;
     private final static boolean MAX_COMMITS_ENA = true;
     private final static boolean PARALLEL = true;

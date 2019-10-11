@@ -37,7 +37,7 @@ public class App {
                 "THERMISTORHEATER", "THERMISTORBED", "TSd2PinMap_hHERMISTORHEATER", "PID_DEBUG", "HEATER_USES_THERMISTOR", "__AVR_ATmega328P__", "__AVR_ATmega1280__", "__AVR_ATmega168__",
                 "ADVANCE", "PID_OPENLOOP", "SDSUPPORT", "BED_USES_THERMISTOR", "SIMPLE_LCD", "NEWPANEL", "DEBUG_STEPS", "BED_USES_AD595", "ARDUINO",
                 "HEATER_1_USES_THERMISTOR", "THERMISTORHEATER_1", "HEATER_USES_THERMISTOR_1", "HEATER_2_USES_AD595", "HEATER_1_MAXTEMP", "THERMISTORHEATER_0",
-                "HEATER_1_MINTEMP", "HEATER_0_USES_THERMISTOR", "RESET_MANUAL", "PID_PID"};/*
+                "HEATER_1_MINTEMP", "HEATER_0_USES_THERMISTOR", "RESET_MANUAL", "PID_PID"};
         String[] featuresToAdd = {"BASE", "WITH_SERVER", "HAVE_LIBZ", "WORDS_BIGENDIAN", "DEBUG_CRYPTO",
                 "HAVE_OPENSSL_AES_H","HAVE_GETHOSTBYNAME", "OPENSSL_VERSION_NUMBER","HAVE_SYS_POLL_H",
                 "HAVE_OPENSSL_BLOWFISH_H", "HAVE_SYS_TIME_H", "HAVE_POLL", "HAVE_SELECT", "HAVE_GETHOSTBYADDR",
@@ -47,8 +47,8 @@ public class App {
                 "HAVE_SYS_SOCKET_H", "HAVE_SYS_TYPES_H","HAVE_STRTOLL","HAVE_PWD_H","HAVE_FCNTL_H","HAVE_OPENNET_H",
                 "TIME_WITH_SYS_TIME","HAVE_DIRENT_H","HAVE_NETDB_H","__WIN32__","HAVE_INTTYPES_H","HAVE_LIBOPENNET",
                 "HAVE_SYS_STAT_H","__MINGW32__", "GCRYPT", "HAVE_LIBCRYPTO", "HAVE_PAM_PAM_APPL_H", "HAVE_LIBCRYPT", "HAVE_OPENSSL_DES_H",
-                "_WIN32", "_MSC_VER", "__GNUC__","EWOULDBLOCK","uid_t","gid_t", "WITH_LIBZ"};
-       */ String[] featuresToAdd = {"BASE", "YYERRORSYMBOL", "TEST_COMPARE", "_WIN32", "WIN32", "TEST", "NDEBUG", "NO_READLINE", "TCLSH", "MEMORY_DEBUG", "HAVE_USLEEP", "HAVE_READLINE", "OS_WIN", "NO_TCL",
+                "_WIN32", "_MSC_VER", "__GNUC__","EWOULDBLOCK","uid_t","gid_t", "WITH_LIBZ"};*/
+        String[] featuresToAdd = {"BASE", "YYERRORSYMBOL", "TEST_COMPARE", "_WIN32", "WIN32", "TEST", "NDEBUG", "NO_READLINE", "TCLSH", "MEMORY_DEBUG", "HAVE_USLEEP", "HAVE_READLINE", "OS_WIN", "NO_TCL",
                 "COMPATIBILITY", "etCOMPATIBILITY", "DEBUG", "__cplusplus", "__STDC__", "SIGINT", "BIG_ENDIAN", "DISABLE_GDBM", "SQLITE_TEST", "SQLITE_UTF8", "TCL_UTF_MAX", "USE_TCL_STUBS", "__CYGWIN__",
                 "THREADSAFE", "__MINGW32__", "__BORLANDC__", "NDEEBUG", "NDEBUG2"};
         ArrayList<String> featureList = new ArrayList<>();
@@ -266,7 +266,7 @@ public class App {
             newFeatures[0] = 0;
 
         });
-        gitHelper.getEveryNthCommit(commitList, 3, 5, 1);
+        gitHelper.getEveryNthCommit(commitList, 4, 6, 1);
         //gitHelper.getAllCommits(commitList);
 
         //checkout

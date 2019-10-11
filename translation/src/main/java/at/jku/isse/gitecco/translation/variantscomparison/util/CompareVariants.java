@@ -27,6 +27,7 @@ public class CompareVariants{
         fileTypes.add("cpp");
         fileTypes.add("h");
         fileTypes.add("hpp");
+
         List<File> filesVariant = new LinkedList<File>();
         List<File> filesEcco = new LinkedList<File>();
         getFilesToProcess(srcOriginal, filesVariant);
@@ -46,6 +47,7 @@ public class CompareVariants{
 
 
         for (File f : filesVariant) {
+
             Boolean fileExistsInEcco = false;
             Integer truepositiveLines=0, falsepositiveLines=0,falsenegativeLines=0, originaltotalLines=0, eccototalLines=0;
             Boolean matchFiles = false;
@@ -113,11 +115,11 @@ public class CompareVariants{
                 getFilesToProcess(file, files);
             }
         } else if (f.isFile()) {
-            for (String ext : this.fileTypes) {
-                if (f.getName().endsWith("." + ext)) {
+            //for (String ext : this.fileTypes) {
+            //    if (f.getName().endsWith("." + ext)) {
                     files.add(f);
-                }
-            }
+            //    }
+            //}
         }
     }
 
