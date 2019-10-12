@@ -69,55 +69,67 @@ public class GitHelper {
         this.dirFiles = null;
     }
 
-    public void gitCommitAndCheckout(String srcpathFiles, String destpathFiles, String commitName) throws IOException {
+    public void gitCommitAndCheckout(String srcpathFiles, String destpathFiles, String commitName, String commitMessage) throws IOException, GitAPIException {
         Path sourcepath = Paths.get(srcpathFiles);
         Path destpath = Paths.get(destpathFiles);
         Files.setAttribute(destpath, "dos:readonly", false);
-        if (destpath.toFile().exists()) GitCommitList.recursiveDelete(destpath);
         File dest = new File(String.valueOf(destpath));
-        dest.mkdir();
-        File srcPath = new File(srcpathFiles);
+        Boolean initializeGit = true;
+        if (destpath.toFile().exists()) {
+            for (File path : dest.listFiles()) {
+                if (path.isDirectory() && path.getName().equals(".git")) {
+                    initializeGit = false;
+                } else {
+                    GitCommitList.recursiveDelete(path.toPath());
+                }
+            }
+        } else {
+            dest.mkdir();
+            initializeGit = false;
+        }
+
+        if(initializeGit) {
+            Git git = Git.init().setDirectory(dest).call();
+        }
 
         //checkout of the specif commit of the original git project to copy the files that we need to simulate the GIT commit with the variant
-        try {
-            Ref git = Git.open(srcPath)
+        File srcPath = new File(srcpathFiles);
+        Ref git = Git.open(srcPath)
                 .checkout()
                 .setName(commitName)
                 .call();
-        } catch (GitAPIException e) {
-            e.printStackTrace();
-        }
+
         //end checkout of the specif commit of the original git project to copy the files that we need to simulate the GIT commit with the variant
+        Path pathGit = Paths.get(sourcepath + File.separator + ".git");
 
         Files.walk(sourcepath)
                 .forEach(source -> {
                     try {
-                        copy(source, destpath.resolve(sourcepath.relativize(source)));
+                        if (!source.equals(pathGit))
+                            copy(source, destpath.resolve(sourcepath.relativize(source)));
                     } catch (IOException e) {
 
                     }
                 });
 
         File localPath = new File(destpathFiles);
-        ObjectId lastCommitId = null;
 
         // Create the git repository with init
-        try (Git git = Git.init().setDirectory(localPath).call()) {
 
-            // run the add-call
-            git.add().addFilepattern(localPath.toString()).call();
 
+        // run the add-call
+
+            Git gitOpen = Git.open(dest);
+            gitOpen.add().addFilepattern(localPath.toString()).call();
             //git commit
             Long timeBefore = System.currentTimeMillis();
-            git.commit().setMessage("Initial commit").call();
+            gitOpen.commit().setMessage(commitMessage).call();
             Long timeAfter = System.currentTimeMillis();
             setRuntimeGitCommit(timeAfter - timeBefore);
+            gitOpen.close();
             //end git commit
 
-            git.close();
-        } catch (GitAPIException e) {
-            e.printStackTrace();
-        }
+
 
     }
 
@@ -360,7 +372,7 @@ public class GitHelper {
         revWalk.sort(RevSort.REVERSE, true);
 
         //revWalk.markStart(revWalk.parseCommit(((List<Ref>) allRefs).get(0).getObjectId()));
-        for(Ref ref : allRefs) revWalk.markStart(revWalk.parseCommit(ref.getObjectId()));
+        for (Ref ref : allRefs) revWalk.markStart(revWalk.parseCommit(ref.getObjectId()));
 
         long number = 0;
         for (RevCommit rc : revWalk) {
@@ -388,7 +400,8 @@ public class GitHelper {
      * @throws GitAPIException
      * @throws IOException
      */
-    public GitCommitList getEveryNthCommit(GitCommitList commits, int startcommit, int endcommit, int n) throws Exception {
+    public GitCommitList getEveryNthCommit(GitCommitList commits, int startcommit, int endcommit, int n) throws
+            Exception {
         final boolean FASTMODE = false;
         final Repository repository = git.getRepository();
         final Collection<Ref> allRefs = repository.getRefDatabase().getRefs();

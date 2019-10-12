@@ -14,6 +14,7 @@ import at.jku.isse.gitecco.translation.constraintcomputation.util.ConstraintComp
 import at.jku.isse.gitecco.translation.variantscomparison.util.CompareVariants;
 import at.jku.isse.gitecco.translation.visitor.GetNodesForChangeVisitor;
 import com.sun.org.apache.xpath.internal.operations.Bool;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.glassfish.grizzly.http.server.accesslog.FileAppender;
 
 import java.io.*;
@@ -27,7 +28,10 @@ public class App {
     public static void main(String... args) throws Exception {
         final boolean debug = true;
         //TODO: planned arguments: DEBUG, dispose tree, max commits, repo path, csv path(feature id), outpath for ecco
-        String repoPath = "C:\\obermanndavid\\git-ecco-test\\1_first_run\\sqlite";
+        //String repoPath = "C:\\obermanndavid\\git-ecco-test\\1_first_run\\sqlite";
+        //String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin";
+        //String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\libssh-mirror\\libssh-mirror";
+        String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite\\sqlite";
 
         //optional features of the project obtained by the featureID (chosen that which is in almost cases external feature)
         /*String[] featuresToAdd = {"BASE", "__AVR_ATmega644P__", "F_FILE_DIR_DIRTY", "F_UNUSED", "F_FILE_UNBUFFERED_READ", "RAMPS_V_1_0", "__AVR_ATmega2560__", "F_CPU", "F_OFLAG", "WATCHPERIOD",
@@ -58,19 +62,22 @@ public class App {
         //add directories that we need to include manually to get all the files to create a clean version because "/usr/local/include"
         // and "/usr/include")does not includes files outside the root path
         final List<String> dirFiles = new ArrayList<>();
-        dirFiles.add("C:\\obermanndavid\\git-ecco-test\\1_first_run\\sqlite\\art");
-        dirFiles.add("C:\\obermanndavid\\git-ecco-test\\1_first_run\\sqlite\\contrib");
-        dirFiles.add("C:\\obermanndavid\\git-ecco-test\\1_first_run\\sqlite\\doc");
-        dirFiles.add("C:\\obermanndavid\\git-ecco-test\\1_first_run\\sqlite\\ext");
-        dirFiles.add("C:\\obermanndavid\\git-ecco-test\\1_first_run\\sqlite\\src");
-        dirFiles.add("C:\\obermanndavid\\git-ecco-test\\1_first_run\\sqlite\\test");
-        dirFiles.add("C:\\obermanndavid\\git-ecco-test\\1_first_run\\sqlite\\tool");
+        //dirFiles.add("C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin");
+        //dirFiles.add("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\libssh-mirror\\libssh-mirror");
+        dirFiles.add("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite\\sqlite");
+        dirFiles.add("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite\\sqlite\\art");
+        dirFiles.add("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite\\sqlite\\contrib");
+        dirFiles.add("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite\\sqlite\\doc");
+        dirFiles.add("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite\\sqlite\\ext");
+        dirFiles.add("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite\\sqlite\\src");
+        dirFiles.add("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite\\sqlite\\test");
+        dirFiles.add("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite\\sqlite\\tool");
         final GitHelper gitHelper = new GitHelper(repoPath, dirFiles);
         final GitCommitList commitList = new GitCommitList(gitHelper);
 
         //creating ecco repository for each commit
         //set this path to where the results should be stored
-        final Path OUTPUT_DIR = Paths.get("C:\\obermanndavid\\git-ecco-test\\1_first_run\\variant_result");
+        final Path OUTPUT_DIR = Paths.get("C:\\Users\\gabil\\Desktop\\ECCO_Work\\variant_result");
         if (OUTPUT_DIR.resolve("repo").toFile().exists()) GitCommitList.recursiveDelete(OUTPUT_DIR.resolve("repo"));
         EccoService service = new EccoService();
         service.setRepositoryDir(OUTPUT_DIR.resolve("repo"));
@@ -80,8 +87,8 @@ public class App {
 
         final File gitFolder = new File(gitHelper.getPath());
         final File eccoFolder = new File(gitFolder.getParent(), "ecco");
-        final File checkoutFolder = new File("C:\\obermanndavid\\git-ecco-test\\1_first_run\\variant_result\\checkout\\");
-        final File destGitCommitAndCheckout = new  File ("C:\\obermanndavid\\git-ecco-test\\1_first_run\\gitCommit");
+        final File checkoutFolder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\variant_result\\checkout\\");
+        final File destGitCommitAndCheckout = new  File ("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite\\testeCommitJGit");
         ArrayList<String> configsToCheckout = new ArrayList<>();
 
         Map<Feature, Integer> featureVersions = new HashMap<>();
@@ -126,6 +133,24 @@ public class App {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        //creating runtime csv
+        try {
+            String fileStr = gitRepositoryFolder.getParent() + File.separator +"runtime.csv";
+            FileWriter csvWriter = new FileWriter(fileStr);
+            List<List<String>> headerRows = Arrays.asList(
+                    Arrays.asList("CommitNr","configuration","runtimeEccoCommit", "runtimeEccoCheckout", "runtimeCleanVersionPP", "runtimeGenerateVariantPP", "runtimeGitCommit", "runtimeGitCheckout")
+            );
+            for (List<String> rowData : headerRows) {
+                csvWriter.append(String.join(",", rowData));
+                csvWriter.append("\n");
+            }
+            csvWriter.flush();
+            csvWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        //end runtime csv
 
         commitList.addGitCommitListener((gc, gcl) -> {
             List<String> configurations = new ArrayList<>();
@@ -230,20 +255,6 @@ public class App {
                         runtimeEccoCommit = timeAfter - timeBefore;
                         //end ecco commit
 
-                        //computing the git commit and checkout runtime of the variant
-                        GitHelper gh = new GitHelper();
-                        try {
-                            File srcGitProject = new File(repoPath);
-                            gh.gitCommitAndCheckout(srcGitProject.getAbsolutePath(), destGitCommitAndCheckout.getAbsolutePath(), gc.getCommitName());
-                            runtimeGitCommit = gh.getRuntimeGitCommit();
-                        } catch (IOException e) {
-
-                        }
-                        //end computing the git commit and checkout
-
-                        //add config to checkout after all project commits
-                        configsToCheckout.add(eccoConfig);
-
                         //appending to the config csv
                         try {
                             String fileStr = gitRepositoryFolder.getParent() + File.separator + fileStoreConfig;
@@ -253,7 +264,6 @@ public class App {
                             );
                             for (List<String> rowData : headerRows) {
                                 csvWriter.append(String.join(",", rowData));
-                                csvWriter.append("\n");
                             }
                             csvWriter.close();
                         } catch (IOException e) {
@@ -261,24 +271,40 @@ public class App {
                         }
 
 
-                        //creating a new csv for each variant to store the results later
+                        //computing the git commit runtime of the variant
+                        GitHelper gh = new GitHelper();
                         try {
-                            String fileStr = outputCSV + File.separator + eccoConfig + ".csv";
-                            FileWriter csvWriter = new FileWriter(fileStr);
+                            File srcGitProject = new File(repoPath);
+                            try {
+                                gh.gitCommitAndCheckout(srcGitProject.getAbsolutePath(), destGitCommitAndCheckout.getAbsolutePath(), gc.getCommitName(), eccoConfig);
+                            } catch (GitAPIException e) {
+                                e.printStackTrace();
+                            }
+                            runtimeGitCommit = gh.getRuntimeGitCommit();
+                        } catch (IOException e) {
+
+                        }
+                        //end computing the git commit and checkout
+
+                        //add config to checkout after all project commits
+                        configsToCheckout.add(eccoConfig);
+
+
+                        //appending to the runtime csv
+                        try {
+                            File fileStr = new File(gitRepositoryFolder.getParent() + File.separator +"runtime.csv");
+                            FileAppender csvAppender = new FileAppender(fileStr);
                             List<List<String>> headerRows = Arrays.asList(
-                                    Arrays.asList("runtimeEccoCommit", "runtimeEccoCheckout", "runtimeCleanVersionPP", "runtimeGenerateVariantPP", "runtimeGitCommit", "runtimeGitCheckout"),
-                                    Arrays.asList(runtimeEccoCommit.toString(), runtimeEccoCheckout.toString(), runtimePPCheckoutCleanVersion.toString(), runtimePPCheckoutGenerateVariant.toString(), runtimeGitCommit.toString(), runtimeGitCheckout.toString())
+                                    Arrays.asList(Long.toString(gc.getNumber()),eccoConfig.replace(",","AND"),runtimeEccoCommit.toString(), runtimeEccoCheckout.toString(), runtimePPCheckoutCleanVersion.toString(), runtimePPCheckoutGenerateVariant.toString(), runtimeGitCommit.toString(), runtimeGitCheckout.toString())
                             );
                             for (List<String> rowData : headerRows) {
-                                csvWriter.append(String.join(",", rowData));
-                                csvWriter.append("\n");
+                                csvAppender.append(String.join(",", rowData));
                             }
-                            csvWriter.flush();
-                            csvWriter.close();
+                            csvAppender.close();
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
-                        //end creating new csv
+                        //end appending to the runtime csv
 
                     }
                 }
@@ -303,77 +329,12 @@ public class App {
             newFeatures[0] = 0;
 
         });
-<<<<<<< HEAD
-        //gitHelper.getEveryNthCommit(commitList, 11, 10, 1);
-        gitHelper.getAllCommits(commitList);
-=======
-        //gitHelper.getEveryNthCommit(commitList, 4, 6, 1);
-        gitHelper.getAllCommits(commitList);
 
->>>>>>> 9c1f3d54e78c2107ff26bb8cb43d5b856b5eefbf
-
-        //checkout
-        Long runtimeEccoCheckout, timeBefore, timeAfter;
-        for (String config : configsToCheckout) {
-            Path pathcheckout = Paths.get(OUTPUT_DIR.resolve("checkout") + File.separator + config);
-            File checkoutfile = new File(String.valueOf(pathcheckout));
-            if (checkoutfile.exists()) GitCommitList.recursiveDelete(checkoutfile.toPath());
-            checkoutfile.mkdir();
-            service.setBaseDir(pathcheckout);
-            timeBefore = System.currentTimeMillis();
-            service.checkout(config);
-            timeAfter = System.currentTimeMillis();
-            runtimeEccoCheckout = timeAfter - timeBefore;
-            String outputCSV = eccoFolder.getParentFile().getAbsolutePath();
-            String fileStr = outputCSV + File.separator + config + ".csv";
-            BufferedReader csvReader = null;
-            try {
-                csvReader = new BufferedReader(new FileReader(fileStr));
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
-            String row = null;
-            ArrayList<String> listHeader = new ArrayList<>();
-            ArrayList<String> listRuntimeData = new ArrayList<>();
-            Boolean header = true;
-            while ((row = csvReader.readLine()) != null) {
-                String[] data = row.split(",");
-                if (header) {
-                    for (int i = 0; i < data.length; i++) {
-                        listHeader.add(data[i]);
-                    }
-                    header = false;
-                } else {
-                    for (int i = 0; i < data.length; i++) {
-                        if (i == 1) {
-                            listRuntimeData.add(String.valueOf(runtimeEccoCheckout));
-                        } else {
-                            listRuntimeData.add(String.valueOf(data[i]));
-                        }
-                    }
-                }
-            }
-            csvReader.close();
-            File fwriter = new File(fileStr);
-            FileWriter csvWriter = new FileWriter(fwriter);
-            csvWriter.append(String.join(",", listHeader));
-            csvWriter.append("\n");
-            csvWriter.append(String.join(",", listRuntimeData));
-            csvWriter.flush();
-            csvWriter.close();
-        }
-        //end checkout
+        gitHelper.getEveryNthCommit(commitList, 4, 6, 1);
+        //gitHelper.getAllCommits(commitList);
 
         //close ecco repository
         service.close();
-
-        //compare variant with ecco checkout
-        for (File path : eccoFolder.listFiles()) {
-            CompareVariants cV = new CompareVariants();
-            cV.compareVariant(path, new File(checkoutFolder + File.separator + path.getName()));
-        }
-
-
         System.out.println("Repository closed.");
 
     }
