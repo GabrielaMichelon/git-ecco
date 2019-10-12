@@ -13,6 +13,7 @@ import at.jku.isse.gitecco.core.type.Feature;
 import at.jku.isse.gitecco.translation.constraintcomputation.util.ConstraintComputer;
 import at.jku.isse.gitecco.translation.variantscomparison.util.CompareVariants;
 import at.jku.isse.gitecco.translation.visitor.GetNodesForChangeVisitor;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.glassfish.grizzly.http.server.accesslog.FileAppender;
 
 import java.io.*;
@@ -143,14 +144,16 @@ public class App {
             Set<Feature> changed;
             Set<Feature> alreadyComitted = new HashSet<>();
 
-            //if there is no changed node then there must be a change in the binary files --> commit base.
-            if(changedNodes.isEmpty()) changedNodes.add(new BaseNode(null, 0));
+            if(changedNodes.isEmpty() && gcl.size() > 1){
+                changedNodes.add(new BaseNode(null,1));
+            }
 
             //changedNodes = changedNodes.stream().filter(x -> x.getLocalCondition().equals("__AVR_ATmega644P__ || __AVR_ATmega644__")).collect(Collectors.toSet());
             for (ConditionalNode changedNode : changedNodes) {
                 Long runtimeEccoCommit, runtimeEccoCheckout = Long.valueOf(0), runtimePPCheckoutGenerateVariant, timeBefore, timeAfter;
                 Long runtimeGitCommit = Long.valueOf(0), runtimeGitCheckout = commitList.getRuntimePPCheckoutCleanVersion(), runtimePPCheckoutCleanVersion = commitList.getRuntimePPCheckoutCleanVersion();
                 //compute the config for the var gen
+                //TODO: print every condition that should be solved.
                 config = constraintComputer.computeConfig(changedNode, gc.getTree());
                 if (config != null && !config.isEmpty()) {
                     //compute the marked as changed features.
@@ -187,6 +190,7 @@ public class App {
                     } else {
                         timeBefore = System.currentTimeMillis();
                         //generate the variant for this config
+                        //TODO: add binary files to the generated variant
                         pph.generateVariants(config, gitFolder, eccoFolder, gitHelper.getDirFiles(), eccoConfig);
                         timeAfter = System.currentTimeMillis();
                         runtimePPCheckoutGenerateVariant = timeAfter - timeBefore;
@@ -267,9 +271,8 @@ public class App {
             newFeatures[0] = 0;
 
         });
-        gitHelper.getEveryNthCommit(commitList, 4, 6, 1);
-        //gitHelper.getAllCommits(commitList);
-
+        //gitHelper.getEveryNthCommit(commitList, 11, 10, 1);
+        gitHelper.getAllCommits(commitList);
 
         //checkout
         Long runtimeEccoCheckout, timeBefore, timeAfter;
