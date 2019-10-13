@@ -243,6 +243,10 @@ public class PreprocessorAPI {
 
                 target.getParentFile().mkdirs();
 
+                if(target.exists()){
+                    target.delete();
+                }
+
                 Files.copy(f.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING);
             } catch (IOException e) {
                 System.err.println("Error copying non source files to target dir");

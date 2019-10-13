@@ -68,21 +68,29 @@ public class OnlyExpandMacrosInIfsController extends PreprocessorControlListener
         }
 
         public void postVisit(FeatureExpression visitedExpr) {
-            if(visitedExpr instanceof MacroCall){
-                try {
-                    List<Token> expanded = pp.expand(visitedExpr.toString());
-                    FeatureExpressionParser parser = new FeatureExpressionParser(expanded);
-                    FeatureExpression expandedExpr = parser.parse();
-                    //replace visitedExpr with expandedExpr in expr
-                    if(visitedExpr == this.root){
-                        root = expandedExpr;
-                    } else {
-                        visitedExpr.getParent().replace(visitedExpr, expandedExpr);
+            if (visitedExpr instanceof MacroCall) {
+                String macroName = ((MacroCall) visitedExpr).getName().toString();
+                if (!macroName.equals("defined")) {
+                    try {
+                        List<Token> expanded = pp.expand(visitedExpr.toString());
+
+                        //FIXME #if defined(MACRO), expansion does not work when the define is empty (i.e. #define MACRO)
+                        //TODO recognize when expanded is #if defined(), and return original expression
+
+                        FeatureExpressionParser parser = new FeatureExpressionParser(expanded);
+                        FeatureExpression expandedExpr = parser.parse();
+
+                        //replace visitedExpr with expandedExpr in expr
+                        if (visitedExpr == this.root) {
+                            root = expandedExpr;
+                        } else {
+                            visitedExpr.getParent().replace(visitedExpr, expandedExpr);
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    } catch (LexerException e) {
+                        e.printStackTrace();
                     }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (LexerException e) {
-                    e.printStackTrace();
                 }
             }
         }
