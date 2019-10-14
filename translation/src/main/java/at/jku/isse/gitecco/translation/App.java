@@ -29,17 +29,22 @@ public class App {
         final boolean debug = true;
         //TODO: planned arguments: DEBUG, dispose tree, max commits, repo path, csv path(feature id), outpath for ecco
         //String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\test-featureid";
-        //String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin";
-        String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\libssh-mirror\\libssh-mirror";
+        String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin";
+        //String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\libssh-mirror\\libssh-mirror";
         //String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite\\sqlite";
 
         //optional features of the project obtained by the featureID (chosen that which is in almost cases external feature)
-       /*String[] featuresToAdd = {"BASE", "__AVR_ATmega644P__", "F_FILE_DIR_DIRTY", "F_UNUSED", "F_FILE_UNBUFFERED_READ", "RAMPS_V_1_0", "__AVR_ATmega2560__", "F_CPU", "F_OFLAG", "WATCHPERIOD",
-                "THERMISTORHEATER", "THERMISTORBED", "TSd2PinMap_hHERMISTORHEATER", "PID_DEBUG", "HEATER_USES_THERMISTOR", "__AVR_ATmega328P__", "__AVR_ATmega1280__", "__AVR_ATmega168__",
-                "ADVANCE", "PID_OPENLOOP", "SDSUPPORT", "BED_USES_THERMISTOR", "SIMPLE_LCD", "NEWPANEL", "DEBUG_STEPS", "BED_USES_AD595", "ARDUINO",
-                "HEATER_1_USES_THERMISTOR", "THERMISTORHEATER_1", "HEATER_USES_THERMISTOR_1", "HEATER_2_USES_AD595", "HEATER_1_MAXTEMP", "THERMISTORHEATER_0",
-                "HEATER_1_MINTEMP", "HEATER_0_USES_THERMISTOR", "RESET_MANUAL", "PID_PID"};*/
-         String[] featuresToAdd = {"BASE", "WITH_SERVER", "HAVE_LIBZ", "WORDS_BIGENDIAN", "DEBUG_CRYPTO",
+       String[] featuresToAdd = {"BASE", "__AVR_ATmega644P__", "F_FILE_DIR_DIRTY", "F_UNUSED", "F_FILE_UNBUFFERED_READ", "__AVR_ATmega644PA__", "RAMPS_V_1_0", "__AVR_ATmega2560__", "F_CPU", "__AVR_AT90USB1286__", "F_OFLAG", "WATCHPERIOD",
+                "THERMISTORHEATER", "THERMISTORBED", "TSd2PinMap_hHERMISTORHEATER", "PID_DEBUG", "HEATER_USES_THERMISTOR", "__AVR_ATmega328P__", "__AVR_ATmega1280__", "__AVR_ATmega168__","BED_MINTEMP","SIMPLE_LCD","BED_MAXTEMP","HEATER_1_USES_AD595",
+                "ADVANCE", "PID_OPENLOOP","__AVR_ATmega32U4__", "__AVR_ATmega328__", "__AVR_ATmega644__","__AVR_AT90USB1287__","SDSUPPORT", "BED_USES_THERMISTOR","__AVR_AT90USB646__", "NEWPANEL", "DEBUG_STEPS", "BED_USES_AD595", "ARDUINO",
+                "HEATER_1_USES_THERMISTOR", "THERMISTORHEATER_2","THERMISTORHEATER_1", "HEATER_2_USES_THERMISTOR","HEATER_USES_THERMISTOR_1", "HEATER_2_USES_AD595", "HEATER_1_MAXTEMP", "THERMISTORHEATER_0",
+                "HEATER_1_MINTEMP", "HEATER_0_USES_THERMISTOR", "RESET_MANUAL","PID_PI","AUTOTEMP","XY_FREQUENCY_LIMIT","TIMSK3","TIMSK4","TIMSK5","COM3C1","MCUCR","COM3B1","ISC00","UBRR2H","OCIE5A","WGM50","USBCON","TIMSK","COM2B1","WGM42",
+               "OCR5A","COM2A1","WGM40","UBRR3H","INT0","INT1","TCCR2","TCCR1","TCCR0","UBRR0H","COM4B1","__AVR_ATmega128__","WGM30","UCSRB","USART2_RX_vect","TCNT0L","UBRR0L","USART_RX_vect","SIG_UART0_RECV","COM3A1","WGM20","COM4C1","ISC11",
+               "UBRR1H","ISC10","MUX5","OCIE0A","SIG_USART1_RECV","CS01","CS00","WGM10","COM5B1","COM00","WGM12","TOIE0","OCIE1A","USART3_RX_vect","COM21","TIFR0","CS11","COM5C1","CS10","UBRRL","COM4A1","WGM01","__AVR_ATmega324P__","UBRRH",
+               "__AVR_ATmega8__","UCSR0B","ADABOOT","TCNT0","TCCR1B","TCCR1A","USART0_RX_vect","CS22","GICR","TCCR0A","TCCR0B","SIG_USART0_RECV","CS31","COM5A1","TIMSK0","TCCR3B","TCCR3A","CS43","CS41","USART1_RX_vect","UDR3","UDR2","UDR0",
+               "CS51","EICRB","EICRA","TCCR5B","TCCR5A","GIMSK","TCCR4A","TCCR4B","ADMUX","EIMSK","COM0A1","ADCSRA","SIG_USART2_RECV","ADCSRB","COM0B1","OCR1A","RAMEND","__cplusplus","UDR","COM1A1","OCR0A","SIG_UART_RECV","COM1B1","SIG_USART3_RECV",
+               "ADCL","SPR0","SPR1","__AVR_ATmega1284P__","__AVR_ATmega168P__","DOXYGEN","DIDR2","E2_STEP_PIN","HEATER_2_MAXTEMP","E2_DIR_PIN","E2_ENABLE_PIN","HEATER_2_MINTEMP","BED_LIMIT_SWITCHING"};
+        /* String[] featuresToAdd = {"BASE", "WITH_SERVER", "HAVE_LIBZ", "WORDS_BIGENDIAN", "DEBUG_CRYPTO",
                 "HAVE_OPENSSL_AES_H","HAVE_GETHOSTBYNAME", "OPENSSL_VERSION_NUMBER","HAVE_SYS_POLL_H",
                 "HAVE_OPENSSL_BLOWFISH_H", "HAVE_SYS_TIME_H", "HAVE_POLL", "HAVE_SELECT", "HAVE_GETHOSTBYADDR",
                 "__cplusplus", "HAVE_SSH1", "NO_SERVER", "HAVE_PTY_H", "HAVE_STDINT_H", "HAVE_MEMORY_H", "HAVE_LIBWSOCK32",
@@ -63,8 +68,8 @@ public class App {
         // and "/usr/include")does not includes files outside the root path
         final List<String> dirFiles = new ArrayList<>();
         //dirFiles.add("C:\\Users\\gabil\\Desktop\\ECCO_Work\\test-featureid\\Marlin");
-        //dirFiles.add("C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin");
-        dirFiles.add("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\libssh-mirror\\libssh-mirror");
+        dirFiles.add("C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin");
+        //dirFiles.add("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\libssh-mirror\\libssh-mirror");
         /*dirFiles.add("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite\\sqlite");
         dirFiles.add("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite\\sqlite\\art");
         dirFiles.add("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite\\sqlite\\contrib");
@@ -78,7 +83,7 @@ public class App {
 
         //creating ecco repository for each commit
         //set this path to where the results should be stored
-        final Path OUTPUT_DIR = Paths.get("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\libssh-mirror\\variant_results");
+        final Path OUTPUT_DIR = Paths.get("C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\variant_results");
         if (OUTPUT_DIR.resolve("repo").toFile().exists()) GitCommitList.recursiveDelete(OUTPUT_DIR.resolve("repo"));
         EccoService service = new EccoService();
         service.setRepositoryDir(OUTPUT_DIR.resolve("repo"));
@@ -88,8 +93,8 @@ public class App {
 
         final File gitFolder = new File(gitHelper.getPath());
         final File eccoFolder = new File(gitFolder.getParent(), "ecco");
-        final File checkoutFolder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\libssh-mirror\\variant_results\\checkout\\");
-        final File destGitCommitAndCheckout = new  File ("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\libssh-mirror\\variant_results\\gitCommit");
+        final File checkoutFolder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\variant_results\\checkout\\");
+        final File destGitCommitAndCheckout = new  File ("C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\variant_results\\gitCommit");
         ArrayList<String> configsToCheckout = new ArrayList<>();
 
         Map<Feature, Integer> featureVersions = new HashMap<>();
@@ -232,8 +237,7 @@ public class App {
                     } else {
                         timeBefore = System.currentTimeMillis();
                         //generate the variant for this config
-                        //TODO: add binary files to the generated variant
-                        pph.generateVariants(config, gitFolder, eccoFolder, gitHelper.getDirFiles(), eccoConfig);
+                        //pph.generateVariants(config, gitFolder, eccoFolder, gitHelper.getDirFiles(), eccoConfig);
                         timeAfter = System.currentTimeMillis();
                         runtimePPCheckoutGenerateVariant = timeAfter - timeBefore;
                         runtimeGitCheckout += runtimePPCheckoutGenerateVariant;
@@ -250,14 +254,14 @@ public class App {
                         System.out.println("CONFIG: " + eccoConfig);
                         service.setBaseDir(variant_dir);
                         timeBefore = System.currentTimeMillis();
-                        service.commit(eccoConfig);
+                        //service.commit(eccoConfig);
                         System.out.println("Committed: " + variant_dir);
                         timeAfter = System.currentTimeMillis();
                         runtimeEccoCommit = timeAfter - timeBefore;
                         //end ecco commit
 
                         //appending to the config csv
-                        try {
+                        /*try {
                             String fileStr = gitRepositoryFolder.getParent() + File.separator + fileStoreConfig;
                             FileAppender csvWriter = new FileAppender(new File(fileStr));
                             List<List<String>> headerRows = Arrays.asList(
@@ -269,11 +273,11 @@ public class App {
                             csvWriter.close();
                         } catch (IOException e) {
                             e.printStackTrace();
-                        }
+                        }*/
 
 
                         //computing the git commit runtime of the variant
-                        GitHelper gh = new GitHelper();
+                       /* GitHelper gh = new GitHelper();
                         try {
                             File srcGitProject = new File(repoPath);
                             try {
@@ -286,13 +290,13 @@ public class App {
 
                         }
                         //end computing the git commit and checkout
-
+                        */
                         //add config to checkout after all project commits
                         configsToCheckout.add(eccoConfig);
 
 
                         //appending to the runtime csv
-                        try {
+                       /* try {
                             File fileStr = new File(gitRepositoryFolder.getParent() + File.separator +"runtime.csv");
                             FileAppender csvAppender = new FileAppender(fileStr);
                             List<List<String>> headerRows = Arrays.asList(
@@ -306,11 +310,11 @@ public class App {
                             e.printStackTrace();
                         }
                         //end appending to the runtime csv
-
+                        */
                     }
                 }
             }
-
+            /*
             //append results to the feature report csv
             try {
                 FileAppender csvAppender = new FileAppender(new File(gitRepositoryFolder.getParent() + File.separator + fileReportFeature));
@@ -325,14 +329,17 @@ public class App {
                 e.printStackTrace();
             }
             //end append results to the feature report csv
-
+            */
             countFeaturesChanged[0] = 0;
             newFeatures[0] = 0;
+            for (Map.Entry<Feature, Integer> featureRevision :featureVersions.entrySet()) {
+                System.out.println(featureRevision.getKey() +"."+ featureRevision.getValue());
+            }
 
         });
 
-        //gitHelper.getEveryNthCommit(commitList, 11, 13, 1);
-        gitHelper.getAllCommits(commitList);
+        gitHelper.getEveryNthCommit(commitList, "NULLCOMMIT",0, 100, 1);
+        //gitHelper.getAllCommits(commitList);
 
         //close ecco repository
         service.close();

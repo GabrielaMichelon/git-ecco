@@ -428,6 +428,42 @@ public class GitHelper {
         return commits;
     }
 
+
+    /**
+     * Method to retrieve every nth commit from a repository and put it to a GitCommitList.
+     * starts with a certain commit number and ends with a certain commit number
+     *
+     * @param commits the GitCommitList to which the commits are saved to.
+     * @return The GitCommitList which was passed to the method.
+     * @throws GitAPIException
+     * @throws IOException
+     */
+    public GitCommitList getEveryNthCommit(GitCommitList commits,String firstDiff, int startcommit, int endcommit, int n) throws Exception {
+        final Repository repository = git.getRepository();
+        final Collection<Ref> allRefs = repository.getRefDatabase().getRefs();
+
+        RevWalk revWalk = new RevWalk(repository);
+        revWalk.sort(RevSort.TOPO, true);
+        revWalk.sort(RevSort.REVERSE, true);
+
+
+        for (Ref ref : allRefs) revWalk.markStart(revWalk.parseCommit(ref.getObjectId()));
+
+        long number = 0;
+        String parent = firstDiff;
+        for (RevCommit rc : revWalk) {
+            if (number >= endcommit || number < startcommit) break;
+
+            String branch = getBranchOfCommit(rc.getName());
+            commits.add(new GitCommit(rc.getName(), number, parent, branch, rc));
+            parent = rc.getName();
+
+            number += number < startcommit ? 1 : n;
+        }
+
+        return commits;
+    }
+
     /**
      * Retrieves the file paths of the files in the repository for a given commit
      *

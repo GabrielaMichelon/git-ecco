@@ -46,7 +46,7 @@ public class TranslationTest {
 
     @Test
     public void getCSVInformation() throws IOException {
-        File folder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin");
+        File folder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite+");
         File[] lista = folder.listFiles();
         Float meanRunEccoCommit = Float.valueOf(0), meanRunEccoCheckout = Float.valueOf(0), meanRunPPCheckoutCleanVersion = Float.valueOf(0), meanRunPPCheckoutGenerateVariant = Float.valueOf(0), meanRunGitCommit = Float.valueOf(0), meanRunGitCheckout = Float.valueOf(0);
         Float totalnumberFiles= Float.valueOf(0), matchesFiles= Float.valueOf(0),  eccototalLines= Float.valueOf(0), originaltotalLines= Float.valueOf(0), missingFiles= Float.valueOf(0),  remainingFiles= Float.valueOf(0), totalVariantsMatch= Float.valueOf(0), truepositiveLines = Float.valueOf(0), falsepositiveLines = Float.valueOf(0), falsenegativeLines = Float.valueOf(0);
@@ -121,7 +121,7 @@ public class TranslationTest {
         String filemetrics = "metrics.csv";
         //csv to report new features and features changed per git commit of the project
         try {
-            FileWriter csvWriter = new FileWriter("C:\\Users\\gabil\\Desktop\\ECCO_Work\\variant_result" + File.separator +filemetrics);
+            FileWriter csvWriter = new FileWriter("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite\\variant_results" + File.separator +filemetrics);
             List<List<String>> headerRows = Arrays.asList(
                     Arrays.asList( "PrecisionVariant", "RecallVariant", "F1ScoreVariant","PrecisionFiles", "RecallFiles", "F1ScoreFiles","PrecisionLines", "RecalLines", "F1ScoreLines"),
                     Arrays.asList(precisionVariants.toString(), recallVariants.toString(), f1scoreVariants.toString(),precisionFiles.toString(), recallFiles.toString(), f1scoreFiles.toString(),precisionLines.toString(), recallLines.toString(), f1scorelines.toString()),
