@@ -46,7 +46,7 @@ public class TranslationTest {
 
     @Test
     public void getCSVInformation() throws IOException {
-        File folder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite");
+        File folder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin");
         File[] lista = folder.listFiles();
         Float meanRunEccoCommit = Float.valueOf(0), meanRunEccoCheckout = Float.valueOf(0), meanRunPPCheckoutCleanVersion = Float.valueOf(0), meanRunPPCheckoutGenerateVariant = Float.valueOf(0), meanRunGitCommit = Float.valueOf(0), meanRunGitCheckout = Float.valueOf(0);
         Float totalnumberFiles= Float.valueOf(0), matchesFiles= Float.valueOf(0),  eccototalLines= Float.valueOf(0), originaltotalLines= Float.valueOf(0), missingFiles= Float.valueOf(0),  remainingFiles= Float.valueOf(0), totalVariantsMatch= Float.valueOf(0), truepositiveLines = Float.valueOf(0), falsepositiveLines = Float.valueOf(0), falsenegativeLines = Float.valueOf(0);
@@ -112,7 +112,7 @@ public class TranslationTest {
         }
         Float precisionLines = Float.valueOf(truepositiveLines/ (truepositiveLines+falsepositiveLines));
         Float recallLines = Float.valueOf(truepositiveLines/(truepositiveLines+falsenegativeLines));
-        Float f1scorelines = 2*((precisionLines*recallVariants)/(precisionLines+recallLines));
+        Float f1scorelines = 2*((precisionLines*recallLines)/(precisionLines+recallLines));
         Float precisionFiles = Float.valueOf(matchesFiles/(matchesFiles+remainingFiles));
         Float recallFiles = Float.valueOf(matchesFiles/(matchesFiles+missingFiles));
         Float f1scoreFiles = 2*((precisionFiles*recallFiles)/(precisionFiles+recallFiles));
@@ -142,7 +142,7 @@ public class TranslationTest {
     @Test
     public void testeCompareVariants() {
         CompareVariants cV = new CompareVariants();
-        File variantsrc = new File(String.valueOf("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite\\ecco"));
+        File variantsrc = new File(String.valueOf("C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\ecco"));
         File checkoutfile = new File(String.valueOf("C:\\Users\\gabil\\Desktop\\ECCO_Work\\variant_result\\checkout"));
         try {
             for (File path : variantsrc.listFiles()) {
@@ -157,9 +157,9 @@ public class TranslationTest {
     public void testCheckoutEcco() throws IOException {
         CompareVariants cV = new CompareVariants();
         ArrayList<String> configsToCheckout = new ArrayList<>();
-        File configuration = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite\\configurations.csv");
+        File configuration = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\configurations.csv");
         Path OUTPUT_DIR = Paths.get("C:\\Users\\gabil\\Desktop\\ECCO_Work\\variant_result");
-        File eccoFolder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite\\", "ecco");
+        File eccoFolder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\", "ecco");
         File checkoutFolder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\variant_result\\checkout\\");
         BufferedReader csvReader = null;
         try {
