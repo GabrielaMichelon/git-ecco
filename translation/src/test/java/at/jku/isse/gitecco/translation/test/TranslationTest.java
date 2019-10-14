@@ -46,7 +46,7 @@ public class TranslationTest {
 
     @Test
     public void getCSVInformation() throws IOException {
-        File folder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite+");
+        File folder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite");
         File[] lista = folder.listFiles();
         Float meanRunEccoCommit = Float.valueOf(0), meanRunEccoCheckout = Float.valueOf(0), meanRunPPCheckoutCleanVersion = Float.valueOf(0), meanRunPPCheckoutGenerateVariant = Float.valueOf(0), meanRunGitCommit = Float.valueOf(0), meanRunGitCheckout = Float.valueOf(0);
         Float totalnumberFiles= Float.valueOf(0), matchesFiles= Float.valueOf(0),  eccototalLines= Float.valueOf(0), originaltotalLines= Float.valueOf(0), missingFiles= Float.valueOf(0),  remainingFiles= Float.valueOf(0), totalVariantsMatch= Float.valueOf(0), truepositiveLines = Float.valueOf(0), falsepositiveLines = Float.valueOf(0), falsenegativeLines = Float.valueOf(0);

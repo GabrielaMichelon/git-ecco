@@ -11,9 +11,7 @@ import at.jku.isse.gitecco.core.tree.nodes.FileNode;
 import at.jku.isse.gitecco.core.tree.nodes.SourceFileNode;
 import at.jku.isse.gitecco.core.type.Feature;
 import at.jku.isse.gitecco.translation.constraintcomputation.util.ConstraintComputer;
-import at.jku.isse.gitecco.translation.variantscomparison.util.CompareVariants;
 import at.jku.isse.gitecco.translation.visitor.GetNodesForChangeVisitor;
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.glassfish.grizzly.http.server.accesslog.FileAppender;
 
@@ -26,13 +24,12 @@ public class App {
 
 
     public static void main(String... args) throws Exception {
-        final boolean debug = true;
+        final int MAXCOMMITS = 200;
         //TODO: planned arguments: DEBUG, dispose tree, max commits, repo path, csv path(feature id), outpath for ecco
         //String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\test-featureid";
         String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin";
         //String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\libssh-mirror\\libssh-mirror";
         //String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite\\sqlite";
-
         //optional features of the project obtained by the featureID (chosen that which is in almost cases external feature)
        String[] featuresToAdd = {"BASE", "__AVR_ATmega644P__", "F_FILE_DIR_DIRTY", "F_UNUSED", "F_FILE_UNBUFFERED_READ", "__AVR_ATmega644PA__", "RAMPS_V_1_0", "__AVR_ATmega2560__", "F_CPU", "__AVR_AT90USB1286__", "F_OFLAG", "WATCHPERIOD",
                 "THERMISTORHEATER", "THERMISTORBED", "TSd2PinMap_hHERMISTORHEATER", "PID_DEBUG", "HEATER_USES_THERMISTOR", "__AVR_ATmega328P__", "__AVR_ATmega1280__", "__AVR_ATmega168__","BED_MINTEMP","SIMPLE_LCD","BED_MAXTEMP","HEATER_1_USES_AD595",
@@ -53,7 +50,8 @@ public class App {
                 "HAVE_SYS_SOCKET_H", "HAVE_SYS_TYPES_H","HAVE_STRTOLL","HAVE_PWD_H","HAVE_FCNTL_H","HAVE_OPENNET_H",
                 "TIME_WITH_SYS_TIME","HAVE_DIRENT_H","HAVE_NETDB_H","__WIN32__","HAVE_INTTYPES_H","HAVE_LIBOPENNET",
                 "HAVE_SYS_STAT_H","__MINGW32__", "GCRYPT", "HAVE_LIBCRYPTO", "HAVE_PAM_PAM_APPL_H", "HAVE_LIBCRYPT", "HAVE_OPENSSL_DES_H",
-                "_WIN32", "_MSC_VER", "__GNUC__","EWOULDBLOCK","uid_t","gid_t", "WITH_LIBZ"};
+                "_WIN32", "_MSC_VER", "__GNUC__","EWOULDBLOCK","uid_t","gid_t", "WITH_LIBZ"};*/
+        //SQLITE
         /*String[] featuresToAdd = {"BASE", "YYERRORSYMBOL", "TEST_COMPARE", "_WIN32", "WIN32", "TEST", "NDEBUG", "NO_READLINE", "TCLSH", "MEMORY_DEBUG", "HAVE_USLEEP", "HAVE_READLINE", "OS_WIN", "NO_TCL",
                 "COMPATIBILITY", "etCOMPATIBILITY", "DEBUG", "__cplusplus", "__STDC__", "SIGINT", "BIG_ENDIAN", "DISABLE_GDBM", "SQLITE_TEST", "SQLITE_UTF8", "TCL_UTF_MAX", "USE_TCL_STUBS", "__CYGWIN__",
                 "THREADSAFE", "__MINGW32__", "__BORLANDC__", "NDEEBUG", "NDEBUG2"};*/
@@ -159,6 +157,7 @@ public class App {
         //end runtime csv
 
         commitList.addGitCommitListener((gc, gcl) -> {
+            if(gcl.size() >= MAXCOMMITS) System.exit(0);
             List<String> configurations = new ArrayList<>();
             System.out.println(gc.getCommitName() + ":");
 
@@ -200,7 +199,6 @@ public class App {
                 Long runtimeEccoCommit, runtimeEccoCheckout = Long.valueOf(0), runtimePPCheckoutGenerateVariant, timeBefore, timeAfter;
                 Long runtimeGitCommit = Long.valueOf(0), runtimeGitCheckout = commitList.getRuntimePPCheckoutCleanVersion(), runtimePPCheckoutCleanVersion = commitList.getRuntimePPCheckoutCleanVersion();
                 //compute the config for the var gen
-                //TODO: print every condition that should be solved.
                 config = constraintComputer.computeConfig(changedNode, gc.getTree());
                 if (config != null && !config.isEmpty()) {
                     //compute the marked as changed features.
@@ -237,7 +235,7 @@ public class App {
                     } else {
                         timeBefore = System.currentTimeMillis();
                         //generate the variant for this config
-                        //pph.generateVariants(config, gitFolder, eccoFolder, gitHelper.getDirFiles(), eccoConfig);
+                        pph.generateVariants(config, gitFolder, eccoFolder, gitHelper.getDirFiles(), eccoConfig);
                         timeAfter = System.currentTimeMillis();
                         runtimePPCheckoutGenerateVariant = timeAfter - timeBefore;
                         runtimeGitCheckout += runtimePPCheckoutGenerateVariant;
@@ -254,14 +252,14 @@ public class App {
                         System.out.println("CONFIG: " + eccoConfig);
                         service.setBaseDir(variant_dir);
                         timeBefore = System.currentTimeMillis();
-                        //service.commit(eccoConfig);
+                        service.commit(eccoConfig);
                         System.out.println("Committed: " + variant_dir);
                         timeAfter = System.currentTimeMillis();
                         runtimeEccoCommit = timeAfter - timeBefore;
                         //end ecco commit
 
                         //appending to the config csv
-                        /*try {
+                        try {
                             String fileStr = gitRepositoryFolder.getParent() + File.separator + fileStoreConfig;
                             FileAppender csvWriter = new FileAppender(new File(fileStr));
                             List<List<String>> headerRows = Arrays.asList(
@@ -273,11 +271,11 @@ public class App {
                             csvWriter.close();
                         } catch (IOException e) {
                             e.printStackTrace();
-                        }*/
+                        }
 
 
                         //computing the git commit runtime of the variant
-                       /* GitHelper gh = new GitHelper();
+                        GitHelper gh = new GitHelper();
                         try {
                             File srcGitProject = new File(repoPath);
                             try {
@@ -290,13 +288,13 @@ public class App {
 
                         }
                         //end computing the git commit and checkout
-                        */
+
                         //add config to checkout after all project commits
                         configsToCheckout.add(eccoConfig);
 
 
                         //appending to the runtime csv
-                       /* try {
+                        try {
                             File fileStr = new File(gitRepositoryFolder.getParent() + File.separator +"runtime.csv");
                             FileAppender csvAppender = new FileAppender(fileStr);
                             List<List<String>> headerRows = Arrays.asList(
@@ -310,11 +308,11 @@ public class App {
                             e.printStackTrace();
                         }
                         //end appending to the runtime csv
-                        */
+
                     }
                 }
             }
-            /*
+
             //append results to the feature report csv
             try {
                 FileAppender csvAppender = new FileAppender(new File(gitRepositoryFolder.getParent() + File.separator + fileReportFeature));
@@ -329,7 +327,7 @@ public class App {
                 e.printStackTrace();
             }
             //end append results to the feature report csv
-            */
+
             countFeaturesChanged[0] = 0;
             newFeatures[0] = 0;
             for (Map.Entry<Feature, Integer> featureRevision :featureVersions.entrySet()) {
@@ -338,7 +336,7 @@ public class App {
 
         });
 
-        gitHelper.getEveryNthCommit(commitList, "NULLCOMMIT",0, 100, 1);
+        gitHelper.getEveryNthCommit(commitList, "bf879ceaa9685648adba645cadc6ce5aaa5fac85",14, 100, 1);
         //gitHelper.getAllCommits(commitList);
 
         //close ecco repository

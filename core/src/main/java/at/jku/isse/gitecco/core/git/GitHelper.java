@@ -464,6 +464,7 @@ public class GitHelper {
         return commits;
     }
 
+
     /**
      * Retrieves the file paths of the files in the repository for a given commit
      *

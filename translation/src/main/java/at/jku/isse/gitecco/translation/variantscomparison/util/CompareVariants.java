@@ -3,11 +3,9 @@ package at.jku.isse.gitecco.translation.variantscomparison.util;
 
 import at.jku.isse.ecco.service.EccoService;
 import at.jku.isse.gitecco.core.git.GitCommitList;
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import difflib.Delta;
 import difflib.DiffUtils;
 import difflib.Patch;
-import org.glassfish.grizzly.http.server.accesslog.FileAppender;
 
 import java.io.*;
 import java.nio.file.Files;
