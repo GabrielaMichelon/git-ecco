@@ -99,7 +99,7 @@ public class App extends Thread{
         if(EVERYCOMMIT) {
             gitHelper.getAllCommits(commitList);
         } else {
-            gitHelper.getEveryNthCommit(commitList, STARTCOMMIT, ENDCOMMIT, EVERY_NTH_COMMIT);
+            gitHelper.getEveryNthCommit(commitList, null,STARTCOMMIT, ENDCOMMIT, EVERY_NTH_COMMIT);
         }
 
         while(PARALLEL && !isDone(tasks)) sleep(100);

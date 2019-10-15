@@ -391,43 +391,6 @@ public class GitHelper {
         return commits;
     }
 
-    /**
-     * Method to retrieve every nth commit from a repository and put it to a GitCommitList.
-     * starts with a certain commit number and ends with a certain commit number
-     *
-     * @param commits the GitCommitList to which the commits a re saved to.
-     * @return The GitCommitList which was passed to the method.
-     * @throws GitAPIException
-     * @throws IOException
-     */
-    public GitCommitList getEveryNthCommit(GitCommitList commits, int startcommit, int endcommit, int n) throws
-            Exception {
-        final boolean FASTMODE = false;
-        final Repository repository = git.getRepository();
-        final Collection<Ref> allRefs = repository.getRefDatabase().getRefs();
-
-        RevWalk revWalk = new RevWalk(repository);
-        revWalk.sort(RevSort.TOPO, true);
-        revWalk.sort(RevSort.REVERSE, true);
-
-
-        revWalk.markStart(revWalk.parseCommit(((List<Ref>) allRefs).get(startcommit).getObjectId()));
-
-        long number = startcommit;
-        String parent = "NULLCOMMIT";
-        for (RevCommit rc : revWalk) {
-            if (number >= endcommit) break;
-
-            String branch = FASTMODE ? null : getBranchOfCommit(rc.getName());
-            commits.add(new GitCommit(rc.getName(), number, parent, branch, rc));
-            parent = rc.getName();
-
-            number += n;
-        }
-
-        return commits;
-    }
-
 
     /**
      * Method to retrieve every nth commit from a repository and put it to a GitCommitList.
@@ -451,12 +414,25 @@ public class GitHelper {
 
         long number = 0;
         String parent = firstDiff;
+        boolean enter = false;
         for (RevCommit rc : revWalk) {
-            if (number >= endcommit || number < startcommit) break;
+            if (number > endcommit) break;
 
-            String branch = getBranchOfCommit(rc.getName());
-            commits.add(new GitCommit(rc.getName(), number, parent, branch, rc));
-            parent = rc.getName();
+            if(number >= startcommit) {
+                String branch = getBranchOfCommit(rc.getName());
+
+                if(parent == null || enter) {
+                    try {
+                        parent = rc.getParent(0).getName();
+                    } catch (ArrayIndexOutOfBoundsException e) {
+                        parent = "NULLCOMMIT";
+                    }
+                } else {
+                    enter = true;
+                }
+
+                commits.add(new GitCommit(rc.getName(), number, parent, branch, rc));
+            }
 
             number += number < startcommit ? 1 : n;
         }

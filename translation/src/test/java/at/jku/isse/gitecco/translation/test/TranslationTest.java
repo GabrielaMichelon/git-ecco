@@ -1,6 +1,7 @@
 package at.jku.isse.gitecco.translation.test;
 
 
+import at.jku.isse.gitecco.core.git.GitCommitList;
 import at.jku.isse.gitecco.core.git.GitHelper;
 import at.jku.isse.gitecco.core.preprocessor.PreprocessorHelper;
 import at.jku.isse.gitecco.core.solver.ExpressionSolver;
@@ -33,16 +34,16 @@ public class TranslationTest {
     //git checkout $(git log --branches -1 --pretty=format:"%H")
 
     @Test
-    public void resetGitRepo() {
-        //does not work
-        String path = "C:\\obermanndavid\\git-ecco-test\\test_featureid\\Marlin";
-        Process p;
-        try {
-            p = Runtime.getRuntime().exec("git " + path + " checkout $(git "+ path + " log --branches -1 --pretty=format:\"%H\")");
-            p.waitFor();
-        } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
-        }
+    public void testgetEveryNth() throws Exception {
+
+        GitHelper gh = new GitHelper("C:\\obermanndavid\\git-ecco-test\\2_second_run\\Marlin", null);
+        final GitCommitList commitList = new GitCommitList(gh);
+
+        commitList.addGitCommitListener((gc,gcl) -> {
+            System.out.println(gc.getNumber() + " -> " + gc.getCommitName() + " diff to: " + gc.getDiffCommitName());
+        });
+
+        gh.getEveryNthCommit(commitList, null, 36, 50, 1);
     }
 
     @Test
@@ -337,23 +338,6 @@ public class TranslationTest {
         es.addClause(new Feature("FILE_H"), impls);
 
         es.solve().entrySet().forEach(x -> System.out.println(x.getKey().getName() + " = " + x.getValue()));
-    }
-
-    @Test
-    public void asdf() {
-        //(BASE) && ((MOTHERBOARD == 62) && (!(PINS_H)) && (BASE)) -> MOTHERBOARD == 1
-        ExpressionSolver es = new ExpressionSolver();
-        BoolVar ifc = es.getBoolVarFromExpr("(BASE) && ((MOTHERBOARD == 62) && (!(PINS_H)) && (BASE))");
-        Model model = es.getModel();
-
-        BoolVar y = model.boolVar("MOTHERBOARD").eq(1).boolVar();
-
-        model.addClauses(ifThenElse(ifc, y, y.not()));
-        BoolVar b = model.boolVar("b");
-        model.post(b.extension());
-
-        Solution s = model.getSolver().findSolution();
-        System.out.println(s);
     }
 
     @Test
