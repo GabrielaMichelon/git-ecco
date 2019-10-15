@@ -3,9 +3,11 @@ package at.jku.isse.gitecco.translation.variantscomparison.util;
 
 import at.jku.isse.ecco.service.EccoService;
 import at.jku.isse.gitecco.core.git.GitCommitList;
+import at.jku.isse.gitecco.core.git.GitHelper;
 import difflib.Delta;
 import difflib.DiffUtils;
 import difflib.Patch;
+import org.eclipse.jgit.api.errors.GitAPIException;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -322,7 +324,7 @@ public class CompareVariants {
                 } else {
                     for (int i = 0; i < data.length; i++) {
                         if ((data[1].equals(config.replace(",", "AND"))) && (i == 3)) {
-                            data[i]=(String.valueOf(runtimeEccoCheckout));
+                            data[i] = (String.valueOf(runtimeEccoCheckout));
                         }
                         dataAux.add(data[i]);
                     }
@@ -349,6 +351,147 @@ public class CompareVariants {
         service.close();
 
 
+    }
+
+    public void eccoCommit(File eccoFolder, Path OUTPUT_DIR, ArrayList<String> configsToCommit) throws IOException {
+        EccoService service = new EccoService();
+        if (OUTPUT_DIR.resolve("repo").toFile().exists()) GitCommitList.recursiveDelete(OUTPUT_DIR.resolve("repo"));
+        service.setRepositoryDir(OUTPUT_DIR.resolve("repo"));
+        //initializing repo
+        service.init();
+        System.out.println("Repository initialized.");
+        //commit
+        Long runtimeEccoCommit, timeBefore, timeAfter;
+        for (String config : configsToCommit) {
+            //ecco commit
+            System.out.println("CONFIG: " + config);
+            File variantsrc = new File(eccoFolder, config);
+            Path variant_dir = Paths.get(String.valueOf(variantsrc));
+            service.setBaseDir(variant_dir);
+            timeBefore = System.currentTimeMillis();
+            service.commit(config);
+            System.out.println("Committed: " + variant_dir);
+            timeAfter = System.currentTimeMillis();
+            runtimeEccoCommit = timeAfter - timeBefore;
+            //end ecco commit
+            String outputCSV = eccoFolder.getParentFile().getAbsolutePath();
+            String fileStr = outputCSV + File.separator + "runtime.csv";
+            BufferedReader csvReader = null;
+            try {
+                csvReader = new BufferedReader(new FileReader(fileStr));
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+            String row = null;
+            ArrayList<String> listHeader = new ArrayList<>();
+            ArrayList<String> listRuntimeData = new ArrayList<>();
+            List<List<String>> rows = new ArrayList<>();
+
+            Boolean header = true;
+            while ((row = csvReader.readLine()) != null) {
+                String[] data = row.split(",");
+                ArrayList<String> dataAux = new ArrayList<>();
+                if (header) {
+                    for (int i = 0; i < data.length; i++) {
+                        listHeader.add(data[i]);
+                    }
+                    header = false;
+                } else {
+                    for (int i = 0; i < data.length; i++) {
+                        if ((data[1].equals(config.replace(",", "AND"))) && (i == 2)) {
+                            data[i] = (String.valueOf(runtimeEccoCommit));
+                        }
+                        dataAux.add(data[i]);
+                    }
+                    rows.add(dataAux);
+                }
+
+            }
+            csvReader.close();
+            File fwriter = new File(fileStr);
+            FileWriter csvWriter = new FileWriter(fwriter);
+
+            csvWriter.write(String.join(",", listHeader));
+            csvWriter.write("\n");
+            for (List<String> line : rows) {
+                csvWriter.write(String.join(",", line));
+                csvWriter.write("\n");
+            }
+            csvWriter.flush();
+            csvWriter.close();
+        }
+        //end commit
+
+        //close ecco repository
+        service.close();
+
+
+    }
+
+
+    public void gitCommit(File srcFolder, Path OUTPUT_DIR, Map<String,String> configsToCommit) throws IOException {
+
+        for (Map.Entry<String, String> config : configsToCommit.entrySet()) {
+            Path variant_dir = Paths.get(String.valueOf(srcFolder));
+            Path folderGit = Paths.get(String.valueOf(OUTPUT_DIR));
+            //computing the git commit runtime of the variant
+            Long runtimeGitCommit;
+            GitHelper gh = new GitHelper();
+            File dstGitProject = new File(String.valueOf(folderGit));
+            try {
+                gh.gitCommitAndCheckout(srcFolder.getAbsolutePath(),dstGitProject.getAbsolutePath(), config.getValue(), config.getKey());
+            } catch (GitAPIException e) {
+                e.printStackTrace();
+            }
+            runtimeGitCommit = gh.getRuntimeGitCommit();
+            String outputCSV = srcFolder.getParentFile().getAbsolutePath();
+            String fileStr = outputCSV + File.separator + "runtime.csv";
+            BufferedReader csvReader = null;
+            try {
+                csvReader = new BufferedReader(new FileReader(fileStr));
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+            String row = null;
+            ArrayList<String> listHeader = new ArrayList<>();
+            ArrayList<String> listRuntimeData = new ArrayList<>();
+            List<List<String>> rows = new ArrayList<>();
+
+            Boolean header = true;
+            while ((row = csvReader.readLine()) != null) {
+                String[] data = row.split(",");
+                ArrayList<String> dataAux = new ArrayList<>();
+                if (header) {
+                    for (int i = 0; i < data.length; i++) {
+                        listHeader.add(data[i]);
+                    }
+                    header = false;
+                } else {
+                    for (int i = 0; i < data.length; i++) {
+                        if ((data[1].equals(config.getKey().replace(",", "AND"))) && (i == 6)) {
+                            data[i] = (String.valueOf(runtimeGitCommit));
+                        }
+                        dataAux.add(data[i]);
+                    }
+                    rows.add(dataAux);
+                }
+
+            }
+            csvReader.close();
+            File fwriter = new File(fileStr);
+            FileWriter csvWriter = new FileWriter(fwriter);
+
+            csvWriter.write(String.join(",", listHeader));
+            csvWriter.write("\n");
+            for (List<String> line : rows) {
+                csvWriter.write(String.join(",", line));
+                csvWriter.write("\n");
+            }
+            csvWriter.flush();
+            csvWriter.close();
+
+            //end computing the git commit and checkout
+        }
     }
 
 }

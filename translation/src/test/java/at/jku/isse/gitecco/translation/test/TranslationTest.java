@@ -18,6 +18,7 @@ import org.chocosolver.solver.variables.Variable;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.Assert;
 import org.junit.Test;
+import scala.util.parsing.combinator.testing.Str;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -46,7 +47,7 @@ public class TranslationTest {
 
     @Test
     public void getCSVInformation() throws IOException {
-        File folder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite");
+        File folder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\test");
         File[] lista = folder.listFiles();
         Float meanRunEccoCommit = Float.valueOf(0), meanRunEccoCheckout = Float.valueOf(0), meanRunPPCheckoutCleanVersion = Float.valueOf(0), meanRunPPCheckoutGenerateVariant = Float.valueOf(0), meanRunGitCommit = Float.valueOf(0), meanRunGitCheckout = Float.valueOf(0);
         Float totalnumberFiles= Float.valueOf(0), matchesFiles= Float.valueOf(0),  eccototalLines= Float.valueOf(0), originaltotalLines= Float.valueOf(0), missingFiles= Float.valueOf(0),  remainingFiles= Float.valueOf(0), totalVariantsMatch= Float.valueOf(0), truepositiveLines = Float.valueOf(0), falsepositiveLines = Float.valueOf(0), falsenegativeLines = Float.valueOf(0);
@@ -121,7 +122,7 @@ public class TranslationTest {
         String filemetrics = "metrics.csv";
         //csv to report new features and features changed per git commit of the project
         try {
-            FileWriter csvWriter = new FileWriter("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite\\variant_results" + File.separator +filemetrics);
+            FileWriter csvWriter = new FileWriter("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\test\\variant_results" + File.separator +filemetrics);
             List<List<String>> headerRows = Arrays.asList(
                     Arrays.asList( "PrecisionVariant", "RecallVariant", "F1ScoreVariant","PrecisionFiles", "RecallFiles", "F1ScoreFiles","PrecisionLines", "RecalLines", "F1ScoreLines"),
                     Arrays.asList(precisionVariants.toString(), recallVariants.toString(), f1scoreVariants.toString(),precisionFiles.toString(), recallFiles.toString(), f1scoreFiles.toString(),precisionLines.toString(), recallLines.toString(), f1scorelines.toString()),
@@ -142,8 +143,8 @@ public class TranslationTest {
     @Test
     public void testeCompareVariants() {
         CompareVariants cV = new CompareVariants();
-        File variantsrc = new File(String.valueOf("C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\ecco"));
-        File checkoutfile = new File(String.valueOf("C:\\Users\\gabil\\Desktop\\ECCO_Work\\variant_result\\checkout"));
+        File variantsrc = new File(String.valueOf("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\test\\ecco"));
+        File checkoutfile = new File(String.valueOf("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\test\\variant_results\\checkout"));
         try {
             for (File path : variantsrc.listFiles()) {
                 cV.compareVariant(path, new File(checkoutfile + File.separator + path.getName()));
@@ -157,10 +158,10 @@ public class TranslationTest {
     public void testCheckoutEcco() throws IOException {
         CompareVariants cV = new CompareVariants();
         ArrayList<String> configsToCheckout = new ArrayList<>();
-        File configuration = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\configurations.csv");
-        Path OUTPUT_DIR = Paths.get("C:\\Users\\gabil\\Desktop\\ECCO_Work\\variant_result");
-        File eccoFolder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\", "ecco");
-        File checkoutFolder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\variant_result\\checkout\\");
+        File configuration = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\test\\configurations.csv");
+        Path OUTPUT_DIR = Paths.get("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\test\\variant_results");
+        File eccoFolder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\test\\", "ecco");
+        File checkoutFolder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\test\\variant_results\\checkout\\");
         BufferedReader csvReader = null;
         try {
             csvReader = new BufferedReader(new FileReader(configuration));
@@ -174,7 +175,7 @@ public class TranslationTest {
             if (!(row.equals("")) && !(row.contains("CommitNumber"))) {
                 String[] data = row.split(",");
                 String conf = "";
-                for(int i =1; i<data.length; i++){
+                for(int i =2; i<data.length; i++){
                     if(i<data.length-1)
                         conf+=data[i]+",";
                     else
@@ -190,6 +191,42 @@ public class TranslationTest {
     }
 
     @Test
+    public void testEccoCommit() throws IOException {
+        CompareVariants cV = new CompareVariants();
+        ArrayList<String> configsToCommit = new ArrayList<>();
+        File configuration = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\test\\configurations.csv");
+        Path OUTPUT_DIR = Paths.get("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\test\\variant_results");
+        File eccoFolder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\test\\", "ecco");
+        BufferedReader csvReader = null;
+        try {
+            csvReader = new BufferedReader(new FileReader(configuration));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        String row = null;
+        ArrayList<String> listHeader = new ArrayList<>();
+        ArrayList<String> listRuntimeData = new ArrayList<>();
+        while ((row = csvReader.readLine()) != null) {
+            if (!(row.equals("")) && !(row.contains("CommitNumber"))) {
+                String[] data = row.split(",");
+                String conf = "";
+                for(int i =2; i<data.length; i++){
+                    if(i<data.length-1)
+                        conf+=data[i]+",";
+                    else
+                        conf+=data[i];
+                }
+                configsToCommit.add(conf);
+            }
+        }
+
+        csvReader.close();
+
+        cV.eccoCommit(eccoFolder, OUTPUT_DIR, configsToCommit);
+    }
+
+
+    @Test
     public void JGitCommitAndCheckout() throws IOException {
         GitHelper gh = new GitHelper();
         try {
@@ -202,6 +239,42 @@ public class TranslationTest {
             e.printStackTrace();
         }
 
+    }
+
+    @Test
+    public void testGitCommit() throws IOException {
+        CompareVariants cV = new CompareVariants();
+        Map<String, String> configsToCommit = new HashMap<>();
+        File configuration = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\test\\configurations.csv");
+        Path OUTPUT_DIR = Paths.get("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\test\\variant_results\\gitCommit");
+        File srcFolder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\test\\libssh-mirror");
+        BufferedReader csvReader = null;
+        try {
+            csvReader = new BufferedReader(new FileReader(configuration));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        String row = null;
+        ArrayList<String> listHeader = new ArrayList<>();
+        ArrayList<String> listRuntimeData = new ArrayList<>();
+        while ((row = csvReader.readLine()) != null) {
+            if (!(row.equals("")) && !(row.contains("CommitNumber"))) {
+                String[] data = row.split(",");
+                String conf = "";
+                String commitName = "";
+                for(int i =2; i<data.length; i++){
+                    if(i<data.length-1)
+                        conf+=data[i]+",";
+                    else
+                        conf+=data[i];
+                    commitName = data[1];
+                }
+                configsToCommit.put(conf,commitName);
+            }
+        }
+
+        csvReader.close();
+        cV.gitCommit(srcFolder, OUTPUT_DIR, configsToCommit);
     }
 
     @Test
