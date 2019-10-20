@@ -26,22 +26,29 @@ public class App {
     public static void main(String... args) throws Exception {
         final int MAXCOMMITS = 200;
         //TODO: planned arguments: DEBUG, dispose tree, max commits, repo path, csv path(feature id), outpath for ecco
-        String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\test\\libssh-mirror";
+        String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\marlin-40commits\\Marlin";
         //String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin";
         //String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\libssh-mirror\\libssh-mirror";
         //String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite\\sqlite";
         //optional features of the project obtained by the featureID (chosen that which is in almost cases external feature)
-       /*String[] featuresToAdd = {"BASE", "__AVR_ATmega644P__", "F_FILE_DIR_DIRTY", "F_UNUSED", "F_FILE_UNBUFFERED_READ", "__AVR_ATmega644PA__", "RAMPS_V_1_0", "__AVR_ATmega2560__", "F_CPU", "__AVR_AT90USB1286__", "F_OFLAG", "WATCHPERIOD",
-                "THERMISTORHEATER", "THERMISTORBED", "TSd2PinMap_hHERMISTORHEATER", "PID_DEBUG", "HEATER_USES_THERMISTOR", "__AVR_ATmega328P__", "__AVR_ATmega1280__", "__AVR_ATmega168__","BED_MINTEMP","SIMPLE_LCD","BED_MAXTEMP","HEATER_1_USES_AD595",
-                "ADVANCE", "PID_OPENLOOP","__AVR_ATmega32U4__", "__AVR_ATmega328__", "__AVR_ATmega644__","__AVR_AT90USB1287__","SDSUPPORT", "BED_USES_THERMISTOR","__AVR_AT90USB646__", "NEWPANEL", "DEBUG_STEPS", "BED_USES_AD595", "ARDUINO",
-                "HEATER_1_USES_THERMISTOR", "THERMISTORHEATER_2","THERMISTORHEATER_1", "HEATER_2_USES_THERMISTOR","HEATER_USES_THERMISTOR_1", "HEATER_2_USES_AD595", "HEATER_1_MAXTEMP", "THERMISTORHEATER_0",
-                "HEATER_1_MINTEMP", "HEATER_0_USES_THERMISTOR", "RESET_MANUAL","PID_PI","AUTOTEMP","XY_FREQUENCY_LIMIT","TIMSK3","TIMSK4","TIMSK5","COM3C1","MCUCR","COM3B1","ISC00","UBRR2H","OCIE5A","WGM50","USBCON","TIMSK","COM2B1","WGM42",
-               "OCR5A","COM2A1","WGM40","UBRR3H","INT0","INT1","TCCR2","TCCR1","TCCR0","UBRR0H","COM4B1","__AVR_ATmega128__","WGM30","UCSRB","USART2_RX_vect","TCNT0L","UBRR0L","USART_RX_vect","SIG_UART0_RECV","COM3A1","WGM20","COM4C1","ISC11",
-               "UBRR1H","ISC10","MUX5","OCIE0A","SIG_USART1_RECV","CS01","CS00","WGM10","COM5B1","COM00","WGM12","TOIE0","OCIE1A","USART3_RX_vect","COM21","TIFR0","CS11","COM5C1","CS10","UBRRL","COM4A1","WGM01","__AVR_ATmega324P__","UBRRH",
-               "__AVR_ATmega8__","UCSR0B","ADABOOT","TCNT0","TCCR1B","TCCR1A","USART0_RX_vect","CS22","GICR","TCCR0A","TCCR0B","SIG_USART0_RECV","CS31","COM5A1","TIMSK0","TCCR3B","TCCR3A","CS43","CS41","USART1_RX_vect","UDR3","UDR2","UDR0",
-               "CS51","EICRB","EICRA","TCCR5B","TCCR5A","GIMSK","TCCR4A","TCCR4B","ADMUX","EIMSK","COM0A1","ADCSRA","SIG_USART2_RECV","ADCSRB","COM0B1","OCR1A","RAMEND","__cplusplus","UDR","COM1A1","OCR0A","SIG_UART_RECV","COM1B1","SIG_USART3_RECV",
-               "ADCL","SPR0","SPR1","__AVR_ATmega1284P__","__AVR_ATmega168P__","DOXYGEN","DIDR2","E2_STEP_PIN","HEATER_2_MAXTEMP","E2_DIR_PIN","E2_ENABLE_PIN","HEATER_2_MINTEMP","BED_LIMIT_SWITCHING"};
-        */ String[] featuresToAdd = {"BASE", "WITH_SERVER", "HAVE_LIBZ", "WORDS_BIGENDIAN", "DEBUG_CRYPTO",
+        //Marlin 40 commits = 43 features
+         String[] featuresToAdd = {"BASE","PID_PID","RESET_MANUAL","HEATER_0_USES_THERMISTOR","HEATER_1_MINTEMP","THERMISTORHEATER_0","HEATER_1_MAXTEMP",
+                "HEATER_2_USES_AD595","HEATER_USES_THERMISTOR_1","HEATER_2_USES_THERMISTOR","THERMISTORHEATER_1","THERMISTORHEATER_2","HEATER_1_USES_THERMISTOR",
+                "ARDUINO","BED_USES_AD595","DEBUG_STEPS","NEWPANEL","SIMPLE_LCD","__AVR_AT90USB646__","BED_USES_THERMISTOR","__AVR_AT90USB1287__","__AVR_ATmega644__",
+                "__AVR_ATmega328__","__AVR_ATmega32U4__","PID_OPENLOOP","ADVANCE","__AVR_ATmega168__","__AVR_ATmega1280__", "__AVR_ATmega328P__", "HEATER_USES_THERMISTOR",
+                "PID_DEBUG","THERMISTORHEATER","THERMISTORBED","WATCHPERIOD","__AVR_AT90USB1286__","F_OFLAG","F_CPU","__AVR_ATmega2560__","RAMPS_V_1_0","__AVR_ATmega644PA__",
+                "__AVR_ATmega644P__","F_FILE_UNBUFFERED_READ","F_UNUSED","F_FILE_DIR_DIRTY"};
+              /* String[] featuresToAdd = {"BASE", "__AVR_ATmega644P__", "F_FILE_DIR_DIRTY", "F_UNUSED", "F_FILE_UNBUFFERED_READ", "__AVR_ATmega644PA__", "RAMPS_V_1_0", "__AVR_ATmega2560__", "F_CPU", "__AVR_AT90USB1286__", "F_OFLAG", "WATCHPERIOD",
+                         "THERMISTORHEATER", "THERMISTORBED", "TSd2PinMap_hHERMISTORHEATER", "PID_DEBUG", "HEATER_USES_THERMISTOR", "__AVR_ATmega328P__", "__AVR_ATmega1280__", "__AVR_ATmega168__","BED_MINTEMP","SIMPLE_LCD","BED_MAXTEMP","HEATER_1_USES_AD595",
+                         "ADVANCE", "PID_OPENLOOP","__AVR_ATmega32U4__", "__AVR_ATmega328__", "__AVR_ATmega644__","__AVR_AT90USB1287__","SDSUPPORT", "BED_USES_THERMISTOR","__AVR_AT90USB646__", "NEWPANEL", "DEBUG_STEPS", "BED_USES_AD595", "ARDUINO",
+                         "HEATER_1_USES_THERMISTOR", "THERMISTORHEATER_2","THERMISTORHEATER_1", "HEATER_2_USES_THERMISTOR","HEATER_USES_THERMISTOR_1", "HEATER_2_USES_AD595", "HEATER_1_MAXTEMP", "THERMISTORHEATER_0",
+                         "HEATER_1_MINTEMP", "HEATER_0_USES_THERMISTOR", "RESET_MANUAL","PID_PI","AUTOTEMP","XY_FREQUENCY_LIMIT","TIMSK3","TIMSK4","TIMSK5","COM3C1","MCUCR","COM3B1","ISC00","UBRR2H","OCIE5A","WGM50","USBCON","TIMSK","COM2B1","WGM42",
+                        "OCR5A","COM2A1","WGM40","UBRR3H","INT0","INT1","TCCR2","TCCR1","TCCR0","UBRR0H","COM4B1","__AVR_ATmega128__","WGM30","UCSRB","USART2_RX_vect","TCNT0L","UBRR0L","USART_RX_vect","SIG_UART0_RECV","COM3A1","WGM20","COM4C1","ISC11",
+                        "UBRR1H","ISC10","MUX5","OCIE0A","SIG_USART1_RECV","CS01","CS00","WGM10","COM5B1","COM00","WGM12","TOIE0","OCIE1A","USART3_RX_vect","COM21","TIFR0","CS11","COM5C1","CS10","UBRRL","COM4A1","WGM01","__AVR_ATmega324P__","UBRRH",
+                        "__AVR_ATmega8__","UCSR0B","ADABOOT","TCNT0","TCCR1B","TCCR1A","USART0_RX_vect","CS22","GICR","TCCR0A","TCCR0B","SIG_USART0_RECV","CS31","COM5A1","TIMSK0","TCCR3B","TCCR3A","CS43","CS41","USART1_RX_vect","UDR3","UDR2","UDR0",
+                        "CS51","EICRB","EICRA","TCCR5B","TCCR5A","GIMSK","TCCR4A","TCCR4B","ADMUX","EIMSK","COM0A1","ADCSRA","SIG_USART2_RECV","ADCSRB","COM0B1","OCR1A","RAMEND","__cplusplus","UDR","COM1A1","OCR0A","SIG_UART_RECV","COM1B1","SIG_USART3_RECV",
+                        "ADCL","SPR0","SPR1","__AVR_ATmega1284P__","__AVR_ATmega168P__","DOXYGEN","DIDR2","E2_STEP_PIN","HEATER_2_MAXTEMP","E2_DIR_PIN","E2_ENABLE_PIN","HEATER_2_MINTEMP","BED_LIMIT_SWITCHING"};
+                 String[] featuresToAdd = {"BASE", "WITH_SERVER", "HAVE_LIBZ", "WORDS_BIGENDIAN", "DEBUG_CRYPTO",
                 "HAVE_OPENSSL_AES_H","HAVE_GETHOSTBYNAME", "OPENSSL_VERSION_NUMBER","HAVE_SYS_POLL_H",
                 "HAVE_OPENSSL_BLOWFISH_H", "HAVE_SYS_TIME_H", "HAVE_POLL", "HAVE_SELECT", "HAVE_GETHOSTBYADDR",
                 "__cplusplus", "HAVE_SSH1", "NO_SERVER", "HAVE_PTY_H", "HAVE_STDINT_H", "HAVE_MEMORY_H", "HAVE_LIBWSOCK32",
@@ -65,7 +72,7 @@ public class App {
         //add directories that we need to include manually to get all the files to create a clean version because "/usr/local/include"
         // and "/usr/include")does not includes files outside the root path
         final List<String> dirFiles = new ArrayList<>();
-        dirFiles.add("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\test\\libssh-mirror");
+        dirFiles.add("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\marlin-40commits\\Marlin");
         //dirFiles.add("C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin");
         //dirFiles.add("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\libssh-mirror\\libssh-mirror");
         /*dirFiles.add("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite\\sqlite");
@@ -343,8 +350,8 @@ public class App {
 
         });
 
-        //gitHelper.getEveryNthCommit(commitList, "bf879ceaa9685648adba645cadc6ce5aaa5fac85",14, 100, 1);
-        gitHelper.getAllCommits(commitList);
+        gitHelper.getEveryNthCommit(commitList, null,8, 10, 1);
+        //gitHelper.getAllCommits(commitList);
 
         /*
         //close ecco repository

@@ -2,11 +2,14 @@ package at.jku.isse.gitecco.core.git;
 
 import at.jku.isse.gitecco.core.tree.nodes.BinaryFileNode;
 import at.jku.isse.gitecco.core.tree.nodes.FileNode;
+import difflib.Delta;
+import difflib.DiffUtils;
+import difflib.Patch;
+import org.eclipse.collections.api.set.primitive.CharSet;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffEntry;
-import org.eclipse.jgit.diff.DiffFormatter;
 import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -17,9 +20,12 @@ import org.eclipse.jgit.treewalk.AbstractTreeIterator;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.eclipse.jgit.treewalk.EmptyTreeIterator;
 import org.eclipse.jgit.treewalk.TreeWalk;
-import org.eclipse.jgit.treewalk.filter.PathFilter;
+
 
 import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
+import java.nio.charset.MalformedInputException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -88,7 +94,7 @@ public class GitHelper {
             initializeGit = false;
         }
 
-        if(initializeGit) {
+        if (initializeGit) {
             Git git = Git.init().setDirectory(dest).call();
         }
 
@@ -119,16 +125,15 @@ public class GitHelper {
 
         // run the add-call
 
-            Git gitOpen = Git.open(dest);
-            gitOpen.add().addFilepattern(localPath.toString()).call();
-            //git commit
-            Long timeBefore = System.currentTimeMillis();
-            gitOpen.commit().setMessage(commitMessage).call();
-            Long timeAfter = System.currentTimeMillis();
-            setRuntimeGitCommit(timeAfter - timeBefore);
-            gitOpen.close();
-            //end git commit
-
+        Git gitOpen = Git.open(dest);
+        gitOpen.add().addFilepattern(localPath.toString()).call();
+        //git commit
+        Long timeBefore = System.currentTimeMillis();
+        gitOpen.commit().setMessage(commitMessage).call();
+        Long timeAfter = System.currentTimeMillis();
+        setRuntimeGitCommit(timeAfter - timeBefore);
+        gitOpen.close();
+        //end git commit
 
 
     }
@@ -189,12 +194,12 @@ public class GitHelper {
 
         //prepare for file path filter.
         //String filterPath = filePath.substring(pathUrl.length()+1).replace("\\", "/");
-        List<DiffEntry> diff = git.diff().
+        List<DiffEntry> diff;
+        diff = git.diff().
                 setOldTree(prepareTreeParser(git.getRepository(), newCommit.getDiffCommitName())).
                 setNewTree(prepareTreeParser(git.getRepository(), newCommit.getCommitName())).
-                setPathFilter(PathFilter.create(filePath)).
-                call();
-
+                //setPathFilter(PathFilter.create(filePath)).
+                        call();
         //to filter on Suffix use the following instead
         //setPathFilter(PathSuffixFilter.create(".cpp"))
 
@@ -202,7 +207,60 @@ public class GitHelper {
         ByteArrayOutputStream diffStream = new ByteArrayOutputStream();
         DiffParser fileDiffParser = new DiffParser();
 
+
         for (DiffEntry entry : diff) {
+            String newPath = entry.getNewPath().replace("/", "\\");
+            String oldPath = entry.getOldPath().replace("/", "\\");
+            if (filePath.equals(newPath)) {
+                System.out.println("file diff: " + newPath);
+                if (entry.getChangeType().toString().equals("ADD")) {
+                    newPath = pathUrl + "\\" + newPath;
+                    changes.add(new Change(0, Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size()));
+                } else if (entry.getChangeType().toString().equals("MODIFY")) {
+                    List<String> actual = new ArrayList<>();
+                    List<String> old = new ArrayList<>();
+                    File filenew = new File(pathUrl + "\\" + newPath);
+                    try {
+                        actual = Files.readAllLines(filenew.toPath());
+                    } catch (MalformedInputException e) {
+                        StringBuilder contentBuilder = new StringBuilder();
+                        BufferedReader br = new BufferedReader(new FileReader(filenew.getAbsoluteFile()));
+                        String sCurrentLine;
+                        while ((sCurrentLine = br.readLine()) != null) {
+                            actual.add(sCurrentLine);
+                        }
+                        br.close();
+                    }
+                    git.checkout().setName(newCommit.getDiffCommitName()).call();
+                    File fileold = new File(pathUrl + "\\" + oldPath);
+                    try {
+                        old = Files.readAllLines(fileold.toPath());
+                    } catch (MalformedInputException e) {
+                        StringBuilder contentBuilder = new StringBuilder();
+                        BufferedReader br = new BufferedReader(new FileReader(fileold.getAbsoluteFile()));
+                        String sCurrentLine;
+                        while ((sCurrentLine = br.readLine()) != null) {
+                            old.add(sCurrentLine);
+                        }
+                        br.close();
+                    }
+                    git.checkout().setName(newCommit.getCommitName()).call();
+                    // Compute diff. Get the Patch object. Patch is the container for computed deltas.
+                    Patch<String> patch = null;
+                    patch = DiffUtils.diff(actual, old);
+                    for (Delta delta : patch.getDeltas()) {
+                        Integer first = delta.getOriginal().getPosition();
+                        Integer last = delta.getOriginal().getPosition() + delta.getOriginal().getLines().size();
+                        changes.add(new Change(first, last));
+                    }
+
+                }
+            }
+
+        }
+
+
+       /* for (DiffEntry entry : diff) {
             diffStream.reset();
             try (DiffFormatter formatter = new DiffFormatter(diffStream)) {
                 formatter.setRepository(git.getRepository());
@@ -224,9 +282,9 @@ public class GitHelper {
 
         filePath = pathUrl + "\\" + filePath;
 
-        if (changes.size() == 0)
+        if (newCommit.getDiffCommitName().equals("NULLCOMMIT"))
             changes.add(new Change(0, Files.readAllLines(Paths.get(filePath), StandardCharsets.ISO_8859_1).size()));
-
+        */
         return changes.toArray(new Change[changes.size()]);
     }
 
@@ -401,7 +459,7 @@ public class GitHelper {
      * @throws GitAPIException
      * @throws IOException
      */
-    public GitCommitList getEveryNthCommit(GitCommitList commits,String firstDiff, int startcommit, int endcommit, int n) throws Exception {
+    public GitCommitList getEveryNthCommit(GitCommitList commits, String firstDiff, int startcommit, int endcommit, int n) throws Exception {
         final Repository repository = git.getRepository();
         final Collection<Ref> allRefs = repository.getRefDatabase().getRefs();
 
@@ -418,10 +476,10 @@ public class GitHelper {
         for (RevCommit rc : revWalk) {
             if (number > endcommit) break;
 
-            if(number >= startcommit) {
+            if (number >= startcommit) {
                 String branch = getBranchOfCommit(rc.getName());
 
-                if(parent == null || enter) {
+                if (parent == null || enter) {
                     try {
                         parent = rc.getParent(0).getName();
                     } catch (ArrayIndexOutOfBoundsException e) {

@@ -45,11 +45,14 @@ public class ConstraintComputer {
         //hand the expression of the condition for the changed node to the solver.
         solver.setExpr(changedNode.getCondition());
 
-        //add the built constraint queues to the solver which further constructs all the internal constraints
-        for (Map.Entry<Feature, Queue<FeatureImplication>> featureQueueEntry : implMap.entrySet()) {
-            solver.addClause(featureQueueEntry.getKey(), featureQueueEntry.getValue());
+        if(changedNode.getCondition().equals("(Y_MAX_PIN > -1) && (BASE)")){
+            System.out.println("SIZE: "+implMap.size()+" NODE: "+changedNode.getCondition());
+        }else {
+            //add the built constraint queues to the solver which further constructs all the internal constraints
+            for (Map.Entry<Feature, Queue<FeatureImplication>> featureQueueEntry : implMap.entrySet()) {
+                solver.addClause(featureQueueEntry.getKey(), featureQueueEntry.getValue());
+            }
         }
-
         //solve, filter for global features only and return the solution/configuration.
         //filtering should be optional because if a correct constraint is built we already get only global features.
         Map<Feature, Integer> ret = solver.solve();
