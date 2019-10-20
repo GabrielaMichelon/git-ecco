@@ -21,20 +21,20 @@ public class App extends Thread{
 
     //private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\test-featureid";
     //private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin";
-    private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\marlin-40commits\\Marlin";
+    private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-new-code\\Marlin\\Marlin\\Marlin";
     //private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite\\sqlite";
     //private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\libssh-mirror\\libssh-mirror";
     // "C:\\obermanndavid\\git-to-ecco\\test_repo5"
     // "C:\\obermanndavid\\git-ecco-test\\test_featureid\\betaflight"
     // "C:\\obermanndavid\\git-ecco-test\\test_featureid\\Marlin"
     //private final static String CSV_PATH = "C:\\Users\\gabil\\Desktop\\results\\results.csv";
-    private final static String CSV_PATH = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\marlin-40commits\\results\\results_ marlin_40.csv";
+    private final static String CSV_PATH = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-new-code\\Marlin\\results\\results_ marlin_103.csv";
     private final static boolean DISPOSE = true;
     private final static boolean DEBUG = true;
     private final static int MAX_COMMITS = 500;
     private final static boolean EVERYCOMMIT = false;
     private final static int STARTCOMMIT = 0;
-    private final static int ENDCOMMIT = 200;
+    private final static int ENDCOMMIT = 103;
     private final static int EVERY_NTH_COMMIT = 1;
     private final static boolean MAX_COMMITS_ENA = true;
     private final static boolean PARALLEL = false;

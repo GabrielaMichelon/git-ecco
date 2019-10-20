@@ -8,6 +8,8 @@ import at.jku.isse.gitecco.core.tree.nodes.RootNode;
 import at.jku.isse.gitecco.core.type.Feature;
 import at.jku.isse.gitecco.core.type.FeatureImplication;
 import at.jku.isse.gitecco.translation.visitor.BuildImplicationsVisitor;
+import org.anarres.cpp.featureExpr.FeatureExpression;
+import org.chocosolver.solver.variables.IntVar;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -44,12 +46,33 @@ public class ConstraintComputer {
 
         //hand the expression of the condition for the changed node to the solver.
         solver.setExpr(changedNode.getCondition());
+        Feature feature = new Feature("");
+        ArrayList<Feature> literalsExpression = feature.parseConditionArray(changedNode.getCondition());
+        Map<Feature, Queue<FeatureImplication>> implMapFeaturesExpression = new HashMap<>();
+        for (Map.Entry<Feature, Queue<FeatureImplication>> implMapAux: implMap.entrySet()) {
+            if(literalsExpression.contains(implMapAux.getKey())){
+                implMapFeaturesExpression.put(implMapAux.getKey(),implMapAux.getValue());
+            }else {
+                Boolean addfeature = false;
+                for (FeatureImplication queue : implMapAux.getValue()) {
+                    for (Feature feat : literalsExpression) {
+                        if (queue.getCondition().contains(feat.getName())) {
+                           addfeature=true;
+                        }
+                    }
+                    if(addfeature)
+                        break;
+                    implMapFeaturesExpression.put(implMapAux.getKey(),implMapAux.getValue());
+                    literalsExpression.add(implMapAux.getKey());
+                }
+            }
+        }
 
         if(changedNode.getCondition().equals("(Y_MAX_PIN > -1) && (BASE)")){
             System.out.println("SIZE: "+implMap.size()+" NODE: "+changedNode.getCondition());
         }else {
             //add the built constraint queues to the solver which further constructs all the internal constraints
-            for (Map.Entry<Feature, Queue<FeatureImplication>> featureQueueEntry : implMap.entrySet()) {
+            for (Map.Entry<Feature, Queue<FeatureImplication>> featureQueueEntry : implMapFeaturesExpression.entrySet()) {
                 solver.addClause(featureQueueEntry.getKey(), featureQueueEntry.getValue());
             }
         }

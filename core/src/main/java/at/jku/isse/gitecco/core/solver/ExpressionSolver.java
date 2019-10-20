@@ -195,6 +195,7 @@ public class ExpressionSolver {
 				} catch (NumberFormatException e1) {
 					System.err.println("the given number format is not compatible with the solver!" +
 							"\n number: " + ((NumberLiteral) expr).getToken().getText());
+					stack.push(model.intVar(Long.decode((((NumberLiteral) expr).getToken().getText().replaceAll("0000UL",""))).intValue()));
 				}
 			}
 			isIntVar = true;
