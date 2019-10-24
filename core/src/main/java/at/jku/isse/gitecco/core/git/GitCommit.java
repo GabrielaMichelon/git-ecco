@@ -85,4 +85,8 @@ public class GitCommit {
     public String getCommitName() {
         return commitName;
     }
+
+    public RevCommit getRevCommit() {
+        return revCommit;
+    }
 }

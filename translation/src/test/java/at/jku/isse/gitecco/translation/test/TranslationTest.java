@@ -39,30 +39,211 @@ public class TranslationTest {
         GitHelper gh = new GitHelper("C:\\obermanndavid\\git-ecco-test\\2_second_run\\Marlin", null);
         final GitCommitList commitList = new GitCommitList(gh);
 
-        commitList.addGitCommitListener((gc,gcl) -> {
+        commitList.addGitCommitListener((gc, gcl) -> {
             System.out.println(gc.getNumber() + " -> " + gc.getCommitName() + " diff to: " + gc.getDiffCommitName());
         });
 
         gh.getEveryNthCommit(commitList, null, 36, 50, 1);
     }
 
+
     @Test
-    public void getCSVInformation() throws IOException {
-        File folder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\test");
+    public void getCSVInformationTotal() throws IOException {
+        File[] folder = {new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\randomVariants\\Marlin"),
+                new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\randomVariants\\LibSSH"),
+                new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\randomVariants\\SQLite")};
+        //write metrics in a csv file
+        String filemetrics = "metrics2.csv";
+        FileWriter csvWriter = new FileWriter("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\randomVariants\\TOTAL" + File.separator + filemetrics);
+
+        Float totalmeanRunEccoCommit = Float.valueOf(0), totalmeanRunEccoCheckout = Float.valueOf(0), totalmeanRunPPCheckoutCleanVersion = Float.valueOf(0), totalmeanRunPPCheckoutGenerateVariant = Float.valueOf(0), totalmeanRunGitCommit = Float.valueOf(0), totalmeanRunGitCheckout = Float.valueOf(0);
+        Float totaltotalnumberFiles = Float.valueOf(0), totalmatchesFiles = Float.valueOf(0), totaleccototalLines = Float.valueOf(0), totaloriginaltotalLines = Float.valueOf(0), totalmissingFiles = Float.valueOf(0), totalremainingFiles = Float.valueOf(0), totaltotalVariantsMatch = Float.valueOf(0), totaltruepositiveLines = Float.valueOf(0), totalfalsepositiveLines = Float.valueOf(0), totalfalsenegativeLines = Float.valueOf(0),
+                totaltruepositiveLinesEachFile = Float.valueOf(0), totalfalsepositiveLinesEachFile = Float.valueOf(0), totalfalsenegativeLinesEachFile = Float.valueOf(0), totalnumberTotalFilesEachVariant = Float.valueOf(0), totalmatchFilesEachVariant = Float.valueOf(0), totaleccototalLinesEachFile = Float.valueOf(0), totaloriginaltotalLinesEachFile = Float.valueOf(0),  totalnumberCSV = Float.valueOf(0);
+        for (int j = 0; j < folder.length; j++) {
+            File[] lista = folder[j].listFiles();
+            Float meanRunEccoCommit = Float.valueOf(0), meanRunEccoCheckout = Float.valueOf(0), meanRunPPCheckoutCleanVersion = Float.valueOf(0), meanRunPPCheckoutGenerateVariant = Float.valueOf(0), meanRunGitCommit = Float.valueOf(0), meanRunGitCheckout = Float.valueOf(0);
+            Float totalnumberFiles = Float.valueOf(0), matchesFiles = Float.valueOf(0), eccototalLines = Float.valueOf(0), originaltotalLines = Float.valueOf(0), missingFiles = Float.valueOf(0), remainingFiles = Float.valueOf(0), totalVariantsMatch = Float.valueOf(0), truepositiveLines = Float.valueOf(0), falsepositiveLines = Float.valueOf(0), falsenegativeLines = Float.valueOf(0),
+                    truepositiveLinesEachFile = Float.valueOf(0), falsepositiveLinesEachFile = Float.valueOf(0), falsenegativeLinesEachFile = Float.valueOf(0), numberTotalFilesEachVariant = Float.valueOf(0), matchFilesEachVariant = Float.valueOf(0), eccototalLinesEachFile = Float.valueOf(0), originaltotalLinesEachFile = Float.valueOf(0);
+            Boolean variantMatch = true;
+            Float numberCSV = Float.valueOf(0);
+            for (File file : lista) {
+                if ((file.getName().indexOf(".csv") != -1) && !(file.getName().contains("features_report_each_project_commit")) && !(file.getName().contains("configurations"))) {
+                    Reader reader = Files.newBufferedReader(Paths.get(file.getAbsolutePath()));
+                    CSVReader csvReader = new CSVReaderBuilder(reader).build();
+                    List<String[]> matchesVariants = csvReader.readAll();
+
+                    if (file.getName().contains("runtime")) {
+                        for (int i = 0; i < matchesVariants.size(); i++) {
+                            if (i != 0) {
+                                String[] runtimes = matchesVariants.get(i);
+                                meanRunEccoCommit += Float.valueOf(runtimes[2]);
+                                meanRunEccoCheckout += Float.valueOf(runtimes[3]);
+                                meanRunPPCheckoutCleanVersion += Float.valueOf(runtimes[4]);
+                                meanRunPPCheckoutGenerateVariant += Float.valueOf(runtimes[5]);
+                                meanRunGitCommit += Float.valueOf(runtimes[6]);
+                                meanRunGitCheckout += Float.valueOf(runtimes[7]);
+                            }
+                        }
+                        totalmeanRunEccoCommit+=meanRunEccoCommit; totalmeanRunEccoCheckout+=meanRunEccoCheckout; totalmeanRunGitCommit+=meanRunGitCommit; totalmeanRunGitCheckout+=meanRunGitCheckout;
+                        totalmeanRunPPCheckoutCleanVersion+=meanRunPPCheckoutCleanVersion; totalmeanRunPPCheckoutGenerateVariant+=meanRunPPCheckoutGenerateVariant;
+                    } else {
+                        Float qtdLines = Float.valueOf(matchesVariants.size() - 4);
+                        //totalnumberFiles += qtdLines;
+                        for (int i = 1; i < matchesVariants.size(); i++) {
+
+                            String[] line = matchesVariants.get(i);
+                            truepositiveLines += Integer.valueOf(line[2]);
+                            falsepositiveLines += Integer.valueOf(line[3]);
+                            falsenegativeLines += Integer.valueOf(line[4]);
+                            truepositiveLinesEachFile = Float.valueOf(Integer.valueOf(line[2]));
+                            falsepositiveLinesEachFile = Float.valueOf(Integer.valueOf(line[3]));
+                            falsenegativeLinesEachFile = Float.valueOf(Integer.valueOf(line[4]));
+                            originaltotalLines += Integer.valueOf(line[5]);
+                            eccototalLines += Integer.valueOf(line[6]);
+                            originaltotalLinesEachFile = Float.valueOf(Integer.valueOf(line[5]));
+                            eccototalLinesEachFile = Float.valueOf(Integer.valueOf(line[6]));
+
+                            totaltruepositiveLines+=truepositiveLines;
+                            totalfalsepositiveLines+=falsepositiveLines;
+                            totalfalsenegativeLines+=falsenegativeLines;
+                            totaltruepositiveLinesEachFile+=totaltruepositiveLinesEachFile;
+                            totalfalsepositiveLinesEachFile+=falsepositiveLinesEachFile;
+                            totalfalsenegativeLinesEachFile+=falsenegativeLinesEachFile;
+                            totaloriginaltotalLines+=originaltotalLines;
+                            totaleccototalLines+=eccototalLines;
+                            totaloriginaltotalLinesEachFile+=originaltotalLinesEachFile;
+                            totaleccototalLinesEachFile+=eccototalLinesEachFile;
+
+                            if (line[1].equals("true")) {
+                                if (Float.compare(originaltotalLinesEachFile, eccototalLinesEachFile) == 0 && Float.compare(truepositiveLinesEachFile, originaltotalLinesEachFile) == 0) {
+                                    matchFilesEachVariant++;
+                                    totalmatchFilesEachVariant++;
+                                    matchesFiles++;
+                                    totalmatchesFiles++;
+                                } else {
+                                    remainingFiles++;
+                                    totalremainingFiles++;
+                                    variantMatch = false;
+                                }
+                                numberTotalFilesEachVariant += 1;
+                                totalnumberTotalFilesEachVariant++;
+                            } else if (line[1].equals("not")) {
+                                variantMatch = false;
+                                missingFiles++;
+                                totalmissingFiles++;
+                                numberTotalFilesEachVariant += 1;
+                                totalnumberTotalFilesEachVariant++;
+                            } else if (line[1].equals("justEcco")) {
+                                variantMatch = false;
+                                remainingFiles++;
+                                totalremainingFiles++;
+                            } else {
+                                variantMatch = false;
+                                remainingFiles++;
+                                totalremainingFiles++;
+                            }
+                        }
+                    }
+                    numberCSV++;
+                    totalnumberCSV++;
+                    if (variantMatch && Float.compare(matchFilesEachVariant, numberTotalFilesEachVariant) == 0) {
+                        totalVariantsMatch++;
+                        totaltotalVariantsMatch++;
+                    }
+                }
+                numberTotalFilesEachVariant = Float.valueOf(0);
+                matchFilesEachVariant = Float.valueOf(0);
+                variantMatch = true;
+            }
+            meanRunEccoCommit = (meanRunEccoCommit / numberCSV) / 1000;
+            meanRunEccoCheckout = (meanRunEccoCheckout / numberCSV) / 1000;
+            meanRunPPCheckoutCleanVersion = (meanRunPPCheckoutCleanVersion / numberCSV) / 1000;
+            meanRunPPCheckoutGenerateVariant = (meanRunPPCheckoutGenerateVariant / numberCSV) / 1000;
+            meanRunGitCommit = (meanRunGitCommit / numberCSV) / 1000;
+            meanRunGitCheckout = (meanRunGitCheckout / numberCSV) / 1000;
+            Float totalVariantsNotMatch = (numberCSV - totalVariantsMatch);
+            Float precisionVariants = totalVariantsMatch / (totalVariantsMatch + totalVariantsNotMatch);
+            Float recallVariants = totalVariantsMatch / (numberCSV);
+            Float f1scoreVariants = 2 * ((precisionVariants * recallVariants) / (precisionVariants + recallVariants));
+            if (f1scoreVariants.toString().equals("NaN")) {
+                f1scoreVariants = Float.valueOf(0);
+            }
+            Float precisionLines = Float.valueOf(truepositiveLines / (truepositiveLines + falsepositiveLines));
+            Float recallLines = Float.valueOf(truepositiveLines / (truepositiveLines + falsenegativeLines));
+            Float f1scorelines = 2 * ((precisionLines * recallLines) / (precisionLines + recallLines));
+            Float precisionFiles = Float.valueOf(matchesFiles / (matchesFiles + remainingFiles));
+            Float recallFiles = Float.valueOf(matchesFiles / (matchesFiles + missingFiles));
+            Float f1scoreFiles = 2 * ((precisionFiles * recallFiles) / (precisionFiles + recallFiles));
+
+
+            //csv to report new features and features changed per git commit of the project
+            try {
+                 List<List<String>> headerRows = Arrays.asList(Arrays.asList(folder[j].getName()),
+                        Arrays.asList("PrecisionVariant", "RecallVariant", "F1ScoreVariant", "PrecisionFiles", "RecallFiles", "F1ScoreFiles", "PrecisionLines", "RecalLines", "F1ScoreLines"),
+                        Arrays.asList(precisionVariants.toString(), recallVariants.toString(), f1scoreVariants.toString(), precisionFiles.toString(), recallFiles.toString(), f1scoreFiles.toString(), precisionLines.toString(), recallLines.toString(), f1scorelines.toString()),
+                        Arrays.asList("MeanRuntimeEccoCommit", "MeanRuntimeEccoCheckout", "MeanRuntimeGitCommit", "MeanRuntimeGitCheckout"),
+                        Arrays.asList(meanRunEccoCommit.toString(), meanRunEccoCheckout.toString(), meanRunGitCommit.toString(), meanRunGitCheckout.toString())
+                );
+                for (List<String> rowData : headerRows) {
+                    csvWriter.append(String.join(",", rowData));
+                    csvWriter.append("\n");
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        totalmeanRunEccoCommit = (totalmeanRunEccoCommit / totalnumberCSV) / 1000;
+        totalmeanRunEccoCheckout = (totalmeanRunEccoCheckout / totalnumberCSV) / 1000;
+        totalmeanRunPPCheckoutCleanVersion = (totalmeanRunPPCheckoutCleanVersion / totalnumberCSV) / 1000;
+        totalmeanRunPPCheckoutGenerateVariant = (totalmeanRunPPCheckoutGenerateVariant / totalnumberCSV) / 1000;
+        totalmeanRunGitCommit = (totalmeanRunGitCommit / totalnumberCSV) / 1000;
+        totalmeanRunGitCheckout = (totalmeanRunGitCheckout / totalnumberCSV) / 1000;
+        Float totalVariantsNotMatch = (totalnumberCSV - totaltotalVariantsMatch);
+        Float precisionVariants = totaltotalVariantsMatch / (totaltotalVariantsMatch + totalVariantsNotMatch);
+        Float recallVariants = totaltotalVariantsMatch / (totalnumberCSV);
+        Float f1scoreVariants = 2 * ((precisionVariants * recallVariants) / (precisionVariants + recallVariants));
+        if (f1scoreVariants.toString().equals("NaN")) {
+            f1scoreVariants = Float.valueOf(0);
+        }
+        Float precisionLines = Float.valueOf(totaltruepositiveLines / (totaltruepositiveLines + totalfalsepositiveLines));
+        Float recallLines = Float.valueOf(totaltruepositiveLines / (totaltruepositiveLines + totalfalsenegativeLines));
+        Float f1scorelines = 2 * ((precisionLines * recallLines) / (precisionLines + recallLines));
+        Float precisionFiles = Float.valueOf(totalmatchesFiles / (totalmatchesFiles + totalremainingFiles));
+        Float recallFiles = Float.valueOf(totalmatchesFiles / (totalmatchesFiles + totalmissingFiles));
+        Float f1scoreFiles = 2 * ((precisionFiles * recallFiles) / (precisionFiles + recallFiles));
+        List<List<String>> totalRows = Arrays.asList(Arrays.asList("Three projects together"),
+                Arrays.asList("TotalPrecisionVariant", "TotalRecallVariant", "TotalF1ScoreVariant", "TotalPrecisionFiles", "TotalRecallFiles", "TotalF1ScoreFiles", "TotalPrecisionLines", "TotalRecalLines", "TotalF1ScoreLines"),
+                Arrays.asList(precisionVariants.toString(), recallVariants.toString(), f1scoreVariants.toString(), precisionFiles.toString(), recallFiles.toString(), f1scoreFiles.toString(), precisionLines.toString(), recallLines.toString(), f1scorelines.toString()),
+                Arrays.asList("TotalMeanRuntimeEccoCommit", "TotalMeanRuntimeEccoCheckout", "TotalMeanRuntimeGitCommit", "TotalMeanRuntimeGitCheckout"),
+                Arrays.asList(totalmeanRunEccoCommit.toString(), totalmeanRunEccoCheckout.toString(), totalmeanRunGitCommit.toString(), totalmeanRunGitCheckout.toString())
+        );
+        for (List<String> rowData : totalRows) {
+            csvWriter.append(String.join(",", rowData));
+            csvWriter.append("\n");
+        }
+        csvWriter.flush();
+        csvWriter.close();
+    }
+
+
+    @Test
+    public void getCSVInformation2() throws IOException {
+        File folder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\randomVariants\\LibSSH");
         File[] lista = folder.listFiles();
         Float meanRunEccoCommit = Float.valueOf(0), meanRunEccoCheckout = Float.valueOf(0), meanRunPPCheckoutCleanVersion = Float.valueOf(0), meanRunPPCheckoutGenerateVariant = Float.valueOf(0), meanRunGitCommit = Float.valueOf(0), meanRunGitCheckout = Float.valueOf(0);
-        Float totalnumberFiles= Float.valueOf(0), matchesFiles= Float.valueOf(0),  eccototalLines= Float.valueOf(0), originaltotalLines= Float.valueOf(0), missingFiles= Float.valueOf(0),  remainingFiles= Float.valueOf(0), totalVariantsMatch= Float.valueOf(0), truepositiveLines = Float.valueOf(0), falsepositiveLines = Float.valueOf(0), falsenegativeLines = Float.valueOf(0);
+        Float totalnumberFiles = Float.valueOf(0), matchesFiles = Float.valueOf(0), eccototalLines = Float.valueOf(0), originaltotalLines = Float.valueOf(0), missingFiles = Float.valueOf(0), remainingFiles = Float.valueOf(0), totalVariantsMatch = Float.valueOf(0), truepositiveLines = Float.valueOf(0), falsepositiveLines = Float.valueOf(0), falsenegativeLines = Float.valueOf(0),
+                truepositiveLinesEachFile = Float.valueOf(0), falsepositiveLinesEachFile = Float.valueOf(0), falsenegativeLinesEachFile = Float.valueOf(0), numberTotalFilesEachVariant = Float.valueOf(0), matchFilesEachVariant = Float.valueOf(0), eccototalLinesEachFile = Float.valueOf(0), originaltotalLinesEachFile = Float.valueOf(0);
         Boolean variantMatch = true;
-        Float numberCSV= Float.valueOf(0);
+        Float numberCSV = Float.valueOf(0);
         for (File file : lista) {
             if ((file.getName().indexOf(".csv") != -1) && !(file.getName().contains("features_report_each_project_commit")) && !(file.getName().contains("configurations"))) {
                 Reader reader = Files.newBufferedReader(Paths.get(file.getAbsolutePath()));
                 CSVReader csvReader = new CSVReaderBuilder(reader).build();
                 List<String[]> matchesVariants = csvReader.readAll();
 
-                if(file.getName().contains("runtime")){
-                    for (int i=0; i <matchesVariants.size(); i++) {
-                        if(i!=0){
+                if (file.getName().contains("runtime")) {
+                    for (int i = 0; i < matchesVariants.size(); i++) {
+                        if (i != 0) {
                             String[] runtimes = matchesVariants.get(i);
                             meanRunEccoCommit += Float.valueOf(runtimes[2]);
                             meanRunEccoCheckout += Float.valueOf(runtimes[3]);
@@ -72,64 +253,181 @@ public class TranslationTest {
                             meanRunGitCheckout += Float.valueOf(runtimes[7]);
                         }
                     }
-                }else{
-                    Float qtdLines = Float.valueOf(matchesVariants.size()-4);
+                } else {
+                    Float qtdLines = Float.valueOf(matchesVariants.size() - 4);
                     //totalnumberFiles += qtdLines;
-                    for(int i = 1; i < matchesVariants.size(); i++){
+                    for (int i = 1; i < matchesVariants.size(); i++) {
+
                         String[] line = matchesVariants.get(i);
                         truepositiveLines += Integer.valueOf(line[2]);
-                        falsepositiveLines +=  Integer.valueOf(line[3]);
+                        falsepositiveLines += Integer.valueOf(line[3]);
                         falsenegativeLines += Integer.valueOf(line[4]);
-                        originaltotalLines +=  Integer.valueOf(line[5]);
+                        truepositiveLinesEachFile = Float.valueOf(Integer.valueOf(line[2]));
+                        falsepositiveLinesEachFile = Float.valueOf(Integer.valueOf(line[3]));
+                        falsenegativeLinesEachFile = Float.valueOf(Integer.valueOf(line[4]));
+                        originaltotalLines += Integer.valueOf(line[5]);
                         eccototalLines += Integer.valueOf(line[6]);
-                        if(line[1].equals("true")) {
-                            variantMatch = true;
-                            matchesFiles++;
-                        }else if(line[1].equals("not")){
+                        originaltotalLinesEachFile = Float.valueOf(Integer.valueOf(line[5]));
+                        eccototalLinesEachFile = Float.valueOf(Integer.valueOf(line[6]));
+                        if (line[1].equals("true")) {
+                            if (Float.compare(originaltotalLinesEachFile, eccototalLinesEachFile) == 0 && Float.compare(truepositiveLinesEachFile, originaltotalLinesEachFile) == 0) {
+                                matchFilesEachVariant++;
+                                matchesFiles++;
+                            } else {
+                                remainingFiles++;
+                                variantMatch = false;
+                            }
+                            numberTotalFilesEachVariant += 1;
+                        } else if (line[1].equals("not")) {
                             variantMatch = false;
                             missingFiles++;
-                        }else if(line[1].equals("justEcco")){
+                            numberTotalFilesEachVariant += 1;
+                        } else if (line[1].equals("justEcco")) {
+                            variantMatch = false;
+                            remainingFiles++;
+                        } else {
                             variantMatch = false;
                             remainingFiles++;
                         }
                     }
                 }
                 numberCSV++;
-                if(variantMatch)
+                if (variantMatch && Float.compare(matchFilesEachVariant, numberTotalFilesEachVariant) == 0)
                     totalVariantsMatch++;
-                }
+            }
+            numberTotalFilesEachVariant = Float.valueOf(0);
+            matchFilesEachVariant = Float.valueOf(0);
+            variantMatch = true;
         }
-        meanRunEccoCommit = (meanRunEccoCommit/numberCSV)/1000;
-        meanRunEccoCheckout = (meanRunEccoCheckout/numberCSV)/1000;
-        meanRunPPCheckoutCleanVersion = (meanRunPPCheckoutCleanVersion/numberCSV)/1000;
-        meanRunPPCheckoutGenerateVariant = (meanRunPPCheckoutGenerateVariant/numberCSV)/1000;
-        meanRunGitCommit = (meanRunGitCommit/numberCSV)/1000;
-        meanRunGitCheckout = (meanRunGitCheckout/numberCSV)/1000;
-        Float totalVariantsNotMatch = (numberCSV-totalVariantsMatch);
-        Float precisionVariants = totalVariantsMatch / (totalVariantsMatch+totalVariantsNotMatch);
+        meanRunEccoCommit = (meanRunEccoCommit / numberCSV) / 1000;
+        meanRunEccoCheckout = (meanRunEccoCheckout / numberCSV) / 1000;
+        meanRunPPCheckoutCleanVersion = (meanRunPPCheckoutCleanVersion / numberCSV) / 1000;
+        meanRunPPCheckoutGenerateVariant = (meanRunPPCheckoutGenerateVariant / numberCSV) / 1000;
+        meanRunGitCommit = (meanRunGitCommit / numberCSV) / 1000;
+        meanRunGitCheckout = (meanRunGitCheckout / numberCSV) / 1000;
+        Float totalVariantsNotMatch = (numberCSV - totalVariantsMatch);
+        Float precisionVariants = totalVariantsMatch / (totalVariantsMatch + totalVariantsNotMatch);
         Float recallVariants = totalVariantsMatch / (numberCSV);
-        Float f1scoreVariants = 2*((precisionVariants*recallVariants)/(precisionVariants+recallVariants));
-        if(f1scoreVariants.toString().equals("NaN")){
-            f1scoreVariants= Float.valueOf(0);
+        Float f1scoreVariants = 2 * ((precisionVariants * recallVariants) / (precisionVariants + recallVariants));
+        if (f1scoreVariants.toString().equals("NaN")) {
+            f1scoreVariants = Float.valueOf(0);
         }
-        Float precisionLines = Float.valueOf(truepositiveLines/ (truepositiveLines+falsepositiveLines));
-        Float recallLines = Float.valueOf(truepositiveLines/(truepositiveLines+falsenegativeLines));
-        Float f1scorelines = 2*((precisionLines*recallLines)/(precisionLines+recallLines));
-        Float precisionFiles = Float.valueOf(matchesFiles/(matchesFiles+remainingFiles));
-        Float recallFiles = Float.valueOf(matchesFiles/(matchesFiles+missingFiles));
-        Float f1scoreFiles = 2*((precisionFiles*recallFiles)/(precisionFiles+recallFiles));
+        Float precisionLines = Float.valueOf(truepositiveLines / (truepositiveLines + falsepositiveLines));
+        Float recallLines = Float.valueOf(truepositiveLines / (truepositiveLines + falsenegativeLines));
+        Float f1scorelines = 2 * ((precisionLines * recallLines) / (precisionLines + recallLines));
+        Float precisionFiles = Float.valueOf(matchesFiles / (matchesFiles + remainingFiles));
+        Float recallFiles = Float.valueOf(matchesFiles / (matchesFiles + missingFiles));
+        Float f1scoreFiles = 2 * ((precisionFiles * recallFiles) / (precisionFiles + recallFiles));
+
+        //write metrics in a csv file
+        String filemetrics = "metrics2.csv";
+        //csv to report new features and features changed per git commit of the project
+        try {
+            FileWriter csvWriter = new FileWriter("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\randomVariants\\LibSSH\\variant_results" + File.separator + filemetrics);
+            List<List<String>> headerRows = Arrays.asList(
+                    Arrays.asList("PrecisionVariant", "RecallVariant", "F1ScoreVariant", "PrecisionFiles", "RecallFiles", "F1ScoreFiles", "PrecisionLines", "RecalLines", "F1ScoreLines"),
+                    Arrays.asList(precisionVariants.toString(), recallVariants.toString(), f1scoreVariants.toString(), precisionFiles.toString(), recallFiles.toString(), f1scoreFiles.toString(), precisionLines.toString(), recallLines.toString(), f1scorelines.toString()),
+                    Arrays.asList("MeanRuntimeEccoCommit", "MeanRuntimeEccoCheckout", "MeanRuntimeGitCommit", "MeanRuntimeGitCheckout"),
+                    Arrays.asList(meanRunEccoCommit.toString(), meanRunEccoCheckout.toString(), meanRunGitCommit.toString(), meanRunGitCheckout.toString())
+            );
+            for (List<String> rowData : headerRows) {
+                csvWriter.append(String.join(",", rowData));
+                csvWriter.append("\n");
+            }
+            csvWriter.flush();
+            csvWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void getCSVInformation() throws IOException {
+        File folder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-new-code\\LIBSSH\\libssh");
+        File[] lista = folder.listFiles();
+        Float meanRunEccoCommit = Float.valueOf(0), meanRunEccoCheckout = Float.valueOf(0), meanRunPPCheckoutCleanVersion = Float.valueOf(0), meanRunPPCheckoutGenerateVariant = Float.valueOf(0), meanRunGitCommit = Float.valueOf(0), meanRunGitCheckout = Float.valueOf(0);
+        Float totalnumberFiles = Float.valueOf(0), matchesFiles = Float.valueOf(0), eccototalLines = Float.valueOf(0), originaltotalLines = Float.valueOf(0), missingFiles = Float.valueOf(0), remainingFiles = Float.valueOf(0), totalVariantsMatch = Float.valueOf(0), truepositiveLines = Float.valueOf(0), falsepositiveLines = Float.valueOf(0), falsenegativeLines = Float.valueOf(0);
+        Boolean variantMatch = true;
+        Float numberCSV = Float.valueOf(0);
+        for (File file : lista) {
+            if ((file.getName().indexOf(".csv") != -1) && !(file.getName().contains("features_report_each_project_commit")) && !(file.getName().contains("configurations"))) {
+                Reader reader = Files.newBufferedReader(Paths.get(file.getAbsolutePath()));
+                CSVReader csvReader = new CSVReaderBuilder(reader).build();
+                List<String[]> matchesVariants = csvReader.readAll();
+
+                if (file.getName().contains("runtime")) {
+                    for (int i = 0; i < matchesVariants.size(); i++) {
+                        if (i != 0) {
+                            String[] runtimes = matchesVariants.get(i);
+                            meanRunEccoCommit += Float.valueOf(runtimes[2]);
+                            meanRunEccoCheckout += Float.valueOf(runtimes[3]);
+                            meanRunPPCheckoutCleanVersion += Float.valueOf(runtimes[4]);
+                            meanRunPPCheckoutGenerateVariant += Float.valueOf(runtimes[5]);
+                            meanRunGitCommit += Float.valueOf(runtimes[6]);
+                            meanRunGitCheckout += Float.valueOf(runtimes[7]);
+                        }
+                    }
+                } else {
+                    Float qtdLines = Float.valueOf(matchesVariants.size() - 4);
+                    //totalnumberFiles += qtdLines;
+                    for (int i = 1; i < matchesVariants.size(); i++) {
+                        String[] line = matchesVariants.get(i);
+                        truepositiveLines += Integer.valueOf(line[2]);
+                        falsepositiveLines += Integer.valueOf(line[3]);
+                        falsenegativeLines += Integer.valueOf(line[4]);
+                        originaltotalLines += Integer.valueOf(line[5]);
+                        eccototalLines += Integer.valueOf(line[6]);
+                        if (line[1].equals("true")) {
+                            variantMatch = true;
+                            matchesFiles++;
+                        } else if (line[1].equals("not")) {
+                            variantMatch = false;
+                            missingFiles++;
+                        } else if (line[1].equals("justEcco")) {
+                            variantMatch = false;
+                            remainingFiles++;
+                        } else {
+                            variantMatch = false;
+                            remainingFiles++;
+                        }
+                    }
+                }
+                numberCSV++;
+                if (variantMatch)
+                    totalVariantsMatch++;
+            }
+        }
+        meanRunEccoCommit = (meanRunEccoCommit / numberCSV) / 1000;
+        meanRunEccoCheckout = (meanRunEccoCheckout / numberCSV) / 1000;
+        meanRunPPCheckoutCleanVersion = (meanRunPPCheckoutCleanVersion / numberCSV) / 1000;
+        meanRunPPCheckoutGenerateVariant = (meanRunPPCheckoutGenerateVariant / numberCSV) / 1000;
+        meanRunGitCommit = (meanRunGitCommit / numberCSV) / 1000;
+        meanRunGitCheckout = (meanRunGitCheckout / numberCSV) / 1000;
+        Float totalVariantsNotMatch = (numberCSV - totalVariantsMatch);
+        Float precisionVariants = totalVariantsMatch / (totalVariantsMatch + totalVariantsNotMatch);
+        Float recallVariants = totalVariantsMatch / (numberCSV);
+        Float f1scoreVariants = 2 * ((precisionVariants * recallVariants) / (precisionVariants + recallVariants));
+        if (f1scoreVariants.toString().equals("NaN")) {
+            f1scoreVariants = Float.valueOf(0);
+        }
+        Float precisionLines = Float.valueOf(truepositiveLines / (truepositiveLines + falsepositiveLines));
+        Float recallLines = Float.valueOf(truepositiveLines / (truepositiveLines + falsenegativeLines));
+        Float f1scorelines = 2 * ((precisionLines * recallLines) / (precisionLines + recallLines));
+        Float precisionFiles = Float.valueOf(matchesFiles / (matchesFiles + remainingFiles));
+        Float recallFiles = Float.valueOf(matchesFiles / (matchesFiles + missingFiles));
+        Float f1scoreFiles = 2 * ((precisionFiles * recallFiles) / (precisionFiles + recallFiles));
 
         //write metrics in a csv file
         String filemetrics = "metrics.csv";
         //csv to report new features and features changed per git commit of the project
         try {
-            FileWriter csvWriter = new FileWriter("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\test\\variant_results" + File.separator +filemetrics);
+            FileWriter csvWriter = new FileWriter("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-new-code\\LIBSSH\\libssh\\variant_results" + File.separator + filemetrics);
             List<List<String>> headerRows = Arrays.asList(
-                    Arrays.asList( "PrecisionVariant", "RecallVariant", "F1ScoreVariant","PrecisionFiles", "RecallFiles", "F1ScoreFiles","PrecisionLines", "RecalLines", "F1ScoreLines"),
-                    Arrays.asList(precisionVariants.toString(), recallVariants.toString(), f1scoreVariants.toString(),precisionFiles.toString(), recallFiles.toString(), f1scoreFiles.toString(),precisionLines.toString(), recallLines.toString(), f1scorelines.toString()),
-                    Arrays.asList( "MeanRuntimeEccoCommit", "MeanRuntimeEccoCheckout", "MeanRuntimeGitCommit","MeanRuntimeGitCheckout"),
-                    Arrays.asList(meanRunEccoCommit.toString(), meanRunEccoCheckout.toString(),meanRunGitCommit.toString(),meanRunGitCheckout.toString())
-                    );
+                    Arrays.asList("PrecisionVariant", "RecallVariant", "F1ScoreVariant", "PrecisionFiles", "RecallFiles", "F1ScoreFiles", "PrecisionLines", "RecalLines", "F1ScoreLines"),
+                    Arrays.asList(precisionVariants.toString(), recallVariants.toString(), f1scoreVariants.toString(), precisionFiles.toString(), recallFiles.toString(), f1scoreFiles.toString(), precisionLines.toString(), recallLines.toString(), f1scorelines.toString()),
+                    Arrays.asList("MeanRuntimeEccoCommit", "MeanRuntimeEccoCheckout", "MeanRuntimeGitCommit", "MeanRuntimeGitCheckout"),
+                    Arrays.asList(meanRunEccoCommit.toString(), meanRunEccoCheckout.toString(), meanRunGitCommit.toString(), meanRunGitCheckout.toString())
+            );
             for (List<String> rowData : headerRows) {
                 csvWriter.append(String.join(",", rowData));
                 csvWriter.append("\n");
@@ -144,8 +442,8 @@ public class TranslationTest {
     @Test
     public void testeCompareVariants() {
         CompareVariants cV = new CompareVariants();
-        File variantsrc = new File(String.valueOf("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\test\\ecco"));
-        File checkoutfile = new File(String.valueOf("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\test\\variant_results\\checkout"));
+        File variantsrc = new File(String.valueOf("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\randomVariants\\Marlin\\randomVariants"));
+        File checkoutfile = new File(String.valueOf("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\randomVariants\\Marlin\\variant_results\\checkout"));
         try {
             for (File path : variantsrc.listFiles()) {
                 cV.compareVariant(path, new File(checkoutfile + File.separator + path.getName()));
@@ -159,10 +457,12 @@ public class TranslationTest {
     public void testCheckoutEcco() throws IOException {
         CompareVariants cV = new CompareVariants();
         ArrayList<String> configsToCheckout = new ArrayList<>();
-        File configuration = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\test\\configurations.csv");
-        Path OUTPUT_DIR = Paths.get("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\test\\variant_results");
-        File eccoFolder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\test\\", "ecco");
-        File checkoutFolder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\test\\variant_results\\checkout\\");
+        //File configuration = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-new-code\\Marlin\\Marlin\\configurations.csv");
+        File configuration = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\randomVariants\\Marlin\\randomconfigurations.csv");
+        Path OUTPUT_DIR = Paths.get("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\randomVariants\\Marlin\\variant_results\\");
+        //File eccoFolder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-new-code\\Marlin\\Marlin\\", "ecco");
+        File eccoFolder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\randomVariants\\Marlin\\randomVariants\\");
+        File checkoutFolder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\randomVariants\\Marlin\\variant_results\\checkout\\");
         BufferedReader csvReader = null;
         try {
             csvReader = new BufferedReader(new FileReader(configuration));
@@ -176,11 +476,11 @@ public class TranslationTest {
             if (!(row.equals("")) && !(row.contains("CommitNumber"))) {
                 String[] data = row.split(",");
                 String conf = "";
-                for(int i =2; i<data.length; i++){
-                    if(i<data.length-1)
-                        conf+=data[i]+",";
+                for (int i = 2; i < data.length; i++) {
+                    if (i < data.length - 1)
+                        conf += data[i] + ",";
                     else
-                        conf+=data[i];
+                        conf += data[i];
                 }
                 configsToCheckout.add(conf);
             }
@@ -195,9 +495,9 @@ public class TranslationTest {
     public void testEccoCommit() throws IOException {
         CompareVariants cV = new CompareVariants();
         ArrayList<String> configsToCommit = new ArrayList<>();
-        File configuration = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\test\\configurations.csv");
-        Path OUTPUT_DIR = Paths.get("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\test\\variant_results");
-        File eccoFolder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\test\\", "ecco");
+        File configuration = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-new-code\\testruntimeSQLITE\\marlin\\configurations.csv");
+        Path OUTPUT_DIR = Paths.get("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-new-code\\testruntimeSQLITE\\marlin\\variant_results");
+        File eccoFolder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-new-code\\testruntimeSQLITE\\marlin\\", "ecco");
         BufferedReader csvReader = null;
         try {
             csvReader = new BufferedReader(new FileReader(configuration));
@@ -211,11 +511,11 @@ public class TranslationTest {
             if (!(row.equals("")) && !(row.contains("CommitNumber"))) {
                 String[] data = row.split(",");
                 String conf = "";
-                for(int i =2; i<data.length; i++){
-                    if(i<data.length-1)
-                        conf+=data[i]+",";
+                for (int i = 2; i < data.length; i++) {
+                    if (i < data.length - 1)
+                        conf += data[i] + ",";
                     else
-                        conf+=data[i];
+                        conf += data[i];
                 }
                 configsToCommit.add(conf);
             }
@@ -232,7 +532,7 @@ public class TranslationTest {
         GitHelper gh = new GitHelper();
         try {
             String commitMessage = "test";
-            gh.gitCommitAndCheckout("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite\\sqlite", "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite\\testeCommitJGit", "87feadeefec31ee4946663697432661cbc9fd186", commitMessage);
+            gh.gitCommitAndCheckout("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-new-code\\SQLite\\SQLite\\sqlite", "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite\\testeCommitJGit", "87feadeefec31ee4946663697432661cbc9fd186", commitMessage);
             System.out.println("time git commit" + gh.getRuntimeGitCommit());
         } catch (IOException e) {
             e.printStackTrace();
@@ -246,9 +546,9 @@ public class TranslationTest {
     public void testGitCommit() throws IOException {
         CompareVariants cV = new CompareVariants();
         Map<String, String> configsToCommit = new HashMap<>();
-        File configuration = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\test\\configurations.csv");
-        Path OUTPUT_DIR = Paths.get("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\test\\variant_results\\gitCommit");
-        File srcFolder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\test\\libssh-mirror");
+        File configuration = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-new-code\\LIBSSH\\libssh\\configurations.csv");
+        Path OUTPUT_DIR = Paths.get("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-new-code\\LIBSSH\\libssh\\variant_results\\gitCommit");
+        File srcFolder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-new-code\\LIBSSH\\libssh\\libssh-mirror");
         BufferedReader csvReader = null;
         try {
             csvReader = new BufferedReader(new FileReader(configuration));
@@ -263,14 +563,14 @@ public class TranslationTest {
                 String[] data = row.split(",");
                 String conf = "";
                 String commitName = "";
-                for(int i =2; i<data.length; i++){
-                    if(i<data.length-1)
-                        conf+=data[i]+",";
+                for (int i = 2; i < data.length; i++) {
+                    if (i < data.length - 1)
+                        conf += data[i] + ",";
                     else
-                        conf+=data[i];
+                        conf += data[i];
                     commitName = data[1];
                 }
-                configsToCommit.put(conf,commitName);
+                configsToCommit.put(conf, commitName);
             }
         }
 
@@ -495,5 +795,12 @@ public class TranslationTest {
             if (var.getName().equals(name)) return var;
         }
         return null;
+    }
+
+    @Test
+    public void random(){
+        Random random = new Random();
+        int x = random.nextInt(100);
+        System.out.println(x);
     }
 }

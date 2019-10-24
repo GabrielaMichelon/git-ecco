@@ -292,11 +292,16 @@ public class CompareVariants {
         for (String config : configsToCheckout) {
             Path pathcheckout = Paths.get(OUTPUT_DIR.resolve("checkout") + File.separator + config);
             File checkoutfile = new File(String.valueOf(pathcheckout));
-            if (checkoutfile.exists()) GitCommitList.recursiveDelete(checkoutfile.toPath());
+            //if (checkoutfile.exists()){
+            //    Files.setAttribute(pathcheckout, "dos:readonly", false);
+            //    GitCommitList.recursiveDelete(checkoutfile.toPath());
+            //}
             checkoutfile.mkdir();
             service.setBaseDir(pathcheckout);
             timeBefore = System.currentTimeMillis();
+            System.out.println("config: "+config);
             service.checkout(config);
+            System.out.println("checked out!");
             timeAfter = System.currentTimeMillis();
             runtimeEccoCheckout = timeAfter - timeBefore;
             String outputCSV = eccoFolder.getParentFile().getAbsolutePath();

@@ -175,10 +175,11 @@ public class GitHelper {
      * @return An Array of Changes which contains all the changes between the commits.
      * @throws Exception
      */
-    public Change[] getFileDiffs(GitCommit newCommit, FileNode sfn) throws Exception {
+    public Change[] getFileDiffs(GitCommit newCommit, FileNode sfn, Boolean deletedFile) throws Exception {
         if (sfn instanceof BinaryFileNode) throw new IllegalArgumentException("cannot diff a binary file node");
-        return getFileDiffs(newCommit, sfn.getFilePath());
+        return getFileDiffs(newCommit, sfn.getFilePath(), deletedFile);
     }
+
 
     /**
      * Gets the Diff between two Commits specified by their commit names.
@@ -190,74 +191,83 @@ public class GitHelper {
      * @return An Array of Changes which contains all the changes between the commits.
      * @throws Exception
      */
-    public Change[] getFileDiffs(GitCommit newCommit, String filePath) throws Exception {
-
-        //prepare for file path filter.
-        //String filterPath = filePath.substring(pathUrl.length()+1).replace("\\", "/");
-        List<DiffEntry> diff;
-        diff = git.diff().
-                setOldTree(prepareTreeParser(git.getRepository(), newCommit.getDiffCommitName())).
-                setNewTree(prepareTreeParser(git.getRepository(), newCommit.getCommitName())).
-                //setPathFilter(PathFilter.create(filePath)).
-                        call();
-        //to filter on Suffix use the following instead
-        //setPathFilter(PathSuffixFilter.create(".cpp"))
+    public Change[] getFileDiffs(GitCommit newCommit, String filePath, Boolean deletedFile) throws Exception {
 
         List<Change> changes = new ArrayList<Change>();
-        ByteArrayOutputStream diffStream = new ByteArrayOutputStream();
-        DiffParser fileDiffParser = new DiffParser();
+
+        if (deletedFile) {
+            git.checkout().setName(newCommit.getDiffCommitName()).call();
+            String newPath = pathUrl + "\\" + filePath;
+            changes.add(new Change(0, Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size()));
+            git.checkout().setName(newCommit.getCommitName()).call();
+
+        } else {
+            //prepare for file path filter.
+            //String filterPath = filePath.substring(pathUrl.length()+1).replace("\\", "/");
+            List<DiffEntry> diff;
+            diff = git.diff().
+                    setOldTree(prepareTreeParser(git.getRepository(), newCommit.getDiffCommitName())).
+                    setNewTree(prepareTreeParser(git.getRepository(), newCommit.getCommitName())).
+                    //setPathFilter(PathFilter.create(filePath)).
+                            call();
+            //to filter on Suffix use the following instead
+            //setPathFilter(PathSuffixFilter.create(".cpp"))
 
 
-        for (DiffEntry entry : diff) {
-            String newPath = entry.getNewPath().replace("/", "\\");
-            String oldPath = entry.getOldPath().replace("/", "\\");
-            if (filePath.equals(newPath)) {
-                System.out.println("file diff: " + newPath);
-                if (entry.getChangeType().toString().equals("ADD")) {
-                    newPath = pathUrl + "\\" + newPath;
-                    changes.add(new Change(0, Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size()));
-                } else if (entry.getChangeType().toString().equals("MODIFY")) {
-                    List<String> actual = new ArrayList<>();
-                    List<String> old = new ArrayList<>();
-                    File filenew = new File(pathUrl + "\\" + newPath);
-                    try {
-                        actual = Files.readAllLines(filenew.toPath());
-                    } catch (MalformedInputException e) {
-                        StringBuilder contentBuilder = new StringBuilder();
-                        BufferedReader br = new BufferedReader(new FileReader(filenew.getAbsoluteFile()));
-                        String sCurrentLine;
-                        while ((sCurrentLine = br.readLine()) != null) {
-                            actual.add(sCurrentLine);
+            ByteArrayOutputStream diffStream = new ByteArrayOutputStream();
+            DiffParser fileDiffParser = new DiffParser();
+
+
+            for (DiffEntry entry : diff) {
+                String newPath = entry.getNewPath().replace("/", "\\");
+                String oldPath = entry.getOldPath().replace("/", "\\");
+                if (filePath.equals(newPath)) {
+                    //System.out.println("file diff: " + newPath);
+                    if (entry.getChangeType().toString().equals("ADD")) {
+                        newPath = pathUrl + "\\" + newPath;
+                        changes.add(new Change(0, Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size()));
+                    } else if (entry.getChangeType().toString().equals("MODIFY")) {
+                        List<String> actual = new ArrayList<>();
+                        List<String> old = new ArrayList<>();
+                        File filenew = new File(pathUrl + "\\" + newPath);
+                        try {
+                            actual = Files.readAllLines(filenew.toPath());
+                        } catch (MalformedInputException e) {
+                            StringBuilder contentBuilder = new StringBuilder();
+                            BufferedReader br = new BufferedReader(new FileReader(filenew.getAbsoluteFile()));
+                            String sCurrentLine;
+                            while ((sCurrentLine = br.readLine()) != null) {
+                                actual.add(sCurrentLine);
+                            }
+                            br.close();
                         }
-                        br.close();
-                    }
-                    git.checkout().setName(newCommit.getDiffCommitName()).call();
-                    File fileold = new File(pathUrl + "\\" + oldPath);
-                    try {
-                        old = Files.readAllLines(fileold.toPath());
-                    } catch (MalformedInputException e) {
-                        StringBuilder contentBuilder = new StringBuilder();
-                        BufferedReader br = new BufferedReader(new FileReader(fileold.getAbsoluteFile()));
-                        String sCurrentLine;
-                        while ((sCurrentLine = br.readLine()) != null) {
-                            old.add(sCurrentLine);
+                        git.checkout().setName(newCommit.getDiffCommitName()).call();
+                        File fileold = new File(pathUrl + "\\" + oldPath);
+                        try {
+                            old = Files.readAllLines(fileold.toPath());
+                        } catch (MalformedInputException e) {
+                            StringBuilder contentBuilder = new StringBuilder();
+                            BufferedReader br = new BufferedReader(new FileReader(fileold.getAbsoluteFile()));
+                            String sCurrentLine;
+                            while ((sCurrentLine = br.readLine()) != null) {
+                                old.add(sCurrentLine);
+                            }
+                            br.close();
                         }
-                        br.close();
-                    }
-                    git.checkout().setName(newCommit.getCommitName()).call();
-                    // Compute diff. Get the Patch object. Patch is the container for computed deltas.
-                    Patch<String> patch = null;
-                    patch = DiffUtils.diff(actual, old);
-                    for (Delta delta : patch.getDeltas()) {
-                        Integer first = delta.getOriginal().getPosition();
-                        Integer last = delta.getOriginal().getPosition() + delta.getOriginal().getLines().size();
-                        changes.add(new Change(first, last));
-                    }
+                        git.checkout().setName(newCommit.getCommitName()).call();
+                        // Compute diff. Get the Patch object. Patch is the container for computed deltas.
+                        Patch<String> patch = null;
+                        patch = DiffUtils.diff(actual, old);
+                        for (Delta delta : patch.getDeltas()) {
+                            Integer first = delta.getOriginal().getPosition();
+                            Integer last = delta.getOriginal().getPosition() + delta.getOriginal().getLines().size();
+                            changes.add(new Change(first, last));
+                        }
 
+                    }
                 }
-            }
 
-        }
+            }
 
 
        /* for (DiffEntry entry : diff) {
@@ -285,6 +295,7 @@ public class GitHelper {
         if (newCommit.getDiffCommitName().equals("NULLCOMMIT"))
             changes.add(new Change(0, Files.readAllLines(Paths.get(filePath), StandardCharsets.ISO_8859_1).size()));
         */
+        }
         return changes.toArray(new Change[changes.size()]);
     }
 
