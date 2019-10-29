@@ -19,7 +19,6 @@ import org.chocosolver.solver.variables.Variable;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.Assert;
 import org.junit.Test;
-import scala.util.parsing.combinator.testing.Str;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -31,30 +30,25 @@ import static org.chocosolver.solver.constraints.nary.cnf.LogOp.*;
 
 public class TranslationTest {
 
+    public final String repo_path = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\libssh-mirror\\libssh-mirror";
+    public final String resultsCSVs_path = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\libssh-mirror";
+    public final String resultMetrics_path = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\libssh-mirror\\variant_results";
+    public final String configuration_path = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\randomVariants\\LibSSH\\configurations.csv";
+    public final String configurationRandomVariants_path = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\randomVariants\\LibSSH\\randomconfigurations.csv";
     //git checkout $(git log --branches -1 --pretty=format:"%H")
 
-    @Test
-    public void testgetEveryNth() throws Exception {
 
-        GitHelper gh = new GitHelper("C:\\obermanndavid\\git-ecco-test\\2_second_run\\Marlin", null);
-        final GitCommitList commitList = new GitCommitList(gh);
-
-        commitList.addGitCommitListener((gc, gcl) -> {
-            System.out.println(gc.getNumber() + " -> " + gc.getCommitName() + " diff to: " + gc.getDiffCommitName());
-        });
-
-        gh.getEveryNthCommit(commitList, null, 36, 50, 1);
-    }
-
-
+    //get the metrics of each and for all the target projects together.
+    //To compute the metrics of variants this is considering all the files match and to compute files metrics this is considering all the lines match
     @Test
     public void getCSVInformationTotal() throws IOException {
-        File[] folder = {new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\randomVariants\\Marlin"),
-                new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\randomVariants\\LibSSH"),
-                new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\randomVariants\\SQLite")};
+        //set into this list of File the folders with csv files resulted from the comparison of variants of each target project
+        File[] folder = {new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-new-code\\Marlin50commits\\Marlin50commit"),
+                new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-new-code\\Libssh-deletedfiles-corrected"),
+                new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-new-code\\SQLite\\SQLite")};
         //write metrics in a csv file
-        String filemetrics = "metrics2.csv";
-        FileWriter csvWriter = new FileWriter("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\randomVariants\\TOTAL" + File.separator + filemetrics);
+        String filemetrics = "metricsEachAndTogether.csv";
+        FileWriter csvWriter = new FileWriter("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-new-code\\Libssh-deletedfiles-corrected\\results_metrics" + File.separator + filemetrics);
 
         Float totalmeanRunEccoCommit = Float.valueOf(0), totalmeanRunEccoCheckout = Float.valueOf(0), totalmeanRunPPCheckoutCleanVersion = Float.valueOf(0), totalmeanRunPPCheckoutGenerateVariant = Float.valueOf(0), totalmeanRunGitCommit = Float.valueOf(0), totalmeanRunGitCheckout = Float.valueOf(0);
         Float totaltotalnumberFiles = Float.valueOf(0), totalmatchesFiles = Float.valueOf(0), totaleccototalLines = Float.valueOf(0), totaloriginaltotalLines = Float.valueOf(0), totalmissingFiles = Float.valueOf(0), totalremainingFiles = Float.valueOf(0), totaltotalVariantsMatch = Float.valueOf(0), totaltruepositiveLines = Float.valueOf(0), totalfalsepositiveLines = Float.valueOf(0), totalfalsenegativeLines = Float.valueOf(0),
@@ -133,7 +127,7 @@ public class TranslationTest {
                                 totalmissingFiles++;
                                 numberTotalFilesEachVariant += 1;
                                 totalnumberTotalFilesEachVariant++;
-                            } else if (line[1].equals("justEcco")) {
+                            } else if (line[1].equals("justOnRetrieved")) {
                                 variantMatch = false;
                                 remainingFiles++;
                                 totalremainingFiles++;
@@ -226,9 +220,10 @@ public class TranslationTest {
     }
 
 
+    //to compute the metrics of variants this is considering all the files match and to compute files metrics this is considering all the lines match
     @Test
     public void getCSVInformation2() throws IOException {
-        File folder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\randomVariants\\LibSSH");
+        File folder = new File(resultsCSVs_path);
         File[] lista = folder.listFiles();
         Float meanRunEccoCommit = Float.valueOf(0), meanRunEccoCheckout = Float.valueOf(0), meanRunPPCheckoutCleanVersion = Float.valueOf(0), meanRunPPCheckoutGenerateVariant = Float.valueOf(0), meanRunGitCommit = Float.valueOf(0), meanRunGitCheckout = Float.valueOf(0);
         Float totalnumberFiles = Float.valueOf(0), matchesFiles = Float.valueOf(0), eccototalLines = Float.valueOf(0), originaltotalLines = Float.valueOf(0), missingFiles = Float.valueOf(0), remainingFiles = Float.valueOf(0), totalVariantsMatch = Float.valueOf(0), truepositiveLines = Float.valueOf(0), falsepositiveLines = Float.valueOf(0), falsenegativeLines = Float.valueOf(0),
@@ -282,7 +277,7 @@ public class TranslationTest {
                             variantMatch = false;
                             missingFiles++;
                             numberTotalFilesEachVariant += 1;
-                        } else if (line[1].equals("justEcco")) {
+                        } else if (line[1].equals("justOnRetrieved")) {
                             variantMatch = false;
                             remainingFiles++;
                         } else {
@@ -323,7 +318,7 @@ public class TranslationTest {
         String filemetrics = "metrics2.csv";
         //csv to report new features and features changed per git commit of the project
         try {
-            FileWriter csvWriter = new FileWriter("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\randomVariants\\LibSSH\\variant_results" + File.separator + filemetrics);
+            FileWriter csvWriter = new FileWriter(resultMetrics_path + File.separator + filemetrics);
             List<List<String>> headerRows = Arrays.asList(
                     Arrays.asList("PrecisionVariant", "RecallVariant", "F1ScoreVariant", "PrecisionFiles", "RecallFiles", "F1ScoreFiles", "PrecisionLines", "RecalLines", "F1ScoreLines"),
                     Arrays.asList(precisionVariants.toString(), recallVariants.toString(), f1scoreVariants.toString(), precisionFiles.toString(), recallFiles.toString(), f1scoreFiles.toString(), precisionLines.toString(), recallLines.toString(), f1scorelines.toString()),
@@ -341,9 +336,10 @@ public class TranslationTest {
         }
     }
 
+    //to compute the metrics of variants this is not considering all the files match (just if the file exists) and to compute files metrics this is not considering all the lines match (just if the file exists)
     @Test
     public void getCSVInformation() throws IOException {
-        File folder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-new-code\\LIBSSH\\libssh");
+        File folder = new File(resultsCSVs_path);
         File[] lista = folder.listFiles();
         Float meanRunEccoCommit = Float.valueOf(0), meanRunEccoCheckout = Float.valueOf(0), meanRunPPCheckoutCleanVersion = Float.valueOf(0), meanRunPPCheckoutGenerateVariant = Float.valueOf(0), meanRunGitCommit = Float.valueOf(0), meanRunGitCheckout = Float.valueOf(0);
         Float totalnumberFiles = Float.valueOf(0), matchesFiles = Float.valueOf(0), eccototalLines = Float.valueOf(0), originaltotalLines = Float.valueOf(0), missingFiles = Float.valueOf(0), remainingFiles = Float.valueOf(0), totalVariantsMatch = Float.valueOf(0), truepositiveLines = Float.valueOf(0), falsepositiveLines = Float.valueOf(0), falsenegativeLines = Float.valueOf(0);
@@ -383,7 +379,7 @@ public class TranslationTest {
                         } else if (line[1].equals("not")) {
                             variantMatch = false;
                             missingFiles++;
-                        } else if (line[1].equals("justEcco")) {
+                        } else if (line[1].equals("justOnRetrieved")) {
                             variantMatch = false;
                             remainingFiles++;
                         } else {
@@ -421,7 +417,7 @@ public class TranslationTest {
         String filemetrics = "metrics.csv";
         //csv to report new features and features changed per git commit of the project
         try {
-            FileWriter csvWriter = new FileWriter("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-new-code\\LIBSSH\\libssh\\variant_results" + File.separator + filemetrics);
+            FileWriter csvWriter = new FileWriter(resultMetrics_path + File.separator + filemetrics);
             List<List<String>> headerRows = Arrays.asList(
                     Arrays.asList("PrecisionVariant", "RecallVariant", "F1ScoreVariant", "PrecisionFiles", "RecallFiles", "F1ScoreFiles", "PrecisionLines", "RecalLines", "F1ScoreLines"),
                     Arrays.asList(precisionVariants.toString(), recallVariants.toString(), f1scoreVariants.toString(), precisionFiles.toString(), recallFiles.toString(), f1scoreFiles.toString(), precisionLines.toString(), recallLines.toString(), f1scorelines.toString()),
@@ -439,11 +435,13 @@ public class TranslationTest {
         }
     }
 
+    //compare the variant from PP (original) with the variant from Ecco (retrieved by feature revision location)
     @Test
     public void testeCompareVariants() {
         CompareVariants cV = new CompareVariants();
-        File variantsrc = new File(String.valueOf("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\randomVariants\\Marlin\\randomVariants"));
-        File checkoutfile = new File(String.valueOf("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\randomVariants\\Marlin\\variant_results\\checkout"));
+        //"ecco" if the folder is from the PP generated variants or "randomVariants" if the folder is from the PP generated random variants
+        File variantsrc = new File(resultsCSVs_path, "ecco");
+        File checkoutfile = new File(resultMetrics_path, "checkout");
         try {
             for (File path : variantsrc.listFiles()) {
                 cV.compareVariant(path, new File(checkoutfile + File.separator + path.getName()));
@@ -453,16 +451,17 @@ public class TranslationTest {
         }
     }
 
+    //checkout each combination of feature revisions (configuration) and its artifacts (variant code) from ecco - generation of variant by the stored traces made before (ecco commit)
     @Test
     public void testCheckoutEcco() throws IOException {
         CompareVariants cV = new CompareVariants();
         ArrayList<String> configsToCheckout = new ArrayList<>();
-        //File configuration = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-new-code\\Marlin\\Marlin\\configurations.csv");
-        File configuration = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\randomVariants\\Marlin\\randomconfigurations.csv");
-        Path OUTPUT_DIR = Paths.get("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\randomVariants\\Marlin\\variant_results\\");
-        //File eccoFolder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-new-code\\Marlin\\Marlin\\", "ecco");
-        File eccoFolder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\randomVariants\\Marlin\\randomVariants\\");
-        File checkoutFolder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\randomVariants\\Marlin\\variant_results\\checkout\\");
+        //File configuration = new File(configuration_path);
+        File configuration = new File(configurationRandomVariants_path);
+        Path OUTPUT_DIR = Paths.get(resultMetrics_path+File.separator);
+        //File eccoFolder = new File(resultsCSVs_path+File.separator+"ecco"+File.separator);
+        File eccoFolder = new File(resultsCSVs_path+File.separator+"randomVariants"+File.separator);
+        File checkoutFolder = new File(resultMetrics_path+File.separator+"checkout"+File.separator);
         BufferedReader csvReader = null;
         try {
             csvReader = new BufferedReader(new FileReader(configuration));
@@ -491,13 +490,14 @@ public class TranslationTest {
         cV.eccoCheckout(configsToCheckout, OUTPUT_DIR, eccoFolder, checkoutFolder);
     }
 
+    //commit the traces of each combination of feature revisions (configuration) and its artifacts (variant code) in ecco - feature revision location
     @Test
     public void testEccoCommit() throws IOException {
         CompareVariants cV = new CompareVariants();
         ArrayList<String> configsToCommit = new ArrayList<>();
-        File configuration = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-new-code\\testruntimeSQLITE\\marlin\\configurations.csv");
-        Path OUTPUT_DIR = Paths.get("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-new-code\\testruntimeSQLITE\\marlin\\variant_results");
-        File eccoFolder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-new-code\\testruntimeSQLITE\\marlin\\", "ecco");
+        File configuration = new File(configuration_path);
+        Path OUTPUT_DIR = Paths.get(resultMetrics_path);
+        File eccoFolder = new File(resultsCSVs_path+File.separator+"ecco"+File.separator);
         BufferedReader csvReader = null;
         try {
             csvReader = new BufferedReader(new FileReader(configuration));
@@ -527,28 +527,14 @@ public class TranslationTest {
     }
 
 
-    @Test
-    public void JGitCommitAndCheckout() throws IOException {
-        GitHelper gh = new GitHelper();
-        try {
-            String commitMessage = "test";
-            gh.gitCommitAndCheckout("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-new-code\\SQLite\\SQLite\\sqlite", "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite\\testeCommitJGit", "87feadeefec31ee4946663697432661cbc9fd186", commitMessage);
-            System.out.println("time git commit" + gh.getRuntimeGitCommit());
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (GitAPIException e) {
-            e.printStackTrace();
-        }
-
-    }
-
+    //to have the estimated runtime of Git to commit a variant (what in this case is the time to commit the changes from one Git commit to another)
     @Test
     public void testGitCommit() throws IOException {
         CompareVariants cV = new CompareVariants();
         Map<String, String> configsToCommit = new HashMap<>();
-        File configuration = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-new-code\\LIBSSH\\libssh\\configurations.csv");
-        Path OUTPUT_DIR = Paths.get("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-new-code\\LIBSSH\\libssh\\variant_results\\gitCommit");
-        File srcFolder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-new-code\\LIBSSH\\libssh\\libssh-mirror");
+        File configuration = new File(configuration_path);
+        Path OUTPUT_DIR = Paths.get(resultMetrics_path+File.separator+"gitCommit");
+        File srcFolder = new File(repo_path);
         BufferedReader csvReader = null;
         try {
             csvReader = new BufferedReader(new FileReader(configuration));
@@ -576,6 +562,22 @@ public class TranslationTest {
 
         csvReader.close();
         cV.gitCommit(srcFolder, OUTPUT_DIR, configsToCommit);
+    }
+
+
+    @Test
+    public void JGitCommitAndCheckout() throws IOException {
+        GitHelper gh = new GitHelper();
+        try {
+            String commitMessage = "test";
+            gh.gitCommitAndCheckout("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-new-code\\SQLite\\SQLite\\sqlite", "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite\\testeCommitJGit", "87feadeefec31ee4946663697432661cbc9fd186", commitMessage);
+            System.out.println("time git commit" + gh.getRuntimeGitCommit());
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (GitAPIException e) {
+            e.printStackTrace();
+        }
+
     }
 
     @Test
@@ -618,6 +620,20 @@ public class TranslationTest {
         csvWriter.append(String.join(",", listRuntimeData));
         csvWriter.flush();
         csvWriter.close();
+    }
+
+
+    @Test
+    public void testgetEveryNth() throws Exception {
+
+        GitHelper gh = new GitHelper("C:\\obermanndavid\\git-ecco-test\\2_second_run\\Marlin", null);
+        final GitCommitList commitList = new GitCommitList(gh);
+
+        commitList.addGitCommitListener((gc, gcl) -> {
+            System.out.println(gc.getNumber() + " -> " + gc.getCommitName() + " diff to: " + gc.getDiffCommitName());
+        });
+
+        gh.getEveryNthCommit(commitList, null, 36, 50, 1);
     }
 
     @Test

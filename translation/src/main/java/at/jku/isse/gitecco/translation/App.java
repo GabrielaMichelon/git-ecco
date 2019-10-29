@@ -26,6 +26,10 @@ public class App {
 
     public static void main(String... args) throws Exception {
         final int MAXCOMMITS = 200;
+        //set as true to generate random variants or false to just generate original variants
+        final boolean generateRandomVariants = false;
+        //set as true to generate PP variants or false to just generate configurations to generate random variants
+        final boolean generateOriginalVariants = true;
         //TODO: planned arguments: DEBUG, dispose tree, max commits, repo path, csv path(feature id), outpath for ecco
         String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\libssh-mirror\\libssh-mirror";
         //String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin";
@@ -68,16 +72,16 @@ public class App {
                         "__AVR_ATmega8__","UCSR0B","ADABOOT","TCNT0","TCCR1B","TCCR1A","USART0_RX_vect","CS22","GICR","TCCR0A","TCCR0B","SIG_USART0_RECV","CS31","COM5A1","TIMSK0","TCCR3B","TCCR3A","CS43","CS41","USART1_RX_vect","UDR3","UDR2","UDR0",
                         "CS51","EICRB","EICRA","TCCR5B","TCCR5A","GIMSK","TCCR4A","TCCR4B","ADMUX","EIMSK","COM0A1","ADCSRA","SIG_USART2_RECV","ADCSRB","COM0B1","OCR1A","RAMEND","__cplusplus","UDR","COM1A1","OCR0A","SIG_UART_RECV","COM1B1","SIG_USART3_RECV",
                         "ADCL","SPR0","SPR1","__AVR_ATmega1284P__","__AVR_ATmega168P__","DOXYGEN","DIDR2","E2_STEP_PIN","HEATER_2_MAXTEMP","E2_DIR_PIN","E2_ENABLE_PIN","HEATER_2_MINTEMP","BED_LIMIT_SWITCHING"};
-         //LIB SSH 100 Commits = 53 features*/
-         String[] featuresToAdd = {"WITH_SERVER","HAVE_LIBZ","WORDS_BIGENDIAN","DEBUG_CRYPTO","HAVE_OPENSSL_AES_H","HAVE_GETHOSTBYNAME",
-         "OPENSSL_VERSION_NUMBER","HAVE_SYS_POLL_H","HAVE_OPENSSL_BLOWFISH_H","HAVE_SYS_TIME_H","BASE","HAVE_POLL",
-         "HAVE_SELECT","HAVE_GETHOSTBYADDR","__cplusplus","HAVE_SSH1","NO_SERVER","HAVE_PTY_H","HAVE_STDINT_H","HAVE_MEMORY_H",
-         "HAVE_LIBWSOCK32","HAVE_GETPWUID","DEBUG","HAVE_ERRNO_H","HAVE_CTYPE_H","HAVE_NETINET_IN_H","_CYGWIN_","HAVE_STRSEP",
-         "HAVE_GETUID","HAVE_STDIO_H","HAVE_CONFIG_H","HAVE_STRING_H","HAVE_ARPA_INET_H","HAVE_STRINGS_H","HAVE_SYS_SOCKET_H",
-         "HAVE_SYS_TYPES_H","HAVE_STRTOLL","HAVE_PWD_H","HAVE_FCNTL_H","HAVE_OPENNET_H","TIME_WITH_SYS_TIME","HAVE_DIRENT_H",
-         "HAVE_NETDB_H","_WIN32","HAVE_INTTYPES_H","HAVE_LIBOPENNET","HAVE_SYS_STAT_H","MINGW32_","HAVE_PAM_PAM_APPL_H",
-         "HAVE_SECURITY_PAM_APPL_H","HAVE_LIBGCRYPT","HAVE_OPENSSL_DES_H","HAVE_LIBCRYPTO","GCRYPT"}; /*
-        //SQLITE 100 commits = 9  features
+         //LIB SSH 100 or 50 Commits = 53 features*/
+        String[] featuresToAdd = {"WITH_SERVER", "HAVE_LIBZ", "WORDS_BIGENDIAN", "DEBUG_CRYPTO", "HAVE_OPENSSL_AES_H", "HAVE_GETHOSTBYNAME",
+                "OPENSSL_VERSION_NUMBER", "HAVE_SYS_POLL_H", "HAVE_OPENSSL_BLOWFISH_H", "HAVE_SYS_TIME_H", "BASE", "HAVE_POLL",
+                "HAVE_SELECT", "HAVE_GETHOSTBYADDR", "__cplusplus", "HAVE_SSH1", "NO_SERVER", "HAVE_PTY_H", "HAVE_STDINT_H", "HAVE_MEMORY_H",
+                "HAVE_LIBWSOCK32", "HAVE_GETPWUID", "DEBUG", "HAVE_ERRNO_H", "HAVE_CTYPE_H", "HAVE_NETINET_IN_H", "__CYGWIN__", "HAVE_STRSEP",
+                "HAVE_GETUID", "HAVE_STDIO_H", "HAVE_CONFIG_H", "HAVE_STRING_H", "HAVE_ARPA_INET_H", "HAVE_STRINGS_H", "HAVE_SYS_SOCKET_H",
+                "HAVE_SYS_TYPES_H", "HAVE_STRTOLL", "HAVE_PWD_H", "HAVE_FCNTL_H", "HAVE_OPENNET_H", "TIME_WITH_SYS_TIME", "HAVE_DIRENT_H",
+                "HAVE_NETDB_H", "__WIN32__", "HAVE_INTTYPES_H", "HAVE_LIBOPENNET", "HAVE_SYS_STAT_H", "__MINGW32__", "HAVE_PAM_PAM_APPL_H",
+                "HAVE_SECURITY_PAM_APPL_H", "HAVE_LIBGCRYPT", "HAVE_OPENSSL_DES_H", "HAVE_LIBCRYPTO", "GCRYPT"}; /*
+        //SQLITE 100 or 50 commits = 9  features
         String[] featuresToAdd = {"YYERRORSYMBOL", "TEST_COMPARE", "_WIN32", "WIN32", "TEST", "NDEBUG", "BASE", "NO_READLINE", "TCLSH",};*/
 
         ArrayList<String> featureList = new ArrayList<>();
@@ -180,7 +184,7 @@ public class App {
             GetNodesForChangeVisitor visitor = new GetNodesForChangeVisitor();
             Set<ConditionalNode> changedNodes = new HashSet<>();
 
-            if(gc.getNumber()==0) {
+            if (gc.getNumber() == 0) {
                 gcPrevious[0] = new GitCommit(gc.getCommitName(), gc.getNumber(), gc.getDiffCommitName(), gc.getBranch(), gc.getRevCommit());
                 gcPrevious[0].setTree(gc.getTree());
             }
@@ -201,34 +205,34 @@ public class App {
                         changedNodes.addAll(visitor.getchangedNodes());
                     }
                 }
-                if(gc.getNumber()==0){
+                if (gc.getNumber() == 0) {
                     changedFiles.add(child.getFilePath());
-                }else{
+                } else {
                     changedFilesNext.add(child.getFilePath());
                 }
             }
-            if(gc.getNumber()==0){
+            if (gc.getNumber() == 0) {
 
-            }else{
+            } else {
                 //to retrieve changed nodes of deleted files
-                for (String file:changedFiles) {
-                    if(!changedFilesNext.contains(file)){
-                       FileNode child = gcPrevious[0].getTree().getChild(file);
-                            if (child instanceof SourceFileNode) {
-                                Change[] changes = null;
-                                try {
-                                    changes = gitHelper.getFileDiffs(gc, child, true);
-                                } catch (Exception e) {
-                                    System.err.println("error while executing the file diff: " + child.getFilePath());
-                                    e.printStackTrace();
-                                }
-
-                                for (Change change : changes) {
-                                    visitor.setChange(change);
-                                    child.accept(visitor);
-                                    changedNodes.addAll(visitor.getchangedNodes());
-                                }
+                for (String file : changedFiles) {
+                    if (!changedFilesNext.contains(file)) {
+                        FileNode child = gcPrevious[0].getTree().getChild(file);
+                        if (child instanceof SourceFileNode) {
+                            Change[] changes = null;
+                            try {
+                                changes = gitHelper.getFileDiffs(gc, child, true);
+                            } catch (Exception e) {
+                                System.err.println("error while executing the file diff: " + child.getFilePath());
+                                e.printStackTrace();
                             }
+
+                            for (Change change : changes) {
+                                visitor.setChange(change);
+                                child.accept(visitor);
+                                changedNodes.addAll(visitor.getchangedNodes());
+                            }
+                        }
                     }
                 }
                 //next is changedFiles for the next commit
@@ -236,16 +240,16 @@ public class App {
                 changedFiles.addAll(changedFilesNext);
                 changedFilesNext.removeAll(changedFilesNext);
             }
-            
+
 
             final ConstraintComputer constraintComputer = new ConstraintComputer(featureList);
             final PreprocessorHelper pph = new PreprocessorHelper();
             Map<Feature, Integer> config;
             Set<Feature> changed;
             Set<Feature> alreadyComitted = new HashSet<>();
-            Map<Integer,Map<Feature,Integer>> mapConfigToGenerateRandomVariants = new HashMap<>();
-            Map<Integer,String> mapRevisionToGenerateRandomVariants = new HashMap<>();
-            Integer count=0;
+            Map<Integer, Map<Feature, Integer>> mapConfigToGenerateRandomVariants = new HashMap<>();
+            Map<Integer, String> mapRevisionToGenerateRandomVariants = new HashMap<>();
+            Integer count = 0;
 
             //if there is no changed node then there must be a change in the binary files --> commit base.
             if (changedNodes.isEmpty() && gcl.size() > 1) changedNodes.add(new BaseNode(null, 0));
@@ -289,12 +293,15 @@ public class App {
                         System.out.println("Config already used to generate a variant: " + eccoConfig);
                         //don't need to generate variant and commit it again at the same commit of the project git repository
                     } else {
-                        mapConfigToGenerateRandomVariants.put(count,config);
-                        mapRevisionToGenerateRandomVariants.put(count,eccoConfig);
+                        mapConfigToGenerateRandomVariants.put(count, config);
+                        mapRevisionToGenerateRandomVariants.put(count, eccoConfig);
                         count++;
                         timeBefore = System.currentTimeMillis();
-                        //generate the variant for this config
-                        pph.generateVariants(config, gitFolder, eccoFolder, gitHelper.getDirFiles(), eccoConfig);
+                        if(generateOriginalVariants) {
+                            //generate the variant for this config
+                            pph.generateVariants(config, gitFolder, eccoFolder, gitHelper.getDirFiles(), eccoConfig);
+                            System.out.println("Variant generated with config: " + eccoConfig);
+                        }
                         timeAfter = System.currentTimeMillis();
                         runtimePPCheckoutGenerateVariant = timeAfter - timeBefore;
                         runtimeGitCheckout += runtimePPCheckoutGenerateVariant;
@@ -361,68 +368,69 @@ public class App {
             }
             //end append results to the feature report csv
 
-            /*
             //generate random variants
-            if(countFeaturesChanged[0]+newFeatures[0]>0) {
-                Random random = new Random();
-                int numberConfigs = 1;
-                if(countFeaturesChanged[0]+newFeatures[0]>1)
-                    numberConfigs = random.nextInt((countFeaturesChanged[0] + newFeatures[0])-1)+(countFeaturesChanged[0] + newFeatures[0]);
-                Map<Feature, Integer> mapNewConfig = new HashMap<>();
-                String featurerevision = "";
-                ArrayList<Integer> positionsMap = new ArrayList<>();
-                int posicaoMapToSelectConfig = random.nextInt(count);
-                positionsMap.add(posicaoMapToSelectConfig);
-                System.out.println(mapConfigToGenerateRandomVariants.entrySet());
-                for (int i = 0; i < numberConfigs; i++) {
-                    for (Map.Entry<Feature, Integer> map : mapConfigToGenerateRandomVariants.get(posicaoMapToSelectConfig).entrySet()) {
-                        mapNewConfig.put(map.getKey(), map.getValue());
-                    }
-                    featurerevision += "," + mapRevisionToGenerateRandomVariants.get(posicaoMapToSelectConfig);
-                    posicaoMapToSelectConfig = random.nextInt(count);
-                    if (positionsMap.contains(posicaoMapToSelectConfig)) {
-                        while (!positionsMap.contains(posicaoMapToSelectConfig)) {
-                            posicaoMapToSelectConfig = random.nextInt(count);
+            if (generateRandomVariants) {
+                if (countFeaturesChanged[0] + newFeatures[0] > 0) {
+                    Random random = new Random();
+                    int numberConfigs = 1;
+                    if (countFeaturesChanged[0] + newFeatures[0] > 1)
+                        numberConfigs = random.nextInt((countFeaturesChanged[0] + newFeatures[0]) - 1) + (countFeaturesChanged[0] + newFeatures[0]);
+                    Map<Feature, Integer> mapNewConfig = new HashMap<>();
+                    String featurerevision = "";
+                    ArrayList<Integer> positionsMap = new ArrayList<>();
+                    int positionMapToSelectConfig = random.nextInt(count);
+                    positionsMap.add(positionMapToSelectConfig);
+                    System.out.println(mapConfigToGenerateRandomVariants.entrySet());
+                    for (int i = 0; i < numberConfigs; i++) {
+                        for (Map.Entry<Feature, Integer> map : mapConfigToGenerateRandomVariants.get(positionMapToSelectConfig).entrySet()) {
+                            mapNewConfig.put(map.getKey(), map.getValue());
                         }
+                        featurerevision += "," + mapRevisionToGenerateRandomVariants.get(positionMapToSelectConfig);
+                        positionMapToSelectConfig = random.nextInt(count);
+                        if (positionsMap.contains(positionMapToSelectConfig)) {
+                            while (!positionsMap.contains(positionMapToSelectConfig)) {
+                                positionMapToSelectConfig = random.nextInt(count);
+                            }
+                        } else {
+                            positionsMap.add(positionMapToSelectConfig);
+                        }
+
+                    }
+                    featurerevision = featurerevision.replaceFirst(",", "");
+                    if (featurerevision.contains(",")) {
+                        String[] featurerevisions = featurerevision.split(",");
+                        ArrayList<String> allfeatures = new ArrayList<>();
+                        String featuresToVariant = "";
+                        for (String featRevision : featurerevisions) {
+                            if (!allfeatures.contains(featRevision)) {
+                                allfeatures.add(featRevision);
+                                featuresToVariant += "," + featRevision;
+                            }
+                        }
+                        featuresToVariant = featuresToVariant.replaceFirst(",", "");
+                        featurerevision = featuresToVariant;
+                        pph.generateVariants(mapNewConfig, gitFolder, randomVariantFolder, dirFiles, featuresToVariant);
                     } else {
-                        positionsMap.add(posicaoMapToSelectConfig);
+                        pph.generateVariants(mapNewConfig, gitFolder, randomVariantFolder, dirFiles, featurerevision);
                     }
-
-                }
-                featurerevision = featurerevision.replaceFirst(",", "");
-                if(featurerevision.contains(",")) {
-                    String[] featurerevisions = featurerevision.split(",");
-                    ArrayList<String> allfeatures = new ArrayList<>();
-                    String featuresToVariant = "";
-                    for (String featRevision: featurerevisions) {
-                        if(!allfeatures.contains(featRevision)) {
-                            allfeatures.add(featRevision);
-                            featuresToVariant += "," + featRevision;
+                    //append random configuration to the csv file
+                    try {
+                        String fileStr = gitRepositoryFolder.getParent() + File.separator + fileStoreRandomConfig;
+                        FileAppender csvWriter = new FileAppender(new File(fileStr));
+                        List<List<String>> headerRows = Arrays.asList(
+                                Arrays.asList(Long.toString(gc.getNumber()), gc.getCommitName(), featurerevision)
+                        );
+                        for (List<String> rowData : headerRows) {
+                            csvWriter.append(String.join(",", rowData));
                         }
+                        csvWriter.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
-                    featuresToVariant =  featuresToVariant.replaceFirst(",", "");
-                    pph.generateVariants(mapNewConfig, gitFolder, randomVariantFolder, dirFiles, featuresToVariant);
-                    featurerevision=featuresToVariant;
-                }else{
-                    pph.generateVariants(mapNewConfig, gitFolder, randomVariantFolder, dirFiles, featurerevision);
-                }
-
-                try {
-                    String fileStr = gitRepositoryFolder.getParent() + File.separator + fileStoreRandomConfig;
-                    FileAppender csvWriter = new FileAppender(new File(fileStr));
-                    List<List<String>> headerRows = Arrays.asList(
-                            Arrays.asList(Long.toString(gc.getNumber()), gc.getCommitName(), featurerevision)
-                    );
-                    for (List<String> rowData : headerRows) {
-                        csvWriter.append(String.join(",", rowData));
-                    }
-                    csvWriter.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
+                    //end append random configuration
                 }
             }
             //end generate random variants
-             */
 
             countFeaturesChanged[0] = 0;
             newFeatures[0] = 0;
@@ -433,14 +441,10 @@ public class App {
 
         });
 
-        gitHelper.getEveryNthCommit(commitList, null, 2, 4, 1);
+        //set second parameter as "NULLCOMMIT" when the first commit is 0, or null when the first commit is another (when startcommit is > 0)
+        gitHelper.getEveryNthCommit(commitList, "NULLCOMMIT", 0, 50, 1);
         //gitHelper.getAllCommits(commitList);
 
-        /*
-        //close ecco repository
-        service.close();
-        System.out.println("Repository closed.");
-         */
 
     }
 

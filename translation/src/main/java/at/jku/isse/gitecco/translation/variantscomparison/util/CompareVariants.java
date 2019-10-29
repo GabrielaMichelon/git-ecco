@@ -225,7 +225,7 @@ public class CompareVariants {
                     truepositiveLines = eccototalLines - (falsepositiveLines);
 
                     List<List<String>> resultRows = Arrays.asList(
-                            Arrays.asList(fEcco.getName(), "justEcco", truepositiveLines.toString(), falsepositiveLines.toString(), falsenegativeLines.toString(), originaltotalLines.toString(), eccototalLines.toString())
+                            Arrays.asList(fEcco.getName(), "justOnRetrieved", truepositiveLines.toString(), falsepositiveLines.toString(), falsenegativeLines.toString(), originaltotalLines.toString(), eccototalLines.toString())
                     );
                     for (List<String> rowData : resultRows) {
                         csvWriter.append(String.join(",", rowData));
@@ -249,7 +249,7 @@ public class CompareVariants {
                     truepositiveLines = eccototalLines - (falsepositiveLines);
 
                     List<List<String>> resultRows = Arrays.asList(
-                            Arrays.asList(fEcco.getName(), "justEcco", truepositiveLines.toString(), falsepositiveLines.toString(), falsenegativeLines.toString(), originaltotalLines.toString(), eccototalLines.toString())
+                            Arrays.asList(fEcco.getName(), "justOnRetrieved", truepositiveLines.toString(), falsepositiveLines.toString(), falsenegativeLines.toString(), originaltotalLines.toString(), eccototalLines.toString())
                     );
                     for (List<String> rowData : resultRows) {
                         csvWriter.append(String.join(",", rowData));

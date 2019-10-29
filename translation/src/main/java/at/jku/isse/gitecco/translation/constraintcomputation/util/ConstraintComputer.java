@@ -8,8 +8,7 @@ import at.jku.isse.gitecco.core.tree.nodes.RootNode;
 import at.jku.isse.gitecco.core.type.Feature;
 import at.jku.isse.gitecco.core.type.FeatureImplication;
 import at.jku.isse.gitecco.translation.visitor.BuildImplicationsVisitor;
-import org.anarres.cpp.featureExpr.FeatureExpression;
-import org.chocosolver.solver.variables.IntVar;
+
 
 import java.util.*;
 import java.util.stream.Collectors;
