@@ -86,43 +86,12 @@ public class GitCommitList extends ArrayList<GitCommit> {
         final PreprocessorHelper pph = new PreprocessorHelper();
         final File gitFolder = new File(gitHelper.getPath());
         final File cleanFolder = new File(gitFolder.getParent(), "clean");
-        final File outputDirectory = new File("C:\\obermanndavid\\git-ecco-test\\test_repo_gabi_log"+gitCommit.getBranch());
-
         //delete the clean directory if it exists:
-        if (cleanFolder.exists()) recursiveDelete(cleanFolder.toPath());
+        if (cleanFolder.exists())
+            recursiveDelete(cleanFolder.toPath());
 
         //generate clean version
         setRuntimePPCheckoutCleanVersion(pph.generateCleanVersion(gitFolder, cleanFolder, gitHelper.getDirFiles()));
-
-        //creates a folder to each branch and if it is the first commit delete the folder in case of it already exists
-        if (!outputDirectory.exists()) {
-            outputDirectory.mkdirs();
-        }else if(this.size()==0){
-            GitCommitList.recursiveDelete(outputDirectory.toPath());
-            outputDirectory.mkdirs();
-        }
-        //creates a file to commit
-        try {
-            File file = new File(outputDirectory+"\\"+this.size()+".txt");
-            // If file doesn't exists, then create it
-            if (!file.exists()) {
-                file.createNewFile();
-                String text = "commit nr.: "+gitCommit.getNumber() + "\n";
-                FileWriter fw = new FileWriter(file.getAbsoluteFile());
-                BufferedWriter bw = new BufferedWriter(fw);
-                // Write in file
-                bw.write(text + "\n");
-                bw.close();
-            } else {
-                String text = "commit nr.: "+gitCommit.getNumber() + "\n";
-                FileWriter fw = new FileWriter(file.getAbsoluteFile());
-                BufferedWriter bw = new BufferedWriter(fw);
-                bw.write(text + "\n");
-                bw.close();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
 
         try {
             Files.walk(cleanFolder.toPath())
@@ -179,6 +148,75 @@ public class GitCommitList extends ArrayList<GitCommit> {
         notifyObservers(gitCommit);
         System.out.println("commit nr.:"+gitCommit.getNumber()+" branch: "+gitCommit.getBranch());
         return super.add(gitCommit);
+    }
+
+
+
+    public void addTreeParent(GitCommit gitCommit, String childCommitName) {
+        final RootNode tree = new RootNode(gitHelper.getPath());
+        gitHelper.checkOutCommit(gitCommit.getCommitName());
+
+        final PreprocessorHelper pph = new PreprocessorHelper();
+        final File gitFolder = new File(gitHelper.getPath());
+        final File cleanFolder = new File(gitFolder.getParent(), "cleanParent");
+
+        //delete the clean directory if it exists:
+        if (cleanFolder.exists()) recursiveDelete(cleanFolder.toPath());
+
+        //generate clean version
+        setRuntimePPCheckoutCleanVersion(pph.generateCleanVersion(gitFolder, cleanFolder, gitHelper.getDirFiles()));
+
+        try {
+            Files.walk(cleanFolder.toPath())
+                    .filter(path -> !path.toFile().isDirectory())
+                    .forEach(filePath -> {
+
+                        String file = filePath.toFile().getPath();
+                        if (file.endsWith(".cpp") || file.endsWith(".hpp") || file.endsWith(".c") || file.endsWith(".h")) {
+
+                            final SourceFileNode fn
+                                    = new SourceFileNode(tree, file.substring((gitFolder.getParent()+"\\cleanParent").length()+1));
+                            List<String> codelist = null;
+
+                            try {
+                                codelist = Files.readAllLines(filePath, StandardCharsets.ISO_8859_1);
+                            } catch (IOException e1) {
+                                System.err.println("error reading file: "+file);
+                                e1.printStackTrace();
+                            }
+                            final String code = codelist.stream().collect(Collectors.joining("\n"));
+
+                            //file parsing
+                            IASTTranslationUnit translationUnit = null;
+                            try {
+                                translationUnit = CDTHelper.parse(code.toCharArray());
+                            } catch (CoreException e1) {
+                                System.err.println("error parsing with CDT Core: "+file);
+                                e1.printStackTrace();
+                            }
+                            final IASTPreprocessorStatement[] ppstatements = translationUnit.getAllPreprocessorStatements();
+                            final FeatureParser featureParser = new FeatureParser();
+                            //actual tree building
+                            try {
+                                featureParser.parseToTree(ppstatements, codelist.size(), fn);
+                            } catch (Exception e) {
+                                System.err.println("error parsing to tree: "+file);
+                                e.printStackTrace();
+                            }
+                            tree.addChild(fn);
+                        } else {
+                            final BinaryFileNode fn
+                                    = new BinaryFileNode(tree, file.substring((gitFolder.getParent()+"\\cleanParent").length()+1));
+                            tree.addChild(fn);
+                        }
+
+                    });
+        } catch (IOException e) {
+            if (this.size() != 0) e.printStackTrace();
+        }
+
+        gitCommit.setTree(tree);
+        gitHelper.checkOutCommit(childCommitName);
     }
 
 

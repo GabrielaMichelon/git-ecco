@@ -197,8 +197,10 @@ public class GitHelper {
 
         if (deletedFile) {
             git.checkout().setName(newCommit.getDiffCommitName()).call();
+            if(filePath.contains("arent"))
+                filePath = filePath.replace("arent"+File.separator,"");
             String newPath = pathUrl + "\\" + filePath;
-            changes.add(new Change(0, Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size()));
+            changes.add(new Change(0, Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size(),null));
             git.checkout().setName(newCommit.getCommitName()).call();
 
         } else {
@@ -225,7 +227,7 @@ public class GitHelper {
                     //System.out.println("file diff: " + newPath);
                     if (entry.getChangeType().toString().equals("ADD")) {
                         newPath = pathUrl + "\\" + newPath;
-                        changes.add(new Change(0, Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size()));
+                        changes.add(new Change(0, Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size(),null));
                     } else if (entry.getChangeType().toString().equals("MODIFY")) {
                         List<String> actual = new ArrayList<>();
                         List<String> old = new ArrayList<>();
@@ -259,9 +261,17 @@ public class GitHelper {
                         Patch<String> patch = null;
                         patch = DiffUtils.diff(actual, old);
                         for (Delta delta : patch.getDeltas()) {
-                            Integer first = delta.getOriginal().getPosition();
-                            Integer last = delta.getOriginal().getPosition() + delta.getOriginal().getLines().size();
-                            changes.add(new Change(first, last));
+                            String changeType = null;
+                            Integer first, last;
+                            if(delta.getType().toString().equals("INSERT")){
+                                changeType = delta.getType().toString();
+                                first = delta.getRevised().getPosition();
+                                last = delta.getRevised().getPosition() + delta.getRevised().getLines().size();
+                            }else {
+                                first = delta.getOriginal().getPosition();
+                                last = delta.getOriginal().getPosition() + delta.getOriginal().getLines().size();
+                            }
+                            changes.add(new Change(first, last, changeType));
                         }
 
                     }

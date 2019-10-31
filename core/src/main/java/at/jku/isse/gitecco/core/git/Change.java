@@ -11,6 +11,8 @@ import at.jku.isse.gitecco.core.tree.nodes.ConditionalNode;
 public class Change {
     private final int from;
     private final int to;
+    private final String changeType;
+
 
     /**
      * Creates a new change.
@@ -18,9 +20,11 @@ public class Change {
      * @param from int value of the starting line number of the change.
      * @param cnt  int value which indicates how many lines are covered by this change.
      */
-    public Change(int from, int cnt) {
+    public Change(int from, int cnt, String changeType) {
         this.from = from;
-        this.to = from+cnt;
+        this.to = cnt;
+        this.changeType = changeType;
+        //this.to = from+cnt;
     }
 
     /**
@@ -51,6 +55,12 @@ public class Change {
     public int getTo() {
         return this.to;
     }
+
+
+    public String getChangeType() {
+        return changeType;
+    }
+
 
     @Override
     public String toString() {

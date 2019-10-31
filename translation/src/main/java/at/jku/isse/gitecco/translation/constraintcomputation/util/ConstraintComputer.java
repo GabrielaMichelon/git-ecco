@@ -24,13 +24,14 @@ public class ConstraintComputer {
     /**
      * Computes and returns the configuration for a given changed Node.
      * Also filters the solution for only global features.
+     *
      * @param changedNode
      * @param tree
      * @return
      */
-    public Map<Feature, Integer> computeConfig (ConditionalNode changedNode, RootNode tree) {
+    public Map<Feature, Integer> computeConfig(ConditionalNode changedNode, RootNode tree) {
         //if the changed node is a base node just return BASE as solution
-        if(changedNode instanceof BaseNode) {
+        if (changedNode instanceof BaseNode) {
             Map<Feature, Integer> ret = new HashMap<>();
             ret.put(new Feature("BASE"), 1);
             return ret;
@@ -47,38 +48,54 @@ public class ConstraintComputer {
         solver.setExpr(changedNode.getCondition());
         Feature feature = new Feature("");
         ArrayList<Feature> literalsExpression = feature.parseConditionArray(changedNode.getCondition());
+        ArrayList<Feature> newliteralsToConsider = new ArrayList<>();
         Map<Feature, Queue<FeatureImplication>> implMapFeaturesExpression = new HashMap<>();
-        for (Map.Entry<Feature, Queue<FeatureImplication>> implMapAux: implMap.entrySet()) {
-            if(literalsExpression.contains(implMapAux.getKey())){
-                implMapFeaturesExpression.put(implMapAux.getKey(),implMapAux.getValue());
-            }else {
-                Boolean addfeature = false;
-                for (FeatureImplication queue : implMapAux.getValue()) {
-                    for (Feature feat : literalsExpression) {
-                        if (queue.getCondition().contains(feat.getName())) {
-                           addfeature=true;
+
+        for (Feature literalToConsider : literalsExpression) {
+            for (Map.Entry<Feature, Queue<FeatureImplication>> implMapAux : implMap.entrySet()) {
+                Queue<FeatureImplication> queueAux = new LinkedList<>();
+                for (FeatureImplication featureimplication : implMapAux.getValue()) {
+                    if (featureimplication.getCondition().contains(literalToConsider.getName())) {
+                        queueAux.add(featureimplication);
+                        if (!(literalsExpression.contains(implMapAux.getKey())) && !(newliteralsToConsider.contains(implMapAux.getKey()))) {
+                            newliteralsToConsider.add(implMapAux.getKey());
                         }
                     }
-                    if(addfeature)
-                        break;
-                    implMapFeaturesExpression.put(implMapAux.getKey(),implMapAux.getValue());
-                    literalsExpression.add(implMapAux.getKey());
+                }
+                implMapFeaturesExpression.put(implMapAux.getKey(), queueAux);
+            }
+        }
+        while (newliteralsToConsider.size() > 0) {
+            ArrayList<Feature> literalsAux = newliteralsToConsider;
+            literalsExpression.addAll(newliteralsToConsider);
+            newliteralsToConsider = new ArrayList<>();
+            for (Feature literalToConsider : literalsAux) {
+                for (Map.Entry<Feature, Queue<FeatureImplication>> implMapAux : implMap.entrySet()) {
+                    Queue<FeatureImplication> queueAux = new LinkedList<>();
+                    for (FeatureImplication featureimplication : implMapAux.getValue()) {
+                        if (featureimplication.getCondition().contains(literalToConsider.getName())) {
+                            queueAux.add(featureimplication);
+                            literalsExpression.add(literalToConsider);
+                            if (!(literalsExpression.contains(implMapAux.getKey())) && !(newliteralsToConsider.contains(implMapAux.getKey()))) {
+                                newliteralsToConsider.add(implMapAux.getKey());
+                            }
+                        }
+                    }
+                    implMapFeaturesExpression.put(implMapAux.getKey(), queueAux);
                 }
             }
+
         }
 
-        if(changedNode.getCondition().equals("(Y_MAX_PIN > -1) && (BASE)")){
-            System.out.println("SIZE: "+implMap.size()+" NODE: "+changedNode.getCondition());
-        }else {
-            //add the built constraint queues to the solver which further constructs all the internal constraints
-            for (Map.Entry<Feature, Queue<FeatureImplication>> featureQueueEntry : implMapFeaturesExpression.entrySet()) {
-                solver.addClause(featureQueueEntry.getKey(), featureQueueEntry.getValue());
-            }
+        //add the built constraint queues to the solver which further constructs all the internal constraints
+        for (Map.Entry<Feature, Queue<FeatureImplication>> featureQueueEntry : implMapFeaturesExpression.entrySet()) {
+            solver.addClause(featureQueueEntry.getKey(), featureQueueEntry.getValue());
         }
+
         //solve, filter for global features only and return the solution/configuration.
         //filtering should be optional because if a correct constraint is built we already get only global features.
         Map<Feature, Integer> ret = solver.solve();
-        if(ret != null) {
+        if (ret != null) {
             ret = ret
                     .entrySet()
                     .stream()
@@ -96,15 +113,16 @@ public class ConstraintComputer {
 
     /**
      * Computes which features should be marked as changed.
-     *
+     * <p>
      * This can and will be replaced with a set of different
      * heuristics to achieve the most convenient and fitting result.
+     *
      * @param changedNode
      * @return
      */
-    public Set<Feature> computeChangedFeatures (ConditionalNode changedNode, Map<Feature, Integer> config) {
+    public Set<Feature> computeChangedFeatures(ConditionalNode changedNode, Map<Feature, Integer> config) {
         //if the changed node is a base node just return BASE as solution
-        if(changedNode instanceof BaseNode) {
+        if (changedNode instanceof BaseNode) {
             Set<Feature> ret = new HashSet<>();
             ret.add(new Feature("BASE"));
             return ret;
@@ -119,14 +137,14 @@ public class ConstraintComputer {
         String configClause = configString.toString().replaceFirst("\\|\\|", "");
         configClause = " && ( " + configClause + ")";
 
-        while((changedNode != null || !(changedNode instanceof BaseNode)) && repeat) {
+        while ((changedNode != null || !(changedNode instanceof BaseNode)) && repeat) {
             solver.setExpr(changedNode.getLocalCondition() + configClause);
             Map<Feature, Integer> result = solver.solve();
-            if(result != null) {
+            if (result != null) {
                 ret = result
                         .entrySet()
                         .stream()
-                        .filter(entry -> featureList.contains(entry.getKey().getName()) && entry.getValue()!=0)
+                        .filter(entry -> featureList.contains(entry.getKey().getName()) && entry.getValue() != 0)
                         .map(entry -> entry.getKey())
                         .collect(Collectors.toSet());
 
@@ -134,10 +152,10 @@ public class ConstraintComputer {
             } else {
                 repeat = true;
             }
-            if(repeat) changedNode = changedNode.getParent().getParent();
+            if (repeat) changedNode = changedNode.getParent().getParent();
         }
 
-        if(ret == null || repeat) {
+        if (ret == null || repeat) {
             ret = new HashSet<>();
             ret.add(new Feature("BASE"));
         }
