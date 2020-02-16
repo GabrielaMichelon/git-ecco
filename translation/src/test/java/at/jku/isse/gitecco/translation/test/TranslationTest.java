@@ -30,11 +30,11 @@ import static org.chocosolver.solver.constraints.nary.cnf.LogOp.*;
 
 public class TranslationTest {
 
-    public final String repo_path = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\libssh-mirror\\libssh-mirror";
-    public final String resultsCSVs_path = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\libssh-mirror";
-    public final String resultMetrics_path = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\libssh-mirror\\variant_results";
-    public final String configuration_path = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\randomVariants\\LibSSH\\configurations.csv";
-    public final String configurationRandomVariants_path = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\randomVariants\\LibSSH\\randomconfigurations.csv";
+    public final String repo_path = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-11-02-2020\\SQLite\\sqlite";
+    public final String resultsCSVs_path = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-11-02-2020\\RandomSQLite";
+    public final String resultMetrics_path = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-11-02-2020\\RandomSQLite\\variant_results";
+    public final String configuration_path = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-11-02-2020\\RandomSQLite\\configurations.csv";
+    public final String configurationRandomVariants_path = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-11-02-2020\\RandomSQLite\\randomconfigurations.csv";
     //git checkout $(git log --branches -1 --pretty=format:"%H")
 
 
@@ -43,12 +43,16 @@ public class TranslationTest {
     @Test
     public void getCSVInformationTotal() throws IOException {
         //set into this list of File the folders with csv files resulted from the comparison of variants of each target project
-        File[] folder = {new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-new-code\\Marlin50commits\\Marlin50commit"),
-                new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-new-code\\Libssh-deletedfiles-corrected"),
-                new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-new-code\\SQLite\\SQLite")};
+        /*File[] folder = {new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\bug-fixed\\Marlin50"),
+                new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\bug-fixed\\LibSSH50"),
+                new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-new-code\\SQLite\\SQLite")};*/
+        File[] folder = {new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-11-02-2020\\RandomMarlin"),
+                new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-11-02-2020\\RandomLibssh"),
+                new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-11-02-2020\\RandomSQLite")};
         //write metrics in a csv file
         String filemetrics = "metricsEachAndTogether.csv";
-        FileWriter csvWriter = new FileWriter("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-new-code\\Libssh-deletedfiles-corrected\\results_metrics" + File.separator + filemetrics);
+        //FileWriter csvWriter = new FileWriter("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-new-code\\Libssh-deletedfiles-corrected\\results_metrics" + File.separator + filemetrics);
+        FileWriter csvWriter = new FileWriter("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-11-02-2020\\results_metrics" + File.separator + filemetrics);
 
         Float totalmeanRunEccoCommit = Float.valueOf(0), totalmeanRunEccoCheckout = Float.valueOf(0), totalmeanRunPPCheckoutCleanVersion = Float.valueOf(0), totalmeanRunPPCheckoutGenerateVariant = Float.valueOf(0), totalmeanRunGitCommit = Float.valueOf(0), totalmeanRunGitCheckout = Float.valueOf(0);
         Float totaltotalnumberFiles = Float.valueOf(0), totalmatchesFiles = Float.valueOf(0), totaleccototalLines = Float.valueOf(0), totaloriginaltotalLines = Float.valueOf(0), totalmissingFiles = Float.valueOf(0), totalremainingFiles = Float.valueOf(0), totaltotalVariantsMatch = Float.valueOf(0), totaltruepositiveLines = Float.valueOf(0), totalfalsepositiveLines = Float.valueOf(0), totalfalsenegativeLines = Float.valueOf(0),
@@ -115,8 +119,8 @@ public class TranslationTest {
                                     matchesFiles++;
                                     totalmatchesFiles++;
                                 } else {
-                                    remainingFiles++;
-                                    totalremainingFiles++;
+                                    missingFiles++;
+                                    totalmissingFiles++;
                                     variantMatch = false;
                                 }
                                 numberTotalFilesEachVariant += 1;
@@ -133,8 +137,8 @@ public class TranslationTest {
                                 totalremainingFiles++;
                             } else {
                                 variantMatch = false;
-                                remainingFiles++;
-                                totalremainingFiles++;
+                                missingFiles++;
+                                totalmissingFiles++;
                             }
                         }
                     }
@@ -269,7 +273,7 @@ public class TranslationTest {
                                 matchFilesEachVariant++;
                                 matchesFiles++;
                             } else {
-                                remainingFiles++;
+                                missingFiles++;
                                 variantMatch = false;
                             }
                             numberTotalFilesEachVariant += 1;
@@ -282,7 +286,7 @@ public class TranslationTest {
                             remainingFiles++;
                         } else {
                             variantMatch = false;
-                            remainingFiles++;
+                            missingFiles++;
                         }
                     }
                 }
@@ -384,7 +388,7 @@ public class TranslationTest {
                             remainingFiles++;
                         } else {
                             variantMatch = false;
-                            remainingFiles++;
+                            missingFiles++;
                         }
                     }
                 }

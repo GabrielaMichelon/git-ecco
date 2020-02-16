@@ -14,6 +14,7 @@ import at.jku.isse.gitecco.translation.constraintcomputation.util.ConstraintComp
 import at.jku.isse.gitecco.translation.visitor.GetNodesForChangeVisitor;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.glassfish.grizzly.http.server.accesslog.FileAppender;
+import scala.util.parsing.combinator.testing.Str;
 
 import java.io.*;
 import java.nio.file.Path;
@@ -27,12 +28,12 @@ public class App {
     public static void main(String... args) throws Exception {
         final int MAXCOMMITS = 200;
         //set as true to generate random variants or false to just generate original variants
-        final boolean generateRandomVariants = false;
+        final boolean generateRandomVariants = true;
         //set as true to generate PP variants or false to just generate configurations to generate random variants
-        final boolean generateOriginalVariants = true;
+        final boolean generateOriginalVariants = false;
         //TODO: planned arguments: DEBUG, dispose tree, max commits, repo path, csv path(feature id), outpath for ecco
-        String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin";
-        //String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\libssh-mirror\\libssh-mirror";
+        //String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\bug-fixed\\Random_Variants\\Marlin\\Marlin";
+        String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-11-02-2020\\SQLite\\sqlite";
         //String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\libssh-mirror\\libssh-mirror";
         //String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite\\sqlite";
         //optional features of the project obtained by the featureID (chosen that which is in almost cases external feature)
@@ -48,9 +49,9 @@ public class App {
                 "COM4A1","WGM01","__AVR_ATmega324P__","UBRRH","__AVR_ATmega8__","UCSR0B","ADABOOT","TCNT0","TCCR1B","TCCR1A","USART0_RX_vect","CS22","GICR","TCCR0A","TCCR0B","SIG_USART0_RECV",
                 "CS31","COM5A1","TIMSK0","TCCR3B","TCCR3A","CS43","CS41","USART1_RX_vect","UDR3","UDR2","UDR0","CS51","EICRB","EICRA","TCCR5B","TCCR5A","GIMSK","TCCR4A","TCCR4B","ADMUX","EIMSK",
                 "COM0A1","ADCSRA","SIG_USART2_RECV","ADCSRB","COM0B1","OCR1A","RAMEND","__cplusplus","UDR","COM1A1","OCR0A","SIG_UART_RECV","COM1B1","SIG_USART3_RECV",
-                "ADCL","SPR0","SPR1","__AVR_ATmega1284P__","__AVR_ATmega168P__","DOXYGEN","DIDR2"};*/
-        //Marlin 50 commits = 45 features
-        String[] featuresToAdd = {"F_FILE_DIR_DIRTY", "F_UNUSED", "F_FILE_UNBUFFERED_READ", "__AVR_ATmega644P__", "__AVR_ATmega644PA__", "RAMPS_V_1_0", "__AVR_ATmega2560__", "F_CPU", "F_OFLAG",
+                "ADCL","SPR0","SPR1","__AVR_ATmega1284P__","__AVR_ATmega168P__","DOXYGEN","DIDR2"};
+        //Marlin 50 commits = 45 features*/
+       /* String[] featuresToAdd = {"F_FILE_DIR_DIRTY", "F_UNUSED", "F_FILE_UNBUFFERED_READ", "__AVR_ATmega644P__", "__AVR_ATmega644PA__", "RAMPS_V_1_0", "__AVR_ATmega2560__", "F_CPU", "F_OFLAG",
                 "__AVR_AT90USB1286__", "WATCHPERIOD", "THERMISTORBED", "THERMISTORHEATER", "PID_DEBUG", "HEATER_USES_THERMISTOR", "__AVR_ATmega328P__", "__AVR_ATmega1280__",
                 "__AVR_ATmega168__", "ADVANCE", "PID_OPENLOOP", "__AVR_ATmega32U4__", "__AVR_ATmega328__", "__AVR_ATmega644__", "BASE", "__AVR_AT90USB1287__", "BED_USES_THERMISTOR",
                 "__AVR_AT90USB646__", "SIMPLE_LCD", "NEWPANEL", "DEBUG_STEPS", "BED_USES_AD595", "ARDUINO", "HEATER_1_USES_THERMISTOR", "THERMISTORHEATER_2", "THERMISTORHEATER_1",
@@ -72,18 +73,17 @@ public class App {
                         "__AVR_ATmega8__","UCSR0B","ADABOOT","TCNT0","TCCR1B","TCCR1A","USART0_RX_vect","CS22","GICR","TCCR0A","TCCR0B","SIG_USART0_RECV","CS31","COM5A1","TIMSK0","TCCR3B","TCCR3A","CS43","CS41","USART1_RX_vect","UDR3","UDR2","UDR0",
                         "CS51","EICRB","EICRA","TCCR5B","TCCR5A","GIMSK","TCCR4A","TCCR4B","ADMUX","EIMSK","COM0A1","ADCSRA","SIG_USART2_RECV","ADCSRB","COM0B1","OCR1A","RAMEND","__cplusplus","UDR","COM1A1","OCR0A","SIG_UART_RECV","COM1B1","SIG_USART3_RECV",
                         "ADCL","SPR0","SPR1","__AVR_ATmega1284P__","__AVR_ATmega168P__","DOXYGEN","DIDR2","E2_STEP_PIN","HEATER_2_MAXTEMP","E2_DIR_PIN","E2_ENABLE_PIN","HEATER_2_MINTEMP","BED_LIMIT_SWITCHING"};
-         //LIB SSH 100 or 50 Commits = 53 features
-        String[] featuresToAdd = {"WITH_SERVER", "HAVE_LIBZ", "WORDS_BIGENDIAN", "DEBUG_CRYPTO", "HAVE_OPENSSL_AES_H", "HAVE_GETHOSTBYNAME",
+         //LIB SSH 100 or 50 Commits = 53 features*/
+       /*String[] featuresToAdd = {"WITH_SERVER", "HAVE_LIBZ", "WORDS_BIGENDIAN", "DEBUG_CRYPTO", "HAVE_OPENSSL_AES_H", "HAVE_GETHOSTBYNAME",
                 "OPENSSL_VERSION_NUMBER", "HAVE_SYS_POLL_H", "HAVE_OPENSSL_BLOWFISH_H", "HAVE_SYS_TIME_H", "BASE", "HAVE_POLL",
                 "HAVE_SELECT", "HAVE_GETHOSTBYADDR", "__cplusplus", "HAVE_SSH1", "NO_SERVER", "HAVE_PTY_H", "HAVE_STDINT_H", "HAVE_MEMORY_H",
                 "HAVE_LIBWSOCK32", "HAVE_GETPWUID", "DEBUG", "HAVE_ERRNO_H", "HAVE_CTYPE_H", "HAVE_NETINET_IN_H", "__CYGWIN__", "HAVE_STRSEP",
                 "HAVE_GETUID", "HAVE_STDIO_H", "HAVE_CONFIG_H", "HAVE_STRING_H", "HAVE_ARPA_INET_H", "HAVE_STRINGS_H", "HAVE_SYS_SOCKET_H",
                 "HAVE_SYS_TYPES_H", "HAVE_STRTOLL", "HAVE_PWD_H", "HAVE_FCNTL_H", "HAVE_OPENNET_H", "TIME_WITH_SYS_TIME", "HAVE_DIRENT_H",
                 "HAVE_NETDB_H", "__WIN32__", "HAVE_INTTYPES_H", "HAVE_LIBOPENNET", "HAVE_SYS_STAT_H", "__MINGW32__", "HAVE_PAM_PAM_APPL_H",
-                "HAVE_SECURITY_PAM_APPL_H", "HAVE_LIBGCRYPT", "HAVE_OPENSSL_DES_H", "HAVE_LIBCRYPTO", "GCRYPT"};/*
-        //SQLITE 100 or 50 commits = 9  features
-        String[] featuresToAdd = {"YYERRORSYMBOL", "TEST_COMPARE", "_WIN32", "WIN32", "TEST", "NDEBUG", "BASE", "NO_READLINE", "TCLSH",};
-        String[] featuresToAdd = {"BASE", "B", "A"};*/
+                "HAVE_SECURITY_PAM_APPL_H", "HAVE_LIBGCRYPT", "HAVE_OPENSSL_DES_H", "HAVE_LIBCRYPTO", "GCRYPT"};
+        //SQLITE 100 or 50 commits = 9  features*/
+        String[] featuresToAdd = {"YYERRORSYMBOL", "TEST_COMPARE", "_WIN32", "WIN32", "TEST", "NDEBUG", "BASE", "NO_READLINE", "TCLSH"};
         ArrayList<String> featureList = new ArrayList<>();
 
         for (String feat : featuresToAdd) {
@@ -93,7 +93,7 @@ public class App {
         //add directories that we need to include manually to get all the files to create a clean version because "/usr/local/include"
         // and "/usr/include")does not includes files outside the root path
         final List<String> dirFiles = new ArrayList<>();
-        dirFiles.add("C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin");
+        //dirFiles.add("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-11-02-2020\\RandomMarlin\\Marlin");
         final GitHelper gitHelper = new GitHelper(repoPath, dirFiles);
         final GitCommitList commitList = new GitCommitList(gitHelper);
 
@@ -101,8 +101,6 @@ public class App {
         final File gitFolder = new File(gitHelper.getPath());
         final File eccoFolder = new File(gitFolder.getParent(), "ecco");
         final File randomVariantFolder = new File(gitFolder.getParent(), "randomVariants");
-
-        ArrayList<String> configsToCheckout = new ArrayList<>();
 
         Map<Feature, Integer> featureVersions = new HashMap<>();
         final Integer[] countFeaturesChanged = {0}; //COUNT PER GIT COMMIT
@@ -155,8 +153,7 @@ public class App {
 
         //creating runtime csv
         try {
-            String fileStr = gitRepositoryFolder.getParent() + File.separator + "runtime.csv";
-            FileWriter csvWriter = new FileWriter(fileStr);
+            FileWriter csvWriter = new FileWriter(gitRepositoryFolder.getParent() + File.separator + "runtime.csv");
             List<List<String>> headerRows = Arrays.asList(
                     Arrays.asList("CommitNr", "configuration", "runtimeEccoCommit", "runtimeEccoCheckout", "runtimeCleanVersionPP", "runtimeGenerateVariantPP", "runtimeGitCommit", "runtimeGitCheckout")
             );
@@ -188,7 +185,7 @@ public class App {
             if (gc.getNumber() == 0) {
                 gcPrevious[0] = new GitCommit(gc.getCommitName(), gc.getNumber(), gc.getDiffCommitName(), gc.getBranch(), gc.getRevCommit());
                 gcPrevious[0].setTree(gc.getTree());
-            } else if (previous[0] || previous[0]!=null) {
+            } else if (previous[0] || previous[0] != null) {
                 if (gc.getNumber() - 1 < 1) {
                     previous[0] = false;
                 } else {
@@ -197,7 +194,7 @@ public class App {
                 }
             }
 
-            Map<Change,FileNode> changesInsert = new HashMap<>();
+            Map<Change, FileNode> changesInsert = new HashMap<>();
             //retrieve changed nodes
             for (FileNode child : gc.getTree().getChildren()) {
                 if (child instanceof SourceFileNode) {
@@ -210,12 +207,12 @@ public class App {
                     }
 
                     for (Change change : changes) {
-                        if(change.getChangeType()== null) {
+                        if (change.getChangeType() == null) {
                             visitor.setChange(change);
                             child.accept(visitor);
                             changedNodes.addAll(visitor.getchangedNodes());
-                        }else{
-                            changesInsert.put(change,child);
+                        } else {
+                            changesInsert.put(change, child);
                         }
                     }
                 }
@@ -260,7 +257,7 @@ public class App {
                             }
                         }
                     }
-                    for (Map.Entry<Change, FileNode> changeInsert: changesInsert.entrySet()) {
+                    for (Map.Entry<Change, FileNode> changeInsert : changesInsert.entrySet()) {
                         Change change = changeInsert.getKey();
                         FileNode childAux = changeInsert.getValue();
                         FileNode child = gcPrevious[0].getTree().getChild(childAux.getFilePath());
@@ -283,25 +280,45 @@ public class App {
             Set<Feature> alreadyComitted = new HashSet<>();
             Map<Integer, Map<Feature, Integer>> mapConfigToGenerateRandomVariants = new HashMap<>();
             Map<Integer, String> mapRevisionToGenerateRandomVariants = new HashMap<>();
+            Map<Integer, String> mapRevisionToGenerateRandomVariantsFinal = new HashMap<>();
             Integer count = 0;
 
             //if there is no changed node then there must be a change in the binary files --> commit base.
-            if (changedNodes.size() == 0 && gcl.size() > 1)
+            if (changedNodes.size() == 0 && gcl.size() > 1 && gc.getTree().getChildren().size() > 0)
                 changedNodes.add(new BaseNode(null, 0));
-            else if(changedNodes.size() == 0 && deletedNodes.size() == 0){
+            else if (changedNodes.size() == 0 && deletedNodes.size() == 0 && gc.getTree().getChildren().size() > 0) {
                 changedNodes.add(new BaseNode(null, 0));
             }
 
+            Boolean baseChanged = false;
+            for (ConditionalNode nods : changedNodes) {
+                if (nods instanceof BaseNode) {
+                    baseChanged = true;
+                }
+            }
+            if (!baseChanged) {
+                for (ConditionalNode nods : deletedNodes) {
+                    if (nods instanceof BaseNode) {
+                        baseChanged = true;
+                    }
+                }
+            }
+
+            ArrayList<String> configsToCommit = new ArrayList<>();
+            Map<Map<Feature, Integer>, String> configsToGenerateVariant = new HashMap<>();
+            Feature base = new Feature("BASE");
+            Long runtimeEccoCommit = Long.valueOf(0), runtimeEccoCheckout = Long.valueOf(0), runtimePPCheckoutGenerateVariant = Long.valueOf(0), timeBefore, timeAfter;
+            Long runtimeGitCommit = Long.valueOf(0), runtimeGitCheckout = commitList.getRuntimePPCheckoutCleanVersion(), runtimePPCheckoutCleanVersion = commitList.getRuntimePPCheckoutCleanVersion();
             //changedNodes = changedNodes.stream().filter(x -> x.getLocalCondition().equals("__AVR_ATmega644P__ || __AVR_ATmega644__")).collect(Collectors.toSet());
             for (ConditionalNode changedNode : changedNodes) {
-                Long runtimeEccoCommit = Long.valueOf(0), runtimeEccoCheckout = Long.valueOf(0), runtimePPCheckoutGenerateVariant, timeBefore, timeAfter;
-                Long runtimeGitCommit = Long.valueOf(0), runtimeGitCheckout = commitList.getRuntimePPCheckoutCleanVersion(), runtimePPCheckoutCleanVersion = commitList.getRuntimePPCheckoutCleanVersion();
                 //compute the config for the var gen
                 config = constraintComputer.computeConfig(changedNode, gc.getTree());
                 if (config != null && !config.isEmpty()) {
                     //compute the marked as changed features.
                     changed = constraintComputer.computeChangedFeatures(changedNode, config);
 
+                    if (!changed.contains(base))
+                        config.remove(base);
                     //map with the name of the feature and version and a boolean to set true when it is already incremented in the analysed commit
                     String eccoConfig = "";
                     for (Map.Entry<Feature, Integer> configFeature : config.entrySet()) {
@@ -322,8 +339,14 @@ public class App {
                                 }
                                 featureVersions.put(configFeature.getKey(), version);
                             }
-                            eccoConfig += "," + configFeature.getKey().toString() + "." + version;
+                            if (!configFeature.getKey().toString().equals("BASE"))
+                                eccoConfig += "," + configFeature.getKey().toString() + "." + version;
+                            else
+                                eccoConfig += "," + configFeature.getKey().toString() + ".$$";
                         }
+                    }
+                    if (!eccoConfig.contains("BASE")) {
+                        eccoConfig += "," + "BASE.$$";
                     }
                     eccoConfig = eccoConfig.replaceFirst(",", "");
 
@@ -335,11 +358,8 @@ public class App {
                         mapRevisionToGenerateRandomVariants.put(count, eccoConfig);
                         count++;
                         timeBefore = System.currentTimeMillis();
-                        if (generateOriginalVariants) {
-                            //generate the variant for this config
-                            pph.generateVariants(config, gitFolder, eccoFolder, gitHelper.getDirFiles(), eccoConfig);
-                            System.out.println("Variant generated with config: " + eccoConfig);
-                        }
+                        //configuration that will be used to generate the variant of this changed node
+                        configsToGenerateVariant.put(config, eccoConfig);
                         timeAfter = System.currentTimeMillis();
                         runtimePPCheckoutGenerateVariant = timeAfter - timeBefore;
                         runtimeGitCheckout += runtimePPCheckoutGenerateVariant;
@@ -350,57 +370,19 @@ public class App {
                         String outputCSV = variantsrc.getParentFile().getParentFile().getAbsolutePath();
                         final Path variant_dir = Paths.get(String.valueOf(variantsrc));
 
-
-                        //appending to the config csv
-                        try {
-                            String fileStr = gitRepositoryFolder.getParent() + File.separator + fileStoreConfig;
-                            FileAppender csvWriter = new FileAppender(new File(fileStr));
-                            List<List<String>> headerRows = Arrays.asList(
-                                    Arrays.asList(Long.toString(gc.getNumber()), gc.getCommitName(), eccoConfig)
-                            );
-                            for (List<String> rowData : headerRows) {
-                                csvWriter.append(String.join(",", rowData));
-                            }
-                            csvWriter.close();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-
-
-                        //add config to checkout after all project commits
-                        configsToCheckout.add(eccoConfig);
-
-
-                        //appending to the runtime csv
-                        try {
-                            File fileStr = new File(gitRepositoryFolder.getParent() + File.separator + "runtime.csv");
-                            FileAppender csvAppender = new FileAppender(fileStr);
-                            List<List<String>> headerRows = Arrays.asList(
-                                    Arrays.asList(Long.toString(gc.getNumber()), eccoConfig.replace(",", "AND"), runtimeEccoCommit.toString(), runtimeEccoCheckout.toString(), runtimePPCheckoutCleanVersion.toString(), runtimePPCheckoutGenerateVariant.toString(), runtimeGitCommit.toString(), runtimeGitCheckout.toString())
-                            );
-                            for (List<String> rowData : headerRows) {
-                                csvAppender.append(String.join(",", rowData));
-                            }
-                            csvAppender.close();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        //end appending to the runtime csv
-
                     }
                 }
             }
 
-            if(deletedNodes.size()!=0){
-                for (ConditionalNode deletedNode:deletedNodes) {
-                    Long runtimeEccoCommit = Long.valueOf(0), runtimeEccoCheckout = Long.valueOf(0), runtimePPCheckoutGenerateVariant, timeBefore, timeAfter;
-                    Long runtimeGitCommit = Long.valueOf(0), runtimeGitCheckout = commitList.getRuntimePPCheckoutCleanVersion(), runtimePPCheckoutCleanVersion = commitList.getRuntimePPCheckoutCleanVersion();
+            if (deletedNodes.size() != 0) {
+                for (ConditionalNode deletedNode : deletedNodes) {
                     //compute the config for the var gen
                     config = constraintComputer.computeConfig(deletedNode, gcPrevious[0].getTree());
                     if (config != null && !config.isEmpty()) {
                         //compute the marked as changed features.
                         changed = constraintComputer.computeChangedFeatures(deletedNode, config);
-
+                        if (!changed.contains(base))
+                            config.remove(base);
                         //map with the name of the feature and version and a boolean to set true when it is already incremented in the analysed commit
                         String eccoConfig = "";
                         for (Map.Entry<Feature, Integer> configFeature : config.entrySet()) {
@@ -421,8 +403,15 @@ public class App {
                                     }
                                     featureVersions.put(configFeature.getKey(), version);
                                 }
-                                eccoConfig += "," + configFeature.getKey().toString() + "." + version;
+                                if (!configFeature.getKey().toString().equals("BASE"))
+                                    eccoConfig += "," + configFeature.getKey().toString() + "." + version;
+                                else
+                                    eccoConfig += "," + configFeature.getKey().toString() + ".$$";
+
                             }
+                        }
+                        if (!eccoConfig.contains("BASE")) {
+                            eccoConfig += "," + "BASE.$$";
                         }
                         eccoConfig = eccoConfig.replaceFirst(",", "");
 
@@ -434,63 +423,86 @@ public class App {
                             mapRevisionToGenerateRandomVariants.put(count, eccoConfig);
                             count++;
                             timeBefore = System.currentTimeMillis();
-                            if (generateOriginalVariants) {
-                                //generate the variant for this config
-                                pph.generateVariants(config, gitFolder, eccoFolder, gitHelper.getDirFiles(), eccoConfig);
-                                System.out.println("Variant generated with config: " + eccoConfig);
-                            }
+                            //configuration that will be used to generate the variant of this changed node
+                            configsToGenerateVariant.put(config, eccoConfig);
                             timeAfter = System.currentTimeMillis();
                             runtimePPCheckoutGenerateVariant = timeAfter - timeBefore;
                             runtimeGitCheckout += runtimePPCheckoutGenerateVariant;
 
                             configurations.add(eccoConfig);
-                            //folder where the variant is stored
-                            File variantsrc = new File(eccoFolder, eccoConfig);
-                            String outputCSV = variantsrc.getParentFile().getParentFile().getAbsolutePath();
-                            final Path variant_dir = Paths.get(String.valueOf(variantsrc));
 
-
-                            //appending to the config csv
-                            try {
-                                String fileStr = gitRepositoryFolder.getParent() + File.separator + fileStoreConfig;
-                                FileAppender csvWriter = new FileAppender(new File(fileStr));
-                                List<List<String>> headerRows = Arrays.asList(
-                                        Arrays.asList(Long.toString(gc.getNumber()), gc.getCommitName(), eccoConfig)
-                                );
-                                for (List<String> rowData : headerRows) {
-                                    csvWriter.append(String.join(",", rowData));
-                                }
-                                csvWriter.close();
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-
-
-                            //add config to checkout after all project commits
-                            configsToCheckout.add(eccoConfig);
-
-
-                            //appending to the runtime csv
-                            try {
-                                File fileStr = new File(gitRepositoryFolder.getParent() + File.separator + "runtime.csv");
-                                FileAppender csvAppender = new FileAppender(fileStr);
-                                List<List<String>> headerRows = Arrays.asList(
-                                        Arrays.asList(Long.toString(gc.getNumber()), eccoConfig.replace(",", "AND"), runtimeEccoCommit.toString(), runtimeEccoCheckout.toString(), runtimePPCheckoutCleanVersion.toString(), runtimePPCheckoutGenerateVariant.toString(), runtimeGitCommit.toString(), runtimeGitCheckout.toString())
-                                );
-                                for (List<String> rowData : headerRows) {
-                                    csvAppender.append(String.join(",", rowData));
-                                }
-                                csvAppender.close();
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                            //end appending to the runtime csv
 
                         }
                     }
                 }
             }
 
+            String baseVersion = "";
+            for (Map.Entry<Feature, Integer> configFeature : featureVersions.entrySet()) {
+                if (configFeature.getKey().equals(base))
+                    baseVersion = configFeature.getValue().toString();
+            }
+
+            //generate the variant for this config
+            for (Map.Entry<Map<Feature, Integer>, String> variant : configsToGenerateVariant.entrySet()) {
+                String eccoConfig = variant.getValue().replace("$$", baseVersion);
+                if (generateOriginalVariants) {
+                    pph.generateVariants(variant.getKey(), gitFolder, eccoFolder, gitHelper.getDirFiles(), eccoConfig);
+                    System.out.println("Variant generated with config: " + eccoConfig);
+                }else if(generateRandomVariants){
+                    for (Map.Entry<Integer,String> map:  mapRevisionToGenerateRandomVariants.entrySet()) {
+                        int auxkey = map.getKey();
+                        String newBase = map.getValue();
+                        if(map.getValue().contains("BASE.$$")){
+                            newBase = map.getValue().replace("BASE.$$", "BASE."+baseVersion);
+                        }
+                        mapRevisionToGenerateRandomVariantsFinal.put(auxkey,newBase);
+                    }
+
+                }
+                //config that will be used to commit the variant generated with this changed node in ecco
+                configsToCommit.add(eccoConfig);
+            }
+
+
+            //appending to the config csv
+            try {
+
+                String fileStr = gitRepositoryFolder.getParent() + File.separator + fileStoreConfig;
+                FileAppender csvWriter = new FileAppender(new File(fileStr));
+
+                for (String configs : configsToCommit) {
+                    List<List<String>> headerRows = Arrays.asList(
+                            Arrays.asList(Long.toString(gc.getNumber()), gc.getCommitName(), configs)
+                    );
+                    for (List<String> rowData : headerRows) {
+                        csvWriter.append(String.join(",", rowData));
+                    }
+                }
+                csvWriter.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+
+            //appending to the runtime csv
+            try {
+                String fileStr = gitRepositoryFolder.getParent() + File.separator + "runtime.csv";
+                FileAppender csvWriter = new FileAppender(new File(fileStr));
+
+                for (String configs : configsToCommit) {
+                    List<List<String>> headerRows = Arrays.asList(
+                            Arrays.asList(Long.toString(gc.getNumber()), configs.replaceAll(",", "AND"), runtimeEccoCommit.toString(), runtimeEccoCheckout.toString(), runtimePPCheckoutCleanVersion.toString(), runtimePPCheckoutGenerateVariant.toString(), runtimeGitCommit.toString(), runtimeGitCheckout.toString())
+                    );
+                    for (List<String> rowData : headerRows) {
+                        csvWriter.append(String.join(",", rowData));
+                    }
+                }
+                csvWriter.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            //end appending to the runtime csv
 
             //append results to the feature report csv
             try {
@@ -512,8 +524,12 @@ public class App {
                 if (countFeaturesChanged[0] + newFeatures[0] > 0) {
                     Random random = new Random();
                     int numberConfigs = 1;
-                    if (countFeaturesChanged[0] + newFeatures[0] > 1)
-                        numberConfigs = random.nextInt((countFeaturesChanged[0] + newFeatures[0]) - 1) + (countFeaturesChanged[0] + newFeatures[0]);
+                    if (countFeaturesChanged[0] + newFeatures[0] > 1) {
+                        if ((countFeaturesChanged[0] + newFeatures[0]) > 6)
+                            numberConfigs = random.nextInt((countFeaturesChanged[0] + newFeatures[0]) - 1) + 6;
+                        else
+                            numberConfigs = random.nextInt((countFeaturesChanged[0] + newFeatures[0]) - 1) + (countFeaturesChanged[0] + newFeatures[0]);
+                    }
                     Map<Feature, Integer> mapNewConfig = new HashMap<>();
                     String featurerevision = "";
                     ArrayList<Integer> positionsMap = new ArrayList<>();
@@ -524,7 +540,7 @@ public class App {
                         for (Map.Entry<Feature, Integer> map : mapConfigToGenerateRandomVariants.get(positionMapToSelectConfig).entrySet()) {
                             mapNewConfig.put(map.getKey(), map.getValue());
                         }
-                        featurerevision += "," + mapRevisionToGenerateRandomVariants.get(positionMapToSelectConfig);
+                        featurerevision += "," + mapRevisionToGenerateRandomVariantsFinal.get(positionMapToSelectConfig);
                         positionMapToSelectConfig = random.nextInt(count);
                         if (positionsMap.contains(positionMapToSelectConfig)) {
                             while (!positionsMap.contains(positionMapToSelectConfig)) {
@@ -536,6 +552,9 @@ public class App {
 
                     }
                     featurerevision = featurerevision.replaceFirst(",", "");
+                    if(featurerevision.contains("$$")){
+                        featurerevision = featurerevision.replace("$$",baseVersion);
+                    }
                     if (featurerevision.contains(",")) {
                         String[] featurerevisions = featurerevision.split(",");
                         ArrayList<String> allfeatures = new ArrayList<>();
@@ -582,7 +601,7 @@ public class App {
 
         //set second parameter as "NULLCOMMIT" when the first commit is 0, or null when the first commit is another (when startcommit is > 0)
         //gitHelper.getEveryNthCommit(commitList, "NULLCOMMIT", 0, 50, 1);
-        gitHelper.getEveryNthCommit(commitList, null, 0, 50, 1);
+        gitHelper.getEveryNthCommit(commitList, "NULLCOMMIT", 0, 49, 1);
         //gitHelper.getAllCommits(commitList);
 
 

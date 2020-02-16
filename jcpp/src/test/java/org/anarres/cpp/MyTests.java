@@ -46,7 +46,7 @@ public class MyTests {
 
         //src file or directory
         //target directory
-        pp.preprocess(src, target, null);
+        pp.preprocess(src, target, null,null);
     }
 
     @Test
@@ -81,7 +81,7 @@ public class MyTests {
 
         //src file or directory
         //target directory
-        pp.preprocess(src, target, null);
+        pp.preprocess(src, target, null,null);
 
         controller.printMacros();
     }

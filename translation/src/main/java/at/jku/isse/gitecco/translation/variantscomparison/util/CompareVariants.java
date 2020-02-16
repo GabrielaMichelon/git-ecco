@@ -10,6 +10,7 @@ import difflib.Patch;
 import org.eclipse.jgit.api.errors.GitAPIException;
 
 import java.io.*;
+import java.nio.charset.MalformedInputException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -56,19 +57,37 @@ public class CompareVariants {
             Boolean fileExistsInEcco = false;
             Integer truepositiveLines = 0, falsepositiveLines = 0, falsenegativeLines = 0, originaltotalLines = 0, eccototalLines = 0;
             Boolean matchFiles = false;
-            List<String> original = null;
-            List<String> revised = null;
+            List<String> original = new ArrayList<>();
+            List<String> revised = new ArrayList<>();
 
             String extension = f.getName().substring(f.getName().lastIndexOf('.') + 1);
             if (fileTypes.contains(extension)) {
                 //compare text of files
                 for (File fEcco : filesEcco) {
-                    if (f.getName().equals(fEcco.getName())) {
+                    if (f.toPath().toString().substring(f.toPath().toString().indexOf("ecco\\")+5).equals(fEcco.toPath().toString().substring(fEcco.toPath().toString().indexOf("checkout\\")+9))) {
                         try {
                             original = Files.readAllLines(f.toPath());
+                        } catch (MalformedInputException e) {
+                            StringBuilder contentBuilder = new StringBuilder();
+                            File filenew = new File(String.valueOf(f.toPath()));
+                            BufferedReader br = new BufferedReader(new FileReader(filenew.getAbsoluteFile()));
+                            String sCurrentLine;
+                            while ((sCurrentLine = br.readLine()) != null) {
+                                original.add(sCurrentLine);
+                            }
+                            br.close();
+                        }
+                        try {
                             revised = Files.readAllLines(fEcco.toPath());
-                        } catch (IOException e) {
-                            e.printStackTrace();
+                        } catch (MalformedInputException e) {
+                            StringBuilder contentBuilder = new StringBuilder();
+                            File filenew = new File(String.valueOf(fEcco.toPath()));
+                            BufferedReader br = new BufferedReader(new FileReader(filenew.getAbsoluteFile()));
+                            String sCurrentLine;
+                            while ((sCurrentLine = br.readLine()) != null) {
+                                revised.add(sCurrentLine);
+                            }
+                            br.close();
                         }
 
                         // Compute diff. Get the Patch object. Patch is the container for computed deltas.
@@ -95,7 +114,7 @@ public class CompareVariants {
                         truepositiveLines = eccototalLines - (falsepositiveLines);
 
                         List<List<String>> resultRows = Arrays.asList(
-                                Arrays.asList(f.getName(), matchFiles.toString(), truepositiveLines.toString(), falsepositiveLines.toString(), falsenegativeLines.toString(), originaltotalLines.toString(), eccototalLines.toString())
+                                Arrays.asList(f.toPath().toString().substring(f.toPath().toString().indexOf("ecco\\")+5).replace(",","and"), matchFiles.toString(), truepositiveLines.toString(), falsepositiveLines.toString(), falsenegativeLines.toString(), originaltotalLines.toString(), eccototalLines.toString())
                         );
                         for (List<String> rowData : resultRows) {
                             csvWriter.append(String.join(",", rowData));
@@ -106,7 +125,7 @@ public class CompareVariants {
                 }
                 if (!fileExistsInEcco) {
                     List<List<String>> resultRows = Arrays.asList(
-                            Arrays.asList(f.getName(), "not", "0", "0", originaltotalLines.toString(), originaltotalLines.toString(), eccototalLines.toString())
+                            Arrays.asList(f.toPath().toString().substring(f.toPath().toString().indexOf("ecco\\")+5).replace(",","and"), "not", "0", "0", originaltotalLines.toString(), originaltotalLines.toString(), eccototalLines.toString())
                     );
                     for (List<String> rowData : resultRows) {
                         csvWriter.append(String.join(",", rowData));
@@ -116,7 +135,7 @@ public class CompareVariants {
             } else {
                 //compare other type files
                 for (File fEcco : filesEcco) {
-                    if (f.getName().equals(fEcco.getName())) {
+                    if (f.toPath().toString().substring(f.toPath().toString().indexOf("ecco\\")+5).equals(fEcco.toPath().toString().substring(fEcco.toPath().toString().indexOf("checkout\\")+9))) {
                         if (!f.isDirectory()) {
                             int byte_f1;
                             int byte_f2;
@@ -170,7 +189,7 @@ public class CompareVariants {
                         originaltotalLines = 1;
 
                         List<List<String>> resultRows = Arrays.asList(
-                                Arrays.asList(f.getName(), matchFiles.toString(), truepositiveLines.toString(), falsepositiveLines.toString(), falsenegativeLines.toString(), originaltotalLines.toString(), eccototalLines.toString())
+                                Arrays.asList(f.toPath().toString().substring(f.toPath().toString().indexOf("ecco\\")+5).replace(",","and"), matchFiles.toString(), truepositiveLines.toString(), falsepositiveLines.toString(), falsenegativeLines.toString(), originaltotalLines.toString(), eccototalLines.toString())
                         );
                         for (List<String> rowData : resultRows) {
                             csvWriter.append(String.join(",", rowData));
@@ -184,7 +203,7 @@ public class CompareVariants {
                     falsepositiveLines = 0;
                     truepositiveLines = 0;
                     List<List<String>> resultRows = Arrays.asList(
-                            Arrays.asList(f.getName(), "not", truepositiveLines.toString(), falsepositiveLines.toString(), falsenegativeLines.toString(), originaltotalLines.toString(), eccototalLines.toString())
+                            Arrays.asList(f.toPath().toString().substring(f.toPath().toString().indexOf("ecco\\")+5).replace(",","and"), "not", truepositiveLines.toString(), falsepositiveLines.toString(), falsenegativeLines.toString(), originaltotalLines.toString(), eccototalLines.toString())
                     );
                     for (List<String> rowData : resultRows) {
                         csvWriter.append(String.join(",", rowData));
@@ -210,7 +229,7 @@ public class CompareVariants {
                 List<String> original = Files.readAllLines(fEcco.toPath());
                 Boolean existJustEcco = true;
                 for (File f : filesVariant) {
-                    if (fEcco.getName().equals(f.getName())) {
+                    if (fEcco.toPath().toString().substring(fEcco.toPath().toString().indexOf("checkout\\")+9).equals(f.toPath().toString().substring(f.toPath().toString().indexOf("ecco\\")+5))) {
                         existJustEcco = false;
                     }
                 }
@@ -225,7 +244,7 @@ public class CompareVariants {
                     truepositiveLines = eccototalLines - (falsepositiveLines);
 
                     List<List<String>> resultRows = Arrays.asList(
-                            Arrays.asList(fEcco.getName(), "justOnRetrieved", truepositiveLines.toString(), falsepositiveLines.toString(), falsenegativeLines.toString(), originaltotalLines.toString(), eccototalLines.toString())
+                            Arrays.asList(fEcco.toPath().toString().substring(fEcco.toPath().toString().indexOf("checkout\\")+9).replace(",","and"), "justOnRetrieved", truepositiveLines.toString(), falsepositiveLines.toString(), falsenegativeLines.toString(), originaltotalLines.toString(), eccototalLines.toString())
                     );
                     for (List<String> rowData : resultRows) {
                         csvWriter.append(String.join(",", rowData));
@@ -236,7 +255,7 @@ public class CompareVariants {
                 //compare other type files
                 Boolean existJustEcco = true;
                 for (File f : filesVariant) {
-                    if (fEcco.getName().equals(f.getName())) {
+                    if (fEcco.toPath().toString().substring(fEcco.toPath().toString().indexOf("checkout\\")+9).equals(f.toPath().toString().substring(f.toPath().toString().indexOf("ecco\\")+5))) {
                         existJustEcco = false;
                     }
                 }
@@ -249,7 +268,7 @@ public class CompareVariants {
                     truepositiveLines = eccototalLines - (falsepositiveLines);
 
                     List<List<String>> resultRows = Arrays.asList(
-                            Arrays.asList(fEcco.getName(), "justOnRetrieved", truepositiveLines.toString(), falsepositiveLines.toString(), falsenegativeLines.toString(), originaltotalLines.toString(), eccototalLines.toString())
+                            Arrays.asList(fEcco.toPath().toString().substring(fEcco.toPath().toString().indexOf("checkout\\")+9).replace(",","and"), "justOnRetrieved", truepositiveLines.toString(), falsepositiveLines.toString(), falsenegativeLines.toString(), originaltotalLines.toString(), eccototalLines.toString())
                     );
                     for (List<String> rowData : resultRows) {
                         csvWriter.append(String.join(",", rowData));

@@ -155,11 +155,16 @@ public class ConstraintComputer {
             if (repeat) changedNode = changedNode.getParent().getParent();
         }
 
-        if (ret == null || repeat) {
+        //if (ret == null || repeat) {
+        if (ret == null) {
             ret = new HashSet<>();
             ret.add(new Feature("BASE"));
         }
-
+        //if ret > 1 means it contains a changed node of a feature, so we do not consider BASE, only consider BASE when the changed node does not belong to any feature
+        if(ret.size() > 1){
+            Feature feature = new Feature("BASE");
+            ret.remove(feature);
+        }
         return ret;
     }
 }
