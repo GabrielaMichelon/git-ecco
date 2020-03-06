@@ -31,10 +31,10 @@ import static org.chocosolver.solver.constraints.nary.cnf.LogOp.*;
 public class TranslationTest {
 
     public final String repo_path = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-11-02-2020\\SQLite\\sqlite";
-    public final String resultsCSVs_path = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-11-02-2020\\RandomSQLite";
-    public final String resultMetrics_path = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-11-02-2020\\RandomSQLite\\variant_results";
-    public final String configuration_path = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-11-02-2020\\RandomSQLite\\configurations.csv";
-    public final String configurationRandomVariants_path = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-11-02-2020\\RandomSQLite\\randomconfigurations.csv";
+    public final String resultsCSVs_path = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-11-02-2020\\RandomMarlin";
+    public final String resultMetrics_path = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-11-02-2020\\RandomMarlin\\variant_results";
+    public final String configuration_path = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-11-02-2020\\Marlin\\configurations.csv";
+    public final String configurationRandomVariants_path = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-11-02-2020\\Marlin\\randomconfigurations.csv";
     //git checkout $(git log --branches -1 --pretty=format:"%H")
 
 
@@ -50,7 +50,7 @@ public class TranslationTest {
                 new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-11-02-2020\\RandomLibssh"),
                 new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-11-02-2020\\RandomSQLite")};
         //write metrics in a csv file
-        String filemetrics = "metricsEachAndTogether.csv";
+        String filemetrics = "RandomMetricsEachAndTogether-no-inserted-lines.csv";
         //FileWriter csvWriter = new FileWriter("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-new-code\\Libssh-deletedfiles-corrected\\results_metrics" + File.separator + filemetrics);
         FileWriter csvWriter = new FileWriter("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-11-02-2020\\results_metrics" + File.separator + filemetrics);
 
@@ -319,7 +319,7 @@ public class TranslationTest {
         Float f1scoreFiles = 2 * ((precisionFiles * recallFiles) / (precisionFiles + recallFiles));
 
         //write metrics in a csv file
-        String filemetrics = "metrics2.csv";
+        String filemetrics = "metrics_justdeleted.csv";
         //csv to report new features and features changed per git commit of the project
         try {
             FileWriter csvWriter = new FileWriter(resultMetrics_path + File.separator + filemetrics);
@@ -338,6 +338,8 @@ public class TranslationTest {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        System.out.println(eccototalLines);
+        System.out.println("Total lines inserted: "+falsepositiveLines+ "\nTotal lines deleted: "+falsenegativeLines);
     }
 
     //to compute the metrics of variants this is not considering all the files match (just if the file exists) and to compute files metrics this is not considering all the lines match (just if the file exists)
@@ -444,8 +446,8 @@ public class TranslationTest {
     public void testeCompareVariants() {
         CompareVariants cV = new CompareVariants();
         //"ecco" if the folder is from the PP generated variants or "randomVariants" if the folder is from the PP generated random variants
-        File variantsrc = new File(resultsCSVs_path, "ecco");
-        File checkoutfile = new File(resultMetrics_path, "checkout");
+        File variantsrc = new File("C:\\Users\\gabil\\Desktop\\test", "ecco");
+        File checkoutfile = new File("C:\\Users\\gabil\\Desktop\\test", "checkout");
         try {
             for (File path : variantsrc.listFiles()) {
                 cV.compareVariant(path, new File(checkoutfile + File.separator + path.getName()));
@@ -499,7 +501,7 @@ public class TranslationTest {
     public void testEccoCommit() throws IOException {
         CompareVariants cV = new CompareVariants();
         ArrayList<String> configsToCommit = new ArrayList<>();
-        File configuration = new File(configuration_path);
+        File configuration = new File(configurationRandomVariants_path);
         Path OUTPUT_DIR = Paths.get(resultMetrics_path);
         File eccoFolder = new File(resultsCSVs_path+File.separator+"ecco"+File.separator);
         BufferedReader csvReader = null;

@@ -8,6 +8,7 @@ import difflib.Delta;
 import difflib.DiffUtils;
 import difflib.Patch;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import scala.util.parsing.combinator.testing.Str;
 
 import java.io.*;
 import java.nio.charset.MalformedInputException;
@@ -64,7 +65,7 @@ public class CompareVariants {
             if (fileTypes.contains(extension)) {
                 //compare text of files
                 for (File fEcco : filesEcco) {
-                    if (f.toPath().toString().substring(f.toPath().toString().indexOf("ecco\\")+5).equals(fEcco.toPath().toString().substring(fEcco.toPath().toString().indexOf("checkout\\")+9))) {
+                    if (f.toPath().toString().substring(f.toPath().toString().indexOf("ecco\\") + 5).equals(fEcco.toPath().toString().substring(fEcco.toPath().toString().indexOf("checkout\\") + 9))) {
                         try {
                             original = Files.readAllLines(f.toPath());
                         } catch (MalformedInputException e) {
@@ -93,28 +94,89 @@ public class CompareVariants {
                         // Compute diff. Get the Patch object. Patch is the container for computed deltas.
                         Patch<String> patch = null;
                         patch = DiffUtils.diff(original, revised);
-
+                        ArrayList<String> insertedLines = new ArrayList<>();
+                        ArrayList<String> deletedLines = new ArrayList<>();
                         if (patch.getDeltas().size() == 0) {
                             //files match
                             matchFiles = true;
                         } else {
-                            matchFiles = false;
+                            //matchFiles = false;
+                            String del ="", insert = "";
                             for (Delta delta : patch.getDeltas()) {
                                 Integer difLines = Math.abs(delta.getOriginal().getLines().size() - delta.getRevised().getLines().size());
                                 //List<String> unifiedDiff = DiffUtils.generateUnifiedDiff(f.getName(), fEcco.getName(), original, patch, original.size());
-                                System.out.println(delta.getType().toString());
-                                if (delta.getType().toString().equals("INSERT"))
-                                    falsepositiveLines += difLines;
-                                else
-                                    falsenegativeLines += difLines;
+                                String line = "";
+                                if (delta.getType().toString().equals("INSERT")) {
+                                    ArrayList<String> arraylines = (ArrayList<String>) delta.getRevised().getLines();
+                                    for (String deltaaux : arraylines) {
+                                        line = deltaaux.trim().replaceAll("\t", "").replaceAll(",", "").replaceAll(" ", "");
+                                        if (!line.equals("")) {
+                                            matchFiles = false;
+                                            falsepositiveLines++;
+                                            insert=line;
+                                            insertedLines.add(insert);
+                                            //falsepositiveLines += difLines;
+                                            //System.out.println("file: " + fEcco.getAbsolutePath()  +" TYPE: " +delta.getType().toString() +"delta: " + deltaaux);
+                                        }
+                                    }
+                                } else {
+                                    ArrayList<String> arraylines = (ArrayList<String>) delta.getOriginal().getLines();
+                                    for (String deltaaux : arraylines) {
+                                        line = deltaaux.trim().replaceAll("\t", "").replaceAll(",", "").replaceAll(" ", "");
+                                        if (!line.equals("")) {
+                                            matchFiles = false;
+                                            falsenegativeLines++;
+                                            del=line;
+                                            deletedLines.add(del);
+                                            //falsenegativeLines += difLines;
+                                            //System.out.println("file: " + fEcco.getAbsolutePath() +" TYPE: " +delta.getType().toString() +"delta: " + deltaaux);
+                                        }
+                                    }
+
+
+                                }
                             }
                         }
+                        ArrayList<String> diffDeleted = new ArrayList<>();
+                        Boolean found = false;
+                        for (String line: deletedLines) {
+                            for (String insertLine: insertedLines) {
+                                if(insertLine.equals(line)){
+                                    falsepositiveLines--;
+                                    falsenegativeLines--;
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            if(!found) {
+                                diffDeleted.add(line);
+                            }else {
+                                insertedLines.remove(line);
+                                found = false;
+                            }
+                        }
+
+                        if (falsepositiveLines==0 && falsenegativeLines == 0)
+                            matchFiles=true;
+                        else {
+                            if (diffDeleted.size() > 0) {
+                                for (String line: diffDeleted) {
+                                    System.out.println("file: " + fEcco.getAbsolutePath() + " TYPE: DELETE delta: " +line);
+                                }
+                            }
+                            if (insertedLines.size() > 0) {
+                                for (String line: insertedLines) {
+                                    System.out.println("file: " + fEcco.getAbsolutePath() + " TYPE: INSERT delta: " +line);
+                                }
+                            }
+                        }
+
                         eccototalLines = (revised.size() - 1);
                         originaltotalLines = original.size() - 1;
                         truepositiveLines = eccototalLines - (falsepositiveLines);
 
                         List<List<String>> resultRows = Arrays.asList(
-                                Arrays.asList(f.toPath().toString().substring(f.toPath().toString().indexOf("ecco\\")+5).replace(",","and"), matchFiles.toString(), truepositiveLines.toString(), falsepositiveLines.toString(), falsenegativeLines.toString(), originaltotalLines.toString(), eccototalLines.toString())
+                                Arrays.asList(f.toPath().toString().substring(f.toPath().toString().indexOf("ecco\\") + 5).replace(",", "and"), matchFiles.toString(), truepositiveLines.toString(), falsepositiveLines.toString(), falsenegativeLines.toString(), originaltotalLines.toString(), eccototalLines.toString())
                         );
                         for (List<String> rowData : resultRows) {
                             csvWriter.append(String.join(",", rowData));
@@ -122,10 +184,11 @@ public class CompareVariants {
                         }
                         fileExistsInEcco = true;
                     }
+
                 }
                 if (!fileExistsInEcco) {
                     List<List<String>> resultRows = Arrays.asList(
-                            Arrays.asList(f.toPath().toString().substring(f.toPath().toString().indexOf("ecco\\")+5).replace(",","and"), "not", "0", "0", originaltotalLines.toString(), originaltotalLines.toString(), eccototalLines.toString())
+                            Arrays.asList(f.toPath().toString().substring(f.toPath().toString().indexOf("ecco\\") + 5).replace(",", "and"), "not", "0", "0", originaltotalLines.toString(), originaltotalLines.toString(), eccototalLines.toString())
                     );
                     for (List<String> rowData : resultRows) {
                         csvWriter.append(String.join(",", rowData));
@@ -135,7 +198,7 @@ public class CompareVariants {
             } else {
                 //compare other type files
                 for (File fEcco : filesEcco) {
-                    if (f.toPath().toString().substring(f.toPath().toString().indexOf("ecco\\")+5).equals(fEcco.toPath().toString().substring(fEcco.toPath().toString().indexOf("checkout\\")+9))) {
+                    if (f.toPath().toString().substring(f.toPath().toString().indexOf("ecco\\") + 5).equals(fEcco.toPath().toString().substring(fEcco.toPath().toString().indexOf("checkout\\") + 9))) {
                         if (!f.isDirectory()) {
                             int byte_f1;
                             int byte_f2;
@@ -189,7 +252,7 @@ public class CompareVariants {
                         originaltotalLines = 1;
 
                         List<List<String>> resultRows = Arrays.asList(
-                                Arrays.asList(f.toPath().toString().substring(f.toPath().toString().indexOf("ecco\\")+5).replace(",","and"), matchFiles.toString(), truepositiveLines.toString(), falsepositiveLines.toString(), falsenegativeLines.toString(), originaltotalLines.toString(), eccototalLines.toString())
+                                Arrays.asList(f.toPath().toString().substring(f.toPath().toString().indexOf("ecco\\") + 5).replace(",", "and"), matchFiles.toString(), truepositiveLines.toString(), falsepositiveLines.toString(), falsenegativeLines.toString(), originaltotalLines.toString(), eccototalLines.toString())
                         );
                         for (List<String> rowData : resultRows) {
                             csvWriter.append(String.join(",", rowData));
@@ -203,7 +266,7 @@ public class CompareVariants {
                     falsepositiveLines = 0;
                     truepositiveLines = 0;
                     List<List<String>> resultRows = Arrays.asList(
-                            Arrays.asList(f.toPath().toString().substring(f.toPath().toString().indexOf("ecco\\")+5).replace(",","and"), "not", truepositiveLines.toString(), falsepositiveLines.toString(), falsenegativeLines.toString(), originaltotalLines.toString(), eccototalLines.toString())
+                            Arrays.asList(f.toPath().toString().substring(f.toPath().toString().indexOf("ecco\\") + 5).replace(",", "and"), "not", truepositiveLines.toString(), falsepositiveLines.toString(), falsenegativeLines.toString(), originaltotalLines.toString(), eccototalLines.toString())
                     );
                     for (List<String> rowData : resultRows) {
                         csvWriter.append(String.join(",", rowData));
@@ -229,7 +292,7 @@ public class CompareVariants {
                 List<String> original = Files.readAllLines(fEcco.toPath());
                 Boolean existJustEcco = true;
                 for (File f : filesVariant) {
-                    if (fEcco.toPath().toString().substring(fEcco.toPath().toString().indexOf("checkout\\")+9).equals(f.toPath().toString().substring(f.toPath().toString().indexOf("ecco\\")+5))) {
+                    if (fEcco.toPath().toString().substring(fEcco.toPath().toString().indexOf("checkout\\") + 9).equals(f.toPath().toString().substring(f.toPath().toString().indexOf("ecco\\") + 5))) {
                         existJustEcco = false;
                     }
                 }
@@ -244,7 +307,7 @@ public class CompareVariants {
                     truepositiveLines = eccototalLines - (falsepositiveLines);
 
                     List<List<String>> resultRows = Arrays.asList(
-                            Arrays.asList(fEcco.toPath().toString().substring(fEcco.toPath().toString().indexOf("checkout\\")+9).replace(",","and"), "justOnRetrieved", truepositiveLines.toString(), falsepositiveLines.toString(), falsenegativeLines.toString(), originaltotalLines.toString(), eccototalLines.toString())
+                            Arrays.asList(fEcco.toPath().toString().substring(fEcco.toPath().toString().indexOf("checkout\\") + 9).replace(",", "and"), "justOnRetrieved", truepositiveLines.toString(), falsepositiveLines.toString(), falsenegativeLines.toString(), originaltotalLines.toString(), eccototalLines.toString())
                     );
                     for (List<String> rowData : resultRows) {
                         csvWriter.append(String.join(",", rowData));
@@ -255,7 +318,7 @@ public class CompareVariants {
                 //compare other type files
                 Boolean existJustEcco = true;
                 for (File f : filesVariant) {
-                    if (fEcco.toPath().toString().substring(fEcco.toPath().toString().indexOf("checkout\\")+9).equals(f.toPath().toString().substring(f.toPath().toString().indexOf("ecco\\")+5))) {
+                    if (fEcco.toPath().toString().substring(fEcco.toPath().toString().indexOf("checkout\\") + 9).equals(f.toPath().toString().substring(f.toPath().toString().indexOf("ecco\\") + 5))) {
                         existJustEcco = false;
                     }
                 }
@@ -268,7 +331,7 @@ public class CompareVariants {
                     truepositiveLines = eccototalLines - (falsepositiveLines);
 
                     List<List<String>> resultRows = Arrays.asList(
-                            Arrays.asList(fEcco.toPath().toString().substring(fEcco.toPath().toString().indexOf("checkout\\")+9).replace(",","and"), "justOnRetrieved", truepositiveLines.toString(), falsepositiveLines.toString(), falsenegativeLines.toString(), originaltotalLines.toString(), eccototalLines.toString())
+                            Arrays.asList(fEcco.toPath().toString().substring(fEcco.toPath().toString().indexOf("checkout\\") + 9).replace(",", "and"), "justOnRetrieved", truepositiveLines.toString(), falsepositiveLines.toString(), falsenegativeLines.toString(), originaltotalLines.toString(), eccototalLines.toString())
                     );
                     for (List<String> rowData : resultRows) {
                         csvWriter.append(String.join(",", rowData));
@@ -318,7 +381,7 @@ public class CompareVariants {
             checkoutfile.mkdir();
             service.setBaseDir(pathcheckout);
             timeBefore = System.currentTimeMillis();
-            System.out.println("config: "+config);
+            System.out.println("config: " + config);
             service.checkout(config);
             System.out.println("checked out!");
             timeAfter = System.currentTimeMillis();
@@ -453,7 +516,7 @@ public class CompareVariants {
     }
 
 
-    public void gitCommit(File srcFolder, Path OUTPUT_DIR, Map<String,String> configsToCommit) throws IOException {
+    public void gitCommit(File srcFolder, Path OUTPUT_DIR, Map<String, String> configsToCommit) throws IOException {
 
         for (Map.Entry<String, String> config : configsToCommit.entrySet()) {
             Path variant_dir = Paths.get(String.valueOf(srcFolder));
@@ -463,7 +526,7 @@ public class CompareVariants {
             GitHelper gh = new GitHelper();
             File dstGitProject = new File(String.valueOf(folderGit));
             try {
-                gh.gitCommitAndCheckout(srcFolder.getAbsolutePath(),dstGitProject.getAbsolutePath(), config.getValue(), config.getKey());
+                gh.gitCommitAndCheckout(srcFolder.getAbsolutePath(), dstGitProject.getAbsolutePath(), config.getValue(), config.getKey());
             } catch (GitAPIException e) {
                 e.printStackTrace();
             }
