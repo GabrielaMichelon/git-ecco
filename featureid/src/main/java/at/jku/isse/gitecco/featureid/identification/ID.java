@@ -7,15 +7,13 @@ import at.jku.isse.gitecco.featureid.featuretree.visitor.GetAllFeaturesDefinesIn
 import at.jku.isse.gitecco.featureid.type.FeatureType;
 import at.jku.isse.gitecco.featureid.type.TraceableFeature;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ID {
 
     /**
      * Identifies all features and their types that occur in a tree of a commit.
+     *
      * @param tree
      * @return
      */
@@ -47,7 +45,7 @@ public class ID {
             allincVisitor.reset();
             allDefines.clear();
 
-            if(child instanceof SourceFileNode) {
+            if (child instanceof SourceFileNode) {
                 child.accept(allincVisitor);
 
                 // use includes to get all other defines.
@@ -61,7 +59,7 @@ public class ID {
                 for (IncludeNode include : allincVisitor.getIncludes()) {
                     definesVisitor.reset();
                     FileNode tmpF = tree.getChild(include.getFileName());
-                    if(tmpF != null) tmpF.accept(definesVisitor);
+                    if (tmpF != null) tmpF.accept(definesVisitor);
                     for (DefineNode define : definesVisitor.getDefines()) {
                         //just acting like undefs are just defines because in this scenario it does not matter
                         allDefines.add(new Define(define.getMacroName(), null, include.getLineInfo(), (ConditionalNode) include.getParent()));
@@ -76,21 +74,21 @@ public class ID {
                         type = featureMap.get(entry.getKey());
                         boolean sameName = entry.getKey().getName().equals(define.getMacroName());
                         int lineResult = entry.getValue().compareTo(define.getLineInfo());
-                        if(sameName && lineResult < 0) {
+                        if (sameName && lineResult < 0) {
                             //feature is defined but also appears before its define:
                             featureMap.put(entry.getKey(), FeatureType.TRANSIENT);
                             System.err.println("Feature: " + entry.getKey().getName() + " is transient at some point!");
                             break;
-                        } else if(sameName && lineResult >= 0) {
+                        } else if (sameName && lineResult >= 0) {
                             //feature is defined, and never (at least until this define) appears before its define:
-                            if(type == null || !type.equals(FeatureType.TRANSIENT))
+                            if (type == null || !type.equals(FeatureType.TRANSIENT))
                                 featureMap.put(entry.getKey(), FeatureType.INTERNAL);
                         }
                     }
 
                     type = featureMap.get(entry.getKey());
                     //if the feature has never been defined in this file it is external:
-                    if(type == null || type.equals(FeatureType.EXTERNAL))
+                    if (type == null || type.equals(FeatureType.EXTERNAL))
                         featureMap.put(entry.getKey(), FeatureType.EXTERNAL);
                 }
             }
@@ -101,16 +99,19 @@ public class ID {
     /**
      * Evaluates the map that results from analyzing one commit.
      * For every occurrence of a feature the counter is increased corresponding to its types.
+     *
      * @param evalList A list of traceable features.
-     * @param map The map that results from the id method
+     * @param map      The map that results from the id method
      * @return the list that was passed.
      */
-    public static List<TraceableFeature> evaluateFeatureMap(List<TraceableFeature> evalList, Map<Feature, FeatureType> map) {
+    public static List<TraceableFeature> evaluateFeatureMap(List<TraceableFeature> evalList, Map<Feature, FeatureType> map, Long commitNumber) {
         for (Map.Entry<Feature, FeatureType> entry : map.entrySet()) {
-            if(evalList.contains(entry.getKey())) {
+            if (evalList.contains(entry.getKey())) {
                 evalList.get(evalList.indexOf(entry.getKey())).inc(entry.getValue());
+                evalList.get(evalList.indexOf(entry.getKey())).setListcommit(commitNumber, true);
             } else {
                 evalList.add(new TraceableFeature(entry.getKey()).inc(entry.getValue()));
+                evalList.get(evalList.indexOf(entry.getKey())).setListcommit(commitNumber, true);
             }
         }
         return evalList;

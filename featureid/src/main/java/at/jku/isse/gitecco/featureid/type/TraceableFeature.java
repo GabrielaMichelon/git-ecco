@@ -2,8 +2,13 @@ package at.jku.isse.gitecco.featureid.type;
 
 import at.jku.isse.gitecco.core.type.Feature;
 
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 public class TraceableFeature extends Feature {
 	private Integer externalOcc, internalOcc, transientOcc;
+	private LinkedHashMap<Long, Boolean> commitList =  new LinkedHashMap<>();
 
 	public TraceableFeature(String name) {
 		super(name);
@@ -17,6 +22,10 @@ public class TraceableFeature extends Feature {
 		externalOcc = 0;
 		internalOcc = 0;
 		transientOcc = 0;
+	}
+
+	public void setListcommit(Long commit, boolean present){
+		this.commitList.put(commit,present);
 	}
 
 	/**
@@ -53,5 +62,9 @@ public class TraceableFeature extends Feature {
 
 	public Integer getTotalOcc() {
 		return externalOcc + internalOcc + transientOcc;
+	}
+
+	public Map<Long, Boolean> getCommitList() {
+		return commitList;
 	}
 }

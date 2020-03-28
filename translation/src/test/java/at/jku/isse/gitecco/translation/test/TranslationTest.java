@@ -21,6 +21,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.*;
+import java.nio.charset.MalformedInputException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -31,9 +32,9 @@ import static org.chocosolver.solver.constraints.nary.cnf.LogOp.*;
 public class TranslationTest {
 
     public final String repo_path = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-11-02-2020\\SQLite\\sqlite";
-    public final String resultsCSVs_path = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-11-02-2020\\RandomMarlin";
-    public final String resultMetrics_path = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-11-02-2020\\RandomMarlin\\variant_results";
-    public final String configuration_path = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-11-02-2020\\Marlin\\configurations.csv";
+    public final String resultsCSVs_path = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-11-02-2020\\compute_runtime_commit_again\\SQLite";
+    public final String resultMetrics_path = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-11-02-2020\\compute_runtime_commit_again\\SQLite\\variant_results";
+    public final String configuration_path = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-11-02-2020\\compute_runtime_commit_again\\SQLite\\configurations.csv";
     public final String configurationRandomVariants_path = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-11-02-2020\\Marlin\\randomconfigurations.csv";
     //git checkout $(git log --branches -1 --pretty=format:"%H")
 
@@ -56,7 +57,7 @@ public class TranslationTest {
 
         Float totalmeanRunEccoCommit = Float.valueOf(0), totalmeanRunEccoCheckout = Float.valueOf(0), totalmeanRunPPCheckoutCleanVersion = Float.valueOf(0), totalmeanRunPPCheckoutGenerateVariant = Float.valueOf(0), totalmeanRunGitCommit = Float.valueOf(0), totalmeanRunGitCheckout = Float.valueOf(0);
         Float totaltotalnumberFiles = Float.valueOf(0), totalmatchesFiles = Float.valueOf(0), totaleccototalLines = Float.valueOf(0), totaloriginaltotalLines = Float.valueOf(0), totalmissingFiles = Float.valueOf(0), totalremainingFiles = Float.valueOf(0), totaltotalVariantsMatch = Float.valueOf(0), totaltruepositiveLines = Float.valueOf(0), totalfalsepositiveLines = Float.valueOf(0), totalfalsenegativeLines = Float.valueOf(0),
-                totaltruepositiveLinesEachFile = Float.valueOf(0), totalfalsepositiveLinesEachFile = Float.valueOf(0), totalfalsenegativeLinesEachFile = Float.valueOf(0), totalnumberTotalFilesEachVariant = Float.valueOf(0), totalmatchFilesEachVariant = Float.valueOf(0), totaleccototalLinesEachFile = Float.valueOf(0), totaloriginaltotalLinesEachFile = Float.valueOf(0),  totalnumberCSV = Float.valueOf(0);
+                totaltruepositiveLinesEachFile = Float.valueOf(0), totalfalsepositiveLinesEachFile = Float.valueOf(0), totalfalsenegativeLinesEachFile = Float.valueOf(0), totalnumberTotalFilesEachVariant = Float.valueOf(0), totalmatchFilesEachVariant = Float.valueOf(0), totaleccototalLinesEachFile = Float.valueOf(0), totaloriginaltotalLinesEachFile = Float.valueOf(0), totalnumberCSV = Float.valueOf(0);
         for (int j = 0; j < folder.length; j++) {
             File[] lista = folder[j].listFiles();
             Float meanRunEccoCommit = Float.valueOf(0), meanRunEccoCheckout = Float.valueOf(0), meanRunPPCheckoutCleanVersion = Float.valueOf(0), meanRunPPCheckoutGenerateVariant = Float.valueOf(0), meanRunGitCommit = Float.valueOf(0), meanRunGitCheckout = Float.valueOf(0);
@@ -82,8 +83,12 @@ public class TranslationTest {
                                 meanRunGitCheckout += Float.valueOf(runtimes[7]);
                             }
                         }
-                        totalmeanRunEccoCommit+=meanRunEccoCommit; totalmeanRunEccoCheckout+=meanRunEccoCheckout; totalmeanRunGitCommit+=meanRunGitCommit; totalmeanRunGitCheckout+=meanRunGitCheckout;
-                        totalmeanRunPPCheckoutCleanVersion+=meanRunPPCheckoutCleanVersion; totalmeanRunPPCheckoutGenerateVariant+=meanRunPPCheckoutGenerateVariant;
+                        totalmeanRunEccoCommit += meanRunEccoCommit;
+                        totalmeanRunEccoCheckout += meanRunEccoCheckout;
+                        totalmeanRunGitCommit += meanRunGitCommit;
+                        totalmeanRunGitCheckout += meanRunGitCheckout;
+                        totalmeanRunPPCheckoutCleanVersion += meanRunPPCheckoutCleanVersion;
+                        totalmeanRunPPCheckoutGenerateVariant += meanRunPPCheckoutGenerateVariant;
                     } else {
                         Float qtdLines = Float.valueOf(matchesVariants.size() - 4);
                         //totalnumberFiles += qtdLines;
@@ -101,16 +106,16 @@ public class TranslationTest {
                             originaltotalLinesEachFile = Float.valueOf(Integer.valueOf(line[5]));
                             eccototalLinesEachFile = Float.valueOf(Integer.valueOf(line[6]));
 
-                            totaltruepositiveLines+=truepositiveLines;
-                            totalfalsepositiveLines+=falsepositiveLines;
-                            totalfalsenegativeLines+=falsenegativeLines;
-                            totaltruepositiveLinesEachFile+=totaltruepositiveLinesEachFile;
-                            totalfalsepositiveLinesEachFile+=falsepositiveLinesEachFile;
-                            totalfalsenegativeLinesEachFile+=falsenegativeLinesEachFile;
-                            totaloriginaltotalLines+=originaltotalLines;
-                            totaleccototalLines+=eccototalLines;
-                            totaloriginaltotalLinesEachFile+=originaltotalLinesEachFile;
-                            totaleccototalLinesEachFile+=eccototalLinesEachFile;
+                            totaltruepositiveLines += truepositiveLines;
+                            totalfalsepositiveLines += falsepositiveLines;
+                            totalfalsenegativeLines += falsenegativeLines;
+                            totaltruepositiveLinesEachFile += totaltruepositiveLinesEachFile;
+                            totalfalsepositiveLinesEachFile += falsepositiveLinesEachFile;
+                            totalfalsenegativeLinesEachFile += falsenegativeLinesEachFile;
+                            totaloriginaltotalLines += originaltotalLines;
+                            totaleccototalLines += eccototalLines;
+                            totaloriginaltotalLinesEachFile += originaltotalLinesEachFile;
+                            totaleccototalLinesEachFile += eccototalLinesEachFile;
 
                             if (line[1].equals("true")) {
                                 if (Float.compare(originaltotalLinesEachFile, eccototalLinesEachFile) == 0 && Float.compare(truepositiveLinesEachFile, originaltotalLinesEachFile) == 0) {
@@ -176,7 +181,7 @@ public class TranslationTest {
 
             //csv to report new features and features changed per git commit of the project
             try {
-                 List<List<String>> headerRows = Arrays.asList(Arrays.asList(folder[j].getName()),
+                List<List<String>> headerRows = Arrays.asList(Arrays.asList(folder[j].getName()),
                         Arrays.asList("PrecisionVariant", "RecallVariant", "F1ScoreVariant", "PrecisionFiles", "RecallFiles", "F1ScoreFiles", "PrecisionLines", "RecalLines", "F1ScoreLines"),
                         Arrays.asList(precisionVariants.toString(), recallVariants.toString(), f1scoreVariants.toString(), precisionFiles.toString(), recallFiles.toString(), f1scoreFiles.toString(), precisionLines.toString(), recallLines.toString(), f1scorelines.toString()),
                         Arrays.asList("MeanRuntimeEccoCommit", "MeanRuntimeEccoCheckout", "MeanRuntimeGitCommit", "MeanRuntimeGitCheckout"),
@@ -339,7 +344,7 @@ public class TranslationTest {
             e.printStackTrace();
         }
         System.out.println(eccototalLines);
-        System.out.println("Total lines inserted: "+falsepositiveLines+ "\nTotal lines deleted: "+falsenegativeLines);
+        System.out.println("Total lines inserted: " + falsepositiveLines + "\nTotal lines deleted: " + falsenegativeLines);
     }
 
     //to compute the metrics of variants this is not considering all the files match (just if the file exists) and to compute files metrics this is not considering all the lines match (just if the file exists)
@@ -457,6 +462,69 @@ public class TranslationTest {
         }
     }
 
+
+    //generate clean version to count number of lines for computing SLOC
+    @Test
+    public void generateCleanVersion() {
+        PreprocessorHelper pph = new PreprocessorHelper();
+        File gitFolder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-11-02-2020\\cleanVersion\\marlin\\Marlin");
+        File cleanFolder = new File(gitFolder.getParent(), "clean");
+        String dirs = null;
+        ArrayList<String> listDirs = new ArrayList<>();
+        listDirs.add(dirs);
+        pph.generateCleanVersion(gitFolder, cleanFolder, listDirs);
+    }
+
+    //count SLOC
+    @Test
+    public void countLinesOfCode() throws IOException {
+        List<String> fileTypes = new LinkedList<String>();
+        File gitFolder = new File("C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-11-02-2020\\cleanVersion\\sqlite\\sqlite");
+        fileTypes.add("c");
+        fileTypes.add("cpp");
+        fileTypes.add("h");
+        fileTypes.add("hpp");
+        fileTypes.add("md");
+        fileTypes.add("java");
+        LinkedList<File> files = new LinkedList<>();
+        getFilesToProcess(gitFolder, files);
+        int countLines = 0;
+        //files that are in ecco and variant
+        for (File f : files) {
+            List<String> original = new ArrayList<>();
+            String extension = f.getName().substring(f.getName().lastIndexOf('.') + 1);
+            if (fileTypes.contains(extension) && !f.isDirectory()) {
+                try {
+                    original = Files.readAllLines(f.toPath());
+                } catch (IOException e) {
+                    File filenew = new File(String.valueOf(f.toPath()));
+                    BufferedReader br = null;
+                    br = new BufferedReader(new FileReader(filenew.getAbsoluteFile()));
+                    String sCurrentLine;
+                    while ((sCurrentLine = br.readLine()) != null) {
+                        original.add(sCurrentLine);
+                    }
+                    br.close();
+                }
+            }
+            countLines+=original.size();
+        }
+        System.out.println("Size: "+countLines);
+    }
+
+    private void getFilesToProcess(File f, List<File> files) {
+        if (f.isDirectory()) {
+            for (File file : f.listFiles()) {
+                if (!files.contains(f) && !file.getName().equals(f.getName()))
+                    files.add(f);
+                getFilesToProcess(file, files);
+            }
+        } else if (f.isFile()) {
+            if (!f.getName().equals(".config") && !f.getName().equals(".hashes") && !f.getName().equals(".warnings"))
+                files.add(f);
+        }
+    }
+
     //checkout each combination of feature revisions (configuration) and its artifacts (variant code) from ecco - generation of variant by the stored traces made before (ecco commit)
     @Test
     public void testCheckoutEcco() throws IOException {
@@ -464,10 +532,10 @@ public class TranslationTest {
         ArrayList<String> configsToCheckout = new ArrayList<>();
         //File configuration = new File(configuration_path);
         File configuration = new File(configurationRandomVariants_path);
-        Path OUTPUT_DIR = Paths.get(resultMetrics_path+File.separator);
+        Path OUTPUT_DIR = Paths.get(resultMetrics_path + File.separator);
         //File eccoFolder = new File(resultsCSVs_path+File.separator+"ecco"+File.separator);
-        File eccoFolder = new File(resultsCSVs_path+File.separator+"randomVariants"+File.separator);
-        File checkoutFolder = new File(resultMetrics_path+File.separator+"checkout"+File.separator);
+        File eccoFolder = new File(resultsCSVs_path + File.separator + "randomVariants" + File.separator);
+        File checkoutFolder = new File(resultMetrics_path + File.separator + "checkout" + File.separator);
         BufferedReader csvReader = null;
         try {
             csvReader = new BufferedReader(new FileReader(configuration));
@@ -501,9 +569,9 @@ public class TranslationTest {
     public void testEccoCommit() throws IOException {
         CompareVariants cV = new CompareVariants();
         ArrayList<String> configsToCommit = new ArrayList<>();
-        File configuration = new File(configurationRandomVariants_path);
+        File configuration = new File(configuration_path);
         Path OUTPUT_DIR = Paths.get(resultMetrics_path);
-        File eccoFolder = new File(resultsCSVs_path+File.separator+"ecco"+File.separator);
+        File eccoFolder = new File(resultsCSVs_path + File.separator + "ecco" + File.separator);
         BufferedReader csvReader = null;
         try {
             csvReader = new BufferedReader(new FileReader(configuration));
@@ -539,7 +607,7 @@ public class TranslationTest {
         CompareVariants cV = new CompareVariants();
         Map<String, String> configsToCommit = new HashMap<>();
         File configuration = new File(configuration_path);
-        Path OUTPUT_DIR = Paths.get(resultMetrics_path+File.separator+"gitCommit");
+        Path OUTPUT_DIR = Paths.get(resultMetrics_path + File.separator + "gitCommit");
         File srcFolder = new File(repo_path);
         BufferedReader csvReader = null;
         try {
@@ -820,7 +888,7 @@ public class TranslationTest {
     }
 
     @Test
-    public void random(){
+    public void random() {
         Random random = new Random();
         int x = random.nextInt(100);
         System.out.println(x);

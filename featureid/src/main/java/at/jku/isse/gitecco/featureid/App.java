@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -21,14 +22,15 @@ public class App extends Thread{
 
     //private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\test-featureid";
     //private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin";
-    private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\test\\feat_id\\sqlite";
+    private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\systems\\Bison\\bison";
     //private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite\\sqlite";
     //private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\libssh-mirror\\libssh-mirror";
     // "C:\\obermanndavid\\git-to-ecco\\test_repo5"
     // "C:\\obermanndavid\\git-ecco-test\\test_featureid\\betaflight"
     // "C:\\obermanndavid\\git-ecco-test\\test_featureid\\Marlin"
     //private final static String CSV_PATH = "C:\\Users\\gabil\\Desktop\\results\\results.csv";
-    private final static String CSV_PATH = "C:\\Users\\gabil\\Desktop\\test\\feat_id\\results_sqlite_50.csv";
+    private final static String CSV_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\systems\\feature_identification\\results_bison.csv";
+    private final static String FEATURES_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\systems\\feature_identification\\bison\\";
     private final static boolean DISPOSE = true;
     private final static boolean DEBUG = true;
     private final static int MAX_COMMITS = 500;
@@ -82,19 +84,19 @@ public class App extends Thread{
                     if(PARALLEL) {
                         tasks.add(
                                 executorService.submit(() -> {
-                                    ID.evaluateFeatureMap(evaluation, ID.id(gc.getTree()));
+                                    ID.evaluateFeatureMap(evaluation, ID.id(gc.getTree()),gc.getNumber());
                                     //dispose tree if it is not needed -> for memory saving reasons.
                                     if (dispose) gc.disposeTree();
                                 })
                         );
                     } else {
-                        ID.evaluateFeatureMap(evaluation, ID.id(gc.getTree()));
+                        ID.evaluateFeatureMap(evaluation, ID.id(gc.getTree()), gc.getNumber());
                         //dispose tree if it is not needed -> for memory saving reasons.
                         if (dispose) gc.disposeTree();
                     }
                 }
         );
-        String[] dirFiles = null;
+
 
         if(EVERYCOMMIT) {
             gitHelper.getAllCommits(commitList);
@@ -153,6 +155,21 @@ public class App extends Thread{
                             feature.getInternalOcc().toString(),
                             feature.getTransientOcc().toString()
             });
+            FileWriter commitList = null;
+            try {
+                //second parameter is boolean for appending --> never append
+                final File featureFile = new File(FEATURES_PATH+feature.getName()+".csv");
+                commitList  = new FileWriter(featureFile, false);
+                CSVWriter writerFeature = new CSVWriter(commitList, ';', CSVWriter.NO_QUOTE_CHARACTER);
+                writerFeature.writeNext(new String[]{"commitNumber","Present"});
+                for (Map.Entry<Long, Boolean> commit: feature.getCommitList().entrySet()) {
+                    writerFeature.writeNext(new String[]{String.valueOf(commit.getKey()), String.valueOf(commit.getValue())});
+                }
+                writerFeature.close();
+            } catch (IOException ioe) {
+                System.out.println("Error while handling the csv file output!");
+            }
+
         }
 
         // closing writer connection

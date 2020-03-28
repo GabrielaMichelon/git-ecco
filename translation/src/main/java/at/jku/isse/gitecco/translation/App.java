@@ -28,12 +28,17 @@ public class App {
     public static void main(String... args) throws Exception {
         final int MAXCOMMITS = 200;
         //set as true to generate random variants or false to just generate original variants
-        final boolean generateRandomVariants = true;
+        final boolean generateRandomVariants = false;
         //set as true to generate PP variants or false to just generate configurations to generate random variants
         final boolean generateOriginalVariants = false;
         //TODO: planned arguments: DEBUG, dispose tree, max commits, repo path, csv path(feature id), outpath for ecco
         //String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\bug-fixed\\Random_Variants\\Marlin\\Marlin";
-        String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-11-02-2020\\SQLite\\sqlite";
+        String repoPath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\systems\\Bison\\bison";
+        String[] featuresToAdd = {"BASE","TRACE","DEBUG","MSDOS","eta10","__GO32__","DONTDEF","VMS","HAVE_ALLOCA_H","__GNUC__","_AIX","__STDC__","HAVE_STDLIB_H","HAVE_MEMORY_H","STDC_HEADERS"};
+        /*String[] featuresToAdd = {"BASE","PKZIP_BUG_WORKAROUND","__TURBOC__","NO_STDLIB_H","isgraph","lint","S_IFMPB","NO_STRING_H","__STDC__","MACOS",
+        "FEATURE_RECURSIVE","BB_BLOCK_DEVICE","S_IFIFO","MPW","atarist","TOPS20","NDIR","__OS2__","NO_ASM","FULL_SEARCH","S_IFCHR","SIGHUP","MEDIUM_MEM","S_IFNWK",
+        "S_IFDIR","__GLIBC__","DEBUG","S_IFREG","__ZTC__","unix","SYSNDIR","UNALIGNED_OK","VMS","__GNU_LIBRARY__","pyr","__EMX__","__cplusplus","isblank","__GNUC__",
+        "_MSC_VER","S_IFBLK","DUMP_BL_TREE","__50SERIES","WIN32","__MSDOS__","VAXC","NTFAT","TOSFS","S_IFSOCK","AMIGA","OS2FAT","NO_TIME_H","__BORLANDC__","FORCE_METHOD","ATARI"};
         //String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\libssh-mirror\\libssh-mirror";
         //String repoPath = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite\\sqlite";
         //optional features of the project obtained by the featureID (chosen that which is in almost cases external feature)
@@ -82,8 +87,8 @@ public class App {
                 "HAVE_SYS_TYPES_H", "HAVE_STRTOLL", "HAVE_PWD_H", "HAVE_FCNTL_H", "HAVE_OPENNET_H", "TIME_WITH_SYS_TIME", "HAVE_DIRENT_H",
                 "HAVE_NETDB_H", "__WIN32__", "HAVE_INTTYPES_H", "HAVE_LIBOPENNET", "HAVE_SYS_STAT_H", "__MINGW32__", "HAVE_PAM_PAM_APPL_H",
                 "HAVE_SECURITY_PAM_APPL_H", "HAVE_LIBGCRYPT", "HAVE_OPENSSL_DES_H", "HAVE_LIBCRYPTO", "GCRYPT"};
-        //SQLITE 100 or 50 commits = 9  features*/
-        String[] featuresToAdd = {"YYERRORSYMBOL", "TEST_COMPARE", "_WIN32", "WIN32", "TEST", "NDEBUG", "BASE", "NO_READLINE", "TCLSH"};
+        //SQLITE 100 or 50 commits = 9  features
+        String[] featuresToAdd = {"YYERRORSYMBOL", "TEST_COMPARE", "_WIN32", "WIN32", "TEST", "NDEBUG", "BASE", "NO_READLINE", "TCLSH"};*/
         ArrayList<String> featureList = new ArrayList<>();
 
         for (String feat : featuresToAdd) {
@@ -112,6 +117,7 @@ public class App {
 
         String fileReportFeature = "features_report_each_project_commit.csv";
         //csv to report new features and features changed per git commit of the project
+        //RQ.2 How many features changed per Git commit?
         try {
             FileWriter csvWriter = new FileWriter(gitRepositoryFolder.getParent() + File.separator + fileReportFeature);
             List<List<String>> headerRows = Arrays.asList(
@@ -170,7 +176,6 @@ public class App {
 
         List<String> changedFiles = new ArrayList<>();
         List<String> changedFilesNext = new ArrayList<>();
-        List<String> changedFilesAux = new ArrayList<>();
         final GitCommit[] gcPrevious = {null};
         final Boolean[] previous = {true};
         commitList.addGitCommitListener((gc, gcl) -> {
@@ -592,10 +597,16 @@ public class App {
 
             countFeaturesChanged[0] = 0;
             newFeatures[0] = 0;
-            for (Map.Entry<Feature, Integer> featureRevision : featureVersions.entrySet()) {
+           for (Map.Entry<Feature, Integer> featureRevision : featureVersions.entrySet()) {
                 System.out.println(featureRevision.getKey() + "." + featureRevision.getValue());
             }
-
+            //RQ.2 How many times one feature changed along a number of Git commits?
+            if(gc.getNumber() == commitList.size()){
+                for (Map.Entry<Feature, Integer> featureRevision : featureVersions.entrySet()) {
+                    if(featureRevision.getValue() > 1)
+                        System.out.println(featureRevision.getKey() + " Changed " + (featureRevision.getValue()-1)+" times.");
+                }
+            }
 
         });
 
