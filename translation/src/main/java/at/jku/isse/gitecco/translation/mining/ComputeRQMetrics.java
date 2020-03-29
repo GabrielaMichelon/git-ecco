@@ -1,10 +1,8 @@
 package at.jku.isse.gitecco.translation.mining;
 
 import at.jku.isse.gitecco.core.git.Change;
-import at.jku.isse.gitecco.core.tree.nodes.ConditionalNode;
-import at.jku.isse.gitecco.core.tree.nodes.FileNode;
-import at.jku.isse.gitecco.core.tree.nodes.RootNode;
-import at.jku.isse.gitecco.core.tree.nodes.SourceFileNode;
+import at.jku.isse.gitecco.core.tree.nodes.*;
+import at.jku.isse.gitecco.core.tree.visitor.GetAllFeaturesVisitor;
 import at.jku.isse.gitecco.core.type.Feature;
 import at.jku.isse.gitecco.translation.constraintcomputation.util.ConstraintComputer;
 import scala.Int;
@@ -28,6 +26,7 @@ public class ComputeRQMetrics {
         Set<ConditionalNode> conditionalNodes = new HashSet<>();
         Set<ConditionalNode> negatedConditionalNodes = new HashSet<>();
         final ConstraintComputer constraintComputer = new ConstraintComputer(featureNamesList);
+        Feature baseFeature = new Feature("BASE");
         for (FileNode child : tree.getChildren()) {
             if (child instanceof SourceFileNode) {
                 int from = ((SourceFileNode) child).getBaseNode().getLineFrom();
@@ -40,7 +39,7 @@ public class ComputeRQMetrics {
                 String file = child.getFilePath();
                 Boolean first = true;
                 int last = 0;
-                Feature baseFeature = new Feature("BASE");
+                //RQ3.LOC
                 if (visitor.getLinesConditionalNodes().size() != 0) {
                     for (Map.Entry<Integer, Integer> linesBase : visitor.getLinesConditionalNodes().entrySet()) {
                         FeatureCharacteristic featureCharacteristic = featureMap.get(baseFeature);
@@ -66,6 +65,7 @@ public class ComputeRQMetrics {
                                 last = linesBase.getValue();
                             }
                         }
+                        //RQ3: SD files
                         if (!featureCharacteristic.getScatteringDegreeFiles().contains(file)) {
                             featureCharacteristic.addScatteringDegreeFiles(file);
                         }
@@ -87,6 +87,7 @@ public class ComputeRQMetrics {
                     FeatureCharacteristic featureCharacteristic = featureMap.get(baseFeature);
                     if (featureCharacteristic == null)
                         featureCharacteristic = new FeatureCharacteristic();
+                    //RQ3: SD files
                     if (!featureCharacteristic.getScatteringDegreeFiles().contains(file)) {
                         featureCharacteristic.addScatteringDegreeFiles(file);
                     }
@@ -102,6 +103,20 @@ public class ComputeRQMetrics {
         Set<Feature> changed = new HashSet<>();
 
         for (ConditionalNode cNode : conditionalNodes) {
+            GetAllFeaturesVisitor visitorFeatures = new GetAllFeaturesVisitor();
+            cNode.accept(visitorFeatures);
+            List<Feature> featureInteractions = new ArrayList<>();
+            featureInteractions.addAll(visitorFeatures.getAllFeatures());
+            featureInteractions.remove(baseFeature);
+            int count=0;
+            if(featureInteractions.size()>1){
+                for (Feature featInteraction:featureInteractions) {
+                    if(features.contains(featInteraction)){
+                        count++;
+                    }
+                }
+            }
+
             Map<Feature, Integer> config;
             config = constraintComputer.computeConfig(cNode, tree);
             changed = new HashSet<>();
@@ -119,11 +134,28 @@ public class ComputeRQMetrics {
                 FeatureCharacteristic featureCharacteristic = featureMap.get(featsConditionalStatement);
                 if (featureCharacteristic == null)
                     featureCharacteristic = new FeatureCharacteristic();
+                //RQ3.LOC
                 featureCharacteristic.setLinesOfCode(featureCharacteristic.getLinesOfCode() - 1 + (cNode.getLineTo() - cNode.getLineFrom()));
+                //RQ3: SD #ifdef
                 featureCharacteristic.setScatteringDegreeIFs(featureCharacteristic.getScatteringDegreeIFs() + 1);
                 String file = cNode.getParent().getParent().getContainingFile().getFilePath();
+                //RQ3: SD files
                 if(!featureCharacteristic.getScatteringDegreeFiles().contains(file)) {
                     featureCharacteristic.addScatteringDegreeFiles(file);
+                }
+                //RQ3: TD #ifdef
+                if(count>1){
+                    featureCharacteristic.addTanglingDegreeIFs(count,cNode.getLineTo()-cNode.getLineFrom());
+                }
+                //RQ3: ND #ifdef
+                if(cNode.getChildren().size() > featureCharacteristic.getNestingDegree()){
+                    featureCharacteristic.setNestingDegree(cNode.getChildren().size());
+                }
+                //RQ3: NOTLB OR NONTLB
+                if(cNode.getParent().getParent().getLocalCondition().equals("BASE")){
+                    featureCharacteristic.setNumberOfTopLevelBranches(featureCharacteristic.getNumberOfTopLevelBranches()+1);
+                }else{
+                    featureCharacteristic.setNumberOfNonTopLevelBranches(featureCharacteristic.getNumberOfNonTopLevelBranches()+1);
                 }
                 FeatureCharacteristic finalFeatureCharacteristic = featureCharacteristic;
                 featureMap.computeIfAbsent(featsConditionalStatement, v -> finalFeatureCharacteristic);
@@ -131,6 +163,19 @@ public class ComputeRQMetrics {
             }
         }
         for (ConditionalNode cNode : negatedConditionalNodes) {
+            GetAllFeaturesVisitor visitorFeatures = new GetAllFeaturesVisitor();
+            cNode.accept(visitorFeatures);
+            List<Feature> featureInteractions = new ArrayList<>();
+            featureInteractions.addAll(visitorFeatures.getAllFeatures());
+            featureInteractions.remove(baseFeature);
+            int count=0;
+            if(featureInteractions.size()>1){
+                for (Feature featInteraction:featureInteractions) {
+                    if(features.contains(featInteraction)){
+                        count++;
+                    }
+                }
+            }
             Map<Feature, Integer> config;
             config = constraintComputer.computeConfig(cNode, tree);
             changed = new HashSet<>();
@@ -148,11 +193,37 @@ public class ComputeRQMetrics {
                 FeatureCharacteristic featureCharacteristic = featureMap.get(featsConditionalStatement);
                 if (featureCharacteristic == null)
                     featureCharacteristic = new FeatureCharacteristic();
+                //RQ3.LOC
                 featureCharacteristic.setLinesOfCode(featureCharacteristic.getLinesOfCode() - 1 + (cNode.getLineTo() - cNode.getLineFrom()));
+                //RQ3: SD #ifdef
                 featureCharacteristic.setScatteringDegreeIFs(featureCharacteristic.getScatteringDegreeIFs() + 1);
                 String file = cNode.getParent().getParent().getContainingFile().getFilePath();
+                //RQ3: SD files
                 if(!featureCharacteristic.getScatteringDegreeFiles().contains(file)) {
                     featureCharacteristic.addScatteringDegreeFiles(file);
+                }
+                //RQ3: TD #ifdef
+                if(count>1){
+                    featureCharacteristic.addTanglingDegreeIFs(count,cNode.getLineTo()-cNode.getLineFrom());
+                }
+                //RQ3: ND #ifdef
+                if(cNode.getChildren().size() > featureCharacteristic.getNestingDegree()){
+                    featureCharacteristic.setNestingDegree(cNode.getChildren().size());
+                }
+                //RQ3: NOTLB OR NONTLB
+                if(cNode.getParent().getParent().getLocalCondition().equals("BASE")){
+                    featureCharacteristic.setNumberOfTopLevelBranches(featureCharacteristic.getNumberOfTopLevelBranches()+1);
+                }else{
+                    if(cNode instanceof ELSECondition || cNode instanceof ELIFCondition){
+                        ConditionalNode ifblock = cNode.getParent().getParent().getParent().getIfBlock();
+                        if(ifblock.getParent().getParent().getLocalCondition().equals("BASE")){
+                            featureCharacteristic.setNumberOfTopLevelBranches(featureCharacteristic.getNumberOfTopLevelBranches()+1);
+                        }else{
+                            featureCharacteristic.setNumberOfNonTopLevelBranches(featureCharacteristic.getNumberOfNonTopLevelBranches()+1);
+                        }
+                    }else {
+                        featureCharacteristic.setNumberOfNonTopLevelBranches(featureCharacteristic.getNumberOfNonTopLevelBranches() + 1);
+                    }
                 }
                 FeatureCharacteristic finalFeatureCharacteristic = featureCharacteristic;
                 featureMap.computeIfAbsent(featsConditionalStatement, v -> finalFeatureCharacteristic);

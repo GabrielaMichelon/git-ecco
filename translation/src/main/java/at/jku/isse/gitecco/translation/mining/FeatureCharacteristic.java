@@ -54,8 +54,8 @@ public class FeatureCharacteristic {
         return tanglingDegreeIFs;
     }
 
-    public void setTanglingDegreeIFs(Map<Integer, Integer> tanglingDegreeIFs) {
-        this.tanglingDegreeIFs = tanglingDegreeIFs;
+    public void addTanglingDegreeIFs(Integer numberFeatures, Integer numberlines) {
+        this.tanglingDegreeIFs.put(numberFeatures,numberlines);
     }
 
     public Integer getTanglingDegreeFiles() {
