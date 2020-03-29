@@ -37,7 +37,7 @@ public class ComputeRQMetrics {
                 child.accept(visitor);
                 conditionalNodes.addAll(visitor.getConditionalNodes());
                 negatedConditionalNodes.addAll(visitor.getNegatedConditionalNodes());
-                //while(from <= to){
+                String file = child.getFilePath();
                 Boolean first = true;
                 int last = 0;
                 Feature baseFeature = new Feature("BASE");
@@ -66,12 +66,15 @@ public class ComputeRQMetrics {
                                 last = linesBase.getValue();
                             }
                         }
+                        if (!featureCharacteristic.getScatteringDegreeFiles().contains(file)) {
+                            featureCharacteristic.addScatteringDegreeFiles(file);
+                        }
                         FeatureCharacteristic finalFeatureCharacteristic = featureCharacteristic;
                         featureMap.computeIfAbsent(baseFeature, v -> finalFeatureCharacteristic);
                         featureMap.computeIfPresent(baseFeature, (k, v) -> finalFeatureCharacteristic);
                     }
-                    if(last!=to){
-                        int add = to-last;
+                    if (last != to) {
+                        int add = to - last;
                         FeatureCharacteristic featureCharacteristic = featureMap.get(baseFeature);
                         if (featureCharacteristic == null)
                             featureCharacteristic = new FeatureCharacteristic();
@@ -80,11 +83,14 @@ public class ComputeRQMetrics {
                         featureMap.computeIfAbsent(baseFeature, v -> finalFeatureCharacteristic);
                         featureMap.computeIfPresent(baseFeature, (k, v) -> finalFeatureCharacteristic);
                     }
-                }else{
+                } else {
                     FeatureCharacteristic featureCharacteristic = featureMap.get(baseFeature);
                     if (featureCharacteristic == null)
                         featureCharacteristic = new FeatureCharacteristic();
-                    featureCharacteristic.setLinesOfCode(featureCharacteristic.getLinesOfCode() + (to-from));
+                    if (!featureCharacteristic.getScatteringDegreeFiles().contains(file)) {
+                        featureCharacteristic.addScatteringDegreeFiles(file);
+                    }
+                    featureCharacteristic.setLinesOfCode(featureCharacteristic.getLinesOfCode() + (to - from));
                     FeatureCharacteristic finalFeatureCharacteristic = featureCharacteristic;
                     featureMap.computeIfAbsent(baseFeature, v -> finalFeatureCharacteristic);
                     featureMap.computeIfPresent(baseFeature, (k, v) -> finalFeatureCharacteristic);
@@ -108,12 +114,17 @@ public class ComputeRQMetrics {
                 }
                 //changed = constraintComputer.computeChangedFeatures(cNode, config);
             }
+            Map<Feature,List<String>> filesEachFeature = new HashMap<>();
             for (Feature featsConditionalStatement : changed) {
                 FeatureCharacteristic featureCharacteristic = featureMap.get(featsConditionalStatement);
                 if (featureCharacteristic == null)
                     featureCharacteristic = new FeatureCharacteristic();
                 featureCharacteristic.setLinesOfCode(featureCharacteristic.getLinesOfCode() - 1 + (cNode.getLineTo() - cNode.getLineFrom()));
                 featureCharacteristic.setScatteringDegreeIFs(featureCharacteristic.getScatteringDegreeIFs() + 1);
+                String file = cNode.getParent().getParent().getContainingFile().getFilePath();
+                if(!featureCharacteristic.getScatteringDegreeFiles().contains(file)) {
+                    featureCharacteristic.addScatteringDegreeFiles(file);
+                }
                 FeatureCharacteristic finalFeatureCharacteristic = featureCharacteristic;
                 featureMap.computeIfAbsent(featsConditionalStatement, v -> finalFeatureCharacteristic);
                 featureMap.computeIfPresent(featsConditionalStatement, (k, v) -> finalFeatureCharacteristic);
@@ -139,6 +150,10 @@ public class ComputeRQMetrics {
                     featureCharacteristic = new FeatureCharacteristic();
                 featureCharacteristic.setLinesOfCode(featureCharacteristic.getLinesOfCode() - 1 + (cNode.getLineTo() - cNode.getLineFrom()));
                 featureCharacteristic.setScatteringDegreeIFs(featureCharacteristic.getScatteringDegreeIFs() + 1);
+                String file = cNode.getParent().getParent().getContainingFile().getFilePath();
+                if(!featureCharacteristic.getScatteringDegreeFiles().contains(file)) {
+                    featureCharacteristic.addScatteringDegreeFiles(file);
+                }
                 FeatureCharacteristic finalFeatureCharacteristic = featureCharacteristic;
                 featureMap.computeIfAbsent(featsConditionalStatement, v -> finalFeatureCharacteristic);
                 featureMap.computeIfPresent(featsConditionalStatement, (k, v) -> finalFeatureCharacteristic);

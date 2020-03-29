@@ -1,12 +1,13 @@
 package at.jku.isse.gitecco.translation.mining;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
 public class FeatureCharacteristic {
     private Integer linesOfCode;
     private Integer scatteringDegreeIFs;
-    private Integer scatteringDegreeFiles;
+    private ArrayList<String> scatteringDegreeFiles;
     //number of features with the analyzed #IFDEF of a feature revision and number of lines inside its block
     private Map<Integer,Integer> tanglingDegreeIFs;
     private Integer tanglingDegreeFiles;
@@ -17,7 +18,7 @@ public class FeatureCharacteristic {
     public FeatureCharacteristic() {
         this.linesOfCode = 0;
         this.scatteringDegreeIFs = 0;
-        this.scatteringDegreeFiles = 0;
+        this.scatteringDegreeFiles = new ArrayList<>();
         this.tanglingDegreeIFs = new HashMap<>();
         this.tanglingDegreeFiles = 0;
         this.nestingDegree = 0;
@@ -41,12 +42,12 @@ public class FeatureCharacteristic {
         this.scatteringDegreeIFs = scatteringDegreeIFs;
     }
 
-    public Integer getScatteringDegreeFiles() {
+    public ArrayList<String> getScatteringDegreeFiles() {
         return scatteringDegreeFiles;
     }
 
-    public void setScatteringDegreeFiles(Integer scatteringDegreeFiles) {
-        this.scatteringDegreeFiles = scatteringDegreeFiles;
+    public void addScatteringDegreeFiles(String scatteringDegreeFiles) {
+        this.scatteringDegreeFiles.add(scatteringDegreeFiles);
     }
 
     public Map<Integer, Integer> getTanglingDegreeIFs() {
