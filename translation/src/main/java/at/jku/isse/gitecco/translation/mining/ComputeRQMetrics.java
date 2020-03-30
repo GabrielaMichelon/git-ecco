@@ -22,13 +22,11 @@ import java.util.*;
 public class ComputeRQMetrics {
 
     //RQ1
-    public static void CharacteristicsChange () throws Exception {
+    public static void CharacteristicsChange(String[] featuresToAdd, String repoPath) throws Exception {
         final int MAXCOMMITS = 200;
         //set as true to generate PP variants
         final boolean generateOriginalVariants = false;
         //TODO: planned arguments: DEBUG, dispose tree, max commits, repo path, csv path(feature id), outpath for ecco
-        String repoPath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\systems\\Bison\\bison";
-        String[] featuresToAdd = {"BASE", "TRACE", "DEBUG", "MSDOS", "eta10", "__GO32__", "DONTDEF", "VMS", "HAVE_ALLOCA_H", "__GNUC__", "_AIX", "__STDC__", "HAVE_STDLIB_H", "HAVE_MEMORY_H", "STDC_HEADERS"};
         ArrayList<String> featureList = new ArrayList<>();
 
         for (String feat : featuresToAdd) {
@@ -44,6 +42,7 @@ public class ComputeRQMetrics {
 
         final File gitFolder = new File(gitHelper.getPath());
         final File eccoFolder = new File(gitFolder.getParent(), "ecco");
+        final File changeFolder = new File(gitFolder.getParent(), "ChangeCharacteristic");
 
         Map<Feature, Integer> featureVersions = new HashMap<>();
         final Integer[] countFeaturesChanged = {0}; //COUNT PER GIT COMMIT
@@ -225,11 +224,11 @@ public class ComputeRQMetrics {
                     //map with the name of the feature and version and a boolean to set true when it is already incremented in the analysed commit
                     String eccoConfig = "";
                     String file = "";
-                    if(changedNode.getContainingFile()!=null)
-                         file = changedNode.getContainingFile().getFilePath();
+                    if (changedNode.getContainingFile() != null)
+                        file = changedNode.getContainingFile().getFilePath();
                     for (Map.Entry<Feature, Integer> configFeature : config.entrySet()) {
                         int version = 0;
-                        if (configFeature.getValue() != 0) {
+                        if (featureList.contains(configFeature.getKey().getName()) && configFeature.getValue() != 0) {
                             if (featureVersions.containsKey(configFeature.getKey())) {
                                 version = featureVersions.get(configFeature.getKey());
                             }
@@ -252,13 +251,13 @@ public class ComputeRQMetrics {
                         }
                         //RQ1.
                         ChangeCharacteristic changeCharacteristic;
-                        if( featureMap.get(configFeature.getKey())== null) {
+                        if (featureMap.get(configFeature.getKey()) == null) {
                             changeCharacteristic = new ChangeCharacteristic();
                             featureMap.put(configFeature.getKey(), new ChangeCharacteristic());
-                        }else {
+                        } else {
                             changeCharacteristic = featureMap.get(configFeature.getKey());
                         }
-                        changeCharacteristic.setLinesOfCodeAdded(changeCharacteristic.getLinesOfCodeAdded() + (changedNode.getLineTo() - changedNode.getLineFrom()));
+                        changeCharacteristic.setLinesOfCodeAdded(changeCharacteristic.getLinesOfCodeAdded() -1 + (changedNode.getLineTo() - changedNode.getLineFrom()));
                         changeCharacteristic.addTanglingDegree(config.size());
                         if (!changeCharacteristic.getScatteringDegreeFiles().contains(file)) {
                             changeCharacteristic.addScatteringDegreeFiles(file);
@@ -304,7 +303,7 @@ public class ComputeRQMetrics {
                         String eccoConfig = "";
                         for (Map.Entry<Feature, Integer> configFeature : config.entrySet()) {
                             int version = 0;
-                            if (configFeature.getValue() != 0) {
+                            if (featureList.contains(configFeature.getKey().getName()) && configFeature.getValue() != 0) {
                                 if (featureVersions.containsKey(configFeature.getKey())) {
                                     version = featureVersions.get(configFeature.getKey());
                                 }
@@ -328,6 +327,8 @@ public class ComputeRQMetrics {
                             }
                             //RQ1. deleted lines
                             ChangeCharacteristic changeCharacteristic = featureMap.get(configFeature.getKey());
+                            if (changeCharacteristic == null)
+                                changeCharacteristic = new ChangeCharacteristic();
                             changeCharacteristic.setScatteringDegreeIfs(changeCharacteristic.getScatteringDegreeIfs() + 1);
                             ChangeCharacteristic finalChangeCharacteristic = changeCharacteristic;
                             featureMap.computeIfAbsent(configFeature.getKey(), v -> finalChangeCharacteristic);
@@ -421,15 +422,48 @@ public class ComputeRQMetrics {
                 }
             }
 
-            for (Map.Entry<Feature, ChangeCharacteristic> changes:featureMap.entrySet()) {
+
+            for (Map.Entry<Feature, ChangeCharacteristic> changes : featureMap.entrySet()) {
                 ChangeCharacteristic changeCharacteristic = changes.getValue();
-                System.out.println("Feature: "+changes.getKey());
-                System.out.println("Lines of Code Added: "+changeCharacteristic.getLinesOfCodeAdded());
-                System.out.println("Lines of Code Removed: "+changeCharacteristic.getLinesOfCodeRemoved());
-                System.out.println("SD IFs: "+changeCharacteristic.getScatteringDegreeIfs());
-                System.out.println("SD Files: "+changeCharacteristic.getScatteringDegreeFiles().size());
+                //System.out.println("Feature: "+changes.getKey());
+                //System.out.println("Lines of Code Added: "+changeCharacteristic.getLinesOfCodeAdded());
+                //System.out.println("Lines of Code Removed: "+changeCharacteristic.getLinesOfCodeRemoved());
+                //System.out.println("SD IFs: "+changeCharacteristic.getScatteringDegreeIfs());
+                //System.out.println("SD Files: "+changeCharacteristic.getScatteringDegreeFiles().size());
                 Collections.sort(changeCharacteristic.getTanglingDegree());
-                System.out.println("TD IFs: "+changeCharacteristic.getTanglingDegree().get(changeCharacteristic.getTanglingDegree().size()-1));
+                //System.out.println("TD IFs: "+changeCharacteristic.getTanglingDegree().get(changeCharacteristic.getTanglingDegree().size()-1));
+                File featureCSV = new File(changeFolder, changes.getKey().getName() + ".csv");
+                if (!featureCSV.exists()) {
+                    try {
+                        FileWriter csvWriter = new FileWriter(featureCSV);
+                        List<List<String>> headerRows = Arrays.asList(
+                                Arrays.asList("Commit Nr", "LOC A", "LOC R", "SD IF", "SD File", "TD IF")
+                        );
+                        for (List<String> rowData : headerRows) {
+                            csvWriter.append(String.join(",", rowData));
+                            csvWriter.append("\n");
+                        }
+                        csvWriter.flush();
+                        csvWriter.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                try {
+                    FileAppender csvAppender = new FileAppender(featureCSV);
+                    int tangling = 0;
+                    if (changeCharacteristic.getTanglingDegree().size() > 0)
+                        tangling = changeCharacteristic.getTanglingDegree().get(changeCharacteristic.getTanglingDegree().size() - 1);
+                    List<List<String>> contentRows = Arrays.asList(
+                            Arrays.asList(Long.toString(gc.getNumber()), String.valueOf(changeCharacteristic.getLinesOfCodeAdded()), String.valueOf(changeCharacteristic.getLinesOfCodeRemoved()), String.valueOf(changeCharacteristic.getScatteringDegreeIfs()), String.valueOf(changeCharacteristic.getScatteringDegreeFiles().size()),
+                                    String.valueOf(tangling)));
+                    for (List<String> rowData : contentRows) {
+                        csvAppender.append(String.join(",", rowData));
+                    }
+                    csvAppender.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
 
         });
@@ -448,13 +482,14 @@ public class ComputeRQMetrics {
      * @param tree
      * @return
      */
-    public static Map<Feature, FeatureCharacteristic> CharacteristicsFeature(RootNode tree, List<Feature> features, List<String> featureNamesList) {
+    public static Map<Feature, FeatureCharacteristic> CharacteristicsFeature(String folderProject, Long commitNr, RootNode tree, List<Feature> features, List<String> featureNamesList) {
 
         Map<Feature, FeatureCharacteristic> featureMap = new HashMap<>();
         GetAllConditionalStatementsVisitor visitor = new GetAllConditionalStatementsVisitor();
         Set<ConditionalNode> conditionalNodes = new HashSet<>();
         Set<ConditionalNode> negatedConditionalNodes = new HashSet<>();
         final ConstraintComputer constraintComputer = new ConstraintComputer(featureNamesList);
+        final File folder = new File(folderProject, "FeatureCharacteristic");
         Feature baseFeature = new Feature("BASE");
         for (FileNode child : tree.getChildren()) {
             if (child instanceof SourceFileNode) {
@@ -469,9 +504,9 @@ public class ComputeRQMetrics {
                 Boolean first = true;
                 int last = 0;
                 //RQ3.LOC
+                FeatureCharacteristic featureCharacteristic = featureMap.get(baseFeature);
                 if (visitor.getLinesConditionalNodes().size() != 0) {
                     for (Map.Entry<Integer, Integer> linesBase : visitor.getLinesConditionalNodes().entrySet()) {
-                        FeatureCharacteristic featureCharacteristic = featureMap.get(baseFeature);
                         if (first && from < linesBase.getKey()) {
                             int add = (linesBase.getKey() - from) - 1;
                             if (featureCharacteristic == null)
@@ -503,8 +538,7 @@ public class ComputeRQMetrics {
                         featureMap.computeIfPresent(baseFeature, (k, v) -> finalFeatureCharacteristic);
                     }
                     if (last != to) {
-                        int add = to - last;
-                        FeatureCharacteristic featureCharacteristic = featureMap.get(baseFeature);
+                        int add = to - last -1;
                         if (featureCharacteristic == null)
                             featureCharacteristic = new FeatureCharacteristic();
                         featureCharacteristic.setLinesOfCode(featureCharacteristic.getLinesOfCode() + (add));
@@ -513,14 +547,13 @@ public class ComputeRQMetrics {
                         featureMap.computeIfPresent(baseFeature, (k, v) -> finalFeatureCharacteristic);
                     }
                 } else {
-                    FeatureCharacteristic featureCharacteristic = featureMap.get(baseFeature);
                     if (featureCharacteristic == null)
                         featureCharacteristic = new FeatureCharacteristic();
                     //RQ3: SD files
                     if (!featureCharacteristic.getScatteringDegreeFiles().contains(file)) {
                         featureCharacteristic.addScatteringDegreeFiles(file);
                     }
-                    featureCharacteristic.setLinesOfCode(featureCharacteristic.getLinesOfCode() + (to - from));
+                    featureCharacteristic.setLinesOfCode(featureCharacteristic.getLinesOfCode()-1 + (to - from));
                     FeatureCharacteristic finalFeatureCharacteristic = featureCharacteristic;
                     featureMap.computeIfAbsent(baseFeature, v -> finalFeatureCharacteristic);
                     featureMap.computeIfPresent(baseFeature, (k, v) -> finalFeatureCharacteristic);
@@ -551,44 +584,49 @@ public class ComputeRQMetrics {
             changed = new HashSet<>();
             if (config != null && !config.isEmpty()) {
                 //compute the marked as changed features.
-                for (Map.Entry<Feature, Integer> feat : config.entrySet()) {
-                    if (feat.getValue() != 0) {
-                        changed.add(feat.getKey());
+                //for (Map.Entry<Feature, Integer> feat : config.entrySet()) {
+                //  if (feat.getValue() != 0) {
+                //     changed.add(feat.getKey());
+                //}
+                //}
+                changed = constraintComputer.computeChangedFeatures(cNode, config);
+                if (!changed.contains(baseFeature))
+                    config.remove(baseFeature);
+
+
+                for (Map.Entry<Feature, Integer> featsConditionalStatement : config.entrySet()) {
+                    if (featsConditionalStatement.getValue() != 0) {
+                        FeatureCharacteristic featureCharacteristic = featureMap.get(featsConditionalStatement.getKey());
+                        if (featureCharacteristic == null)
+                            featureCharacteristic = new FeatureCharacteristic();
+                        //RQ3.LOC
+                        featureCharacteristic.setLinesOfCode(featureCharacteristic.getLinesOfCode() - 1 + (cNode.getLineTo() - cNode.getLineFrom()));
+                        //RQ3: SD #ifdef
+                        featureCharacteristic.setScatteringDegreeIFs(featureCharacteristic.getScatteringDegreeIFs() + 1);
+                        String file = cNode.getParent().getParent().getContainingFile().getFilePath();
+                        //RQ3: SD files
+                        if (!featureCharacteristic.getScatteringDegreeFiles().contains(file)) {
+                            featureCharacteristic.addScatteringDegreeFiles(file);
+                        }
+                        //RQ3: TD #ifdef
+                        if (count > 1) {
+                            featureCharacteristic.addTanglingDegreeIFs(count, cNode.getLineTo() - cNode.getLineFrom());
+                        }
+                        //RQ3: ND #ifdef
+                        if (cNode.getChildren().size() > featureCharacteristic.getNestingDegree()) {
+                            featureCharacteristic.setNestingDegree(cNode.getChildren().size());
+                        }
+                        //RQ3: NOTLB OR NONTLB
+                        if (cNode.getParent().getParent().getLocalCondition().equals("BASE")) {
+                            featureCharacteristic.setNumberOfTopLevelBranches(featureCharacteristic.getNumberOfTopLevelBranches() + 1);
+                        } else {
+                            featureCharacteristic.setNumberOfNonTopLevelBranches(featureCharacteristic.getNumberOfNonTopLevelBranches() + 1);
+                        }
+                        FeatureCharacteristic finalFeatureCharacteristic = featureCharacteristic;
+                        featureMap.computeIfAbsent(featsConditionalStatement.getKey(), v -> finalFeatureCharacteristic);
+                        featureMap.computeIfPresent(featsConditionalStatement.getKey(), (k, v) -> finalFeatureCharacteristic);
                     }
                 }
-                //changed = constraintComputer.computeChangedFeatures(cNode, config);
-            }
-            Map<Feature, List<String>> filesEachFeature = new HashMap<>();
-            for (Feature featsConditionalStatement : changed) {
-                FeatureCharacteristic featureCharacteristic = featureMap.get(featsConditionalStatement);
-                if (featureCharacteristic == null)
-                    featureCharacteristic = new FeatureCharacteristic();
-                //RQ3.LOC
-                featureCharacteristic.setLinesOfCode(featureCharacteristic.getLinesOfCode() - 1 + (cNode.getLineTo() - cNode.getLineFrom()));
-                //RQ3: SD #ifdef
-                featureCharacteristic.setScatteringDegreeIFs(featureCharacteristic.getScatteringDegreeIFs() + 1);
-                String file = cNode.getParent().getParent().getContainingFile().getFilePath();
-                //RQ3: SD files
-                if (!featureCharacteristic.getScatteringDegreeFiles().contains(file)) {
-                    featureCharacteristic.addScatteringDegreeFiles(file);
-                }
-                //RQ3: TD #ifdef
-                if (count > 1) {
-                    featureCharacteristic.addTanglingDegreeIFs(count, cNode.getLineTo() - cNode.getLineFrom());
-                }
-                //RQ3: ND #ifdef
-                if (cNode.getChildren().size() > featureCharacteristic.getNestingDegree()) {
-                    featureCharacteristic.setNestingDegree(cNode.getChildren().size());
-                }
-                //RQ3: NOTLB OR NONTLB
-                if (cNode.getParent().getParent().getLocalCondition().equals("BASE")) {
-                    featureCharacteristic.setNumberOfTopLevelBranches(featureCharacteristic.getNumberOfTopLevelBranches() + 1);
-                } else {
-                    featureCharacteristic.setNumberOfNonTopLevelBranches(featureCharacteristic.getNumberOfNonTopLevelBranches() + 1);
-                }
-                FeatureCharacteristic finalFeatureCharacteristic = featureCharacteristic;
-                featureMap.computeIfAbsent(featsConditionalStatement, v -> finalFeatureCharacteristic);
-                featureMap.computeIfPresent(featsConditionalStatement, (k, v) -> finalFeatureCharacteristic);
             }
         }
         for (ConditionalNode cNode : negatedConditionalNodes) {
@@ -610,56 +648,96 @@ public class ComputeRQMetrics {
             changed = new HashSet<>();
             if (config != null && !config.isEmpty()) {
                 //compute the marked as changed features.
+                changed = constraintComputer.computeChangedFeatures(cNode, config);
+                if (!changed.contains(baseFeature)) {
+                    config.remove(baseFeature);
+                }
+
                 for (Map.Entry<Feature, Integer> feat : config.entrySet()) {
                     if (feat.getValue() != 0) {
                         changed.add(feat.getKey());
                     }
                 }
-                //changed = constraintComputer.computeChangedFeatures(cNode, config);
-            }
-            for (Feature featsConditionalStatement : changed) {
+                for (Feature featsConditionalStatement : changed) {
 
-                FeatureCharacteristic featureCharacteristic = featureMap.get(featsConditionalStatement);
-                if (featureCharacteristic == null)
-                    featureCharacteristic = new FeatureCharacteristic();
-                //RQ3.LOC
-                featureCharacteristic.setLinesOfCode(featureCharacteristic.getLinesOfCode() - 1 + (cNode.getLineTo() - cNode.getLineFrom()));
-                //RQ3: SD #ifdef
-                featureCharacteristic.setScatteringDegreeIFs(featureCharacteristic.getScatteringDegreeIFs() + 1);
-                String file = cNode.getParent().getParent().getContainingFile().getFilePath();
-                //RQ3: SD files
-                if (!featureCharacteristic.getScatteringDegreeFiles().contains(file)) {
-                    featureCharacteristic.addScatteringDegreeFiles(file);
-                }
-                //RQ3: TD #ifdef
-                if (count > 1) {
-                    featureCharacteristic.addTanglingDegreeIFs(count, cNode.getLineTo() - cNode.getLineFrom());
-                }
-                //RQ3: ND #ifdef
-                if (cNode.getChildren().size() > featureCharacteristic.getNestingDegree()) {
-                    featureCharacteristic.setNestingDegree(cNode.getChildren().size());
-                }
-                //RQ3: NOTLB OR NONTLB
-                if (cNode.getParent().getParent().getLocalCondition().equals("BASE")) {
-                    featureCharacteristic.setNumberOfTopLevelBranches(featureCharacteristic.getNumberOfTopLevelBranches() + 1);
-                } else {
-                    if (cNode instanceof ELSECondition || cNode instanceof ELIFCondition) {
-                        ConditionalNode ifblock = cNode.getParent().getParent().getParent().getIfBlock();
-                        if (ifblock.getParent().getParent().getLocalCondition().equals("BASE")) {
-                            featureCharacteristic.setNumberOfTopLevelBranches(featureCharacteristic.getNumberOfTopLevelBranches() + 1);
+                    FeatureCharacteristic featureCharacteristic = featureMap.get(featsConditionalStatement);
+                    if (featureCharacteristic == null)
+                        featureCharacteristic = new FeatureCharacteristic();
+                    //RQ3.LOC
+                    featureCharacteristic.setLinesOfCode(featureCharacteristic.getLinesOfCode() - 1 + (cNode.getLineTo() - cNode.getLineFrom()));
+                    //RQ3: SD #ifdef
+                    featureCharacteristic.setScatteringDegreeIFs(featureCharacteristic.getScatteringDegreeIFs() + 1);
+                    String file = cNode.getParent().getParent().getContainingFile().getFilePath();
+                    //RQ3: SD files
+                    if (!featureCharacteristic.getScatteringDegreeFiles().contains(file)) {
+                        featureCharacteristic.addScatteringDegreeFiles(file);
+                    }
+                    //RQ3: TD #ifdef
+                    if (count > 1) {
+                        featureCharacteristic.addTanglingDegreeIFs(count, cNode.getLineTo() - cNode.getLineFrom());
+                    }
+                    //RQ3: ND #ifdef
+                    if (cNode.getChildren().size() > featureCharacteristic.getNestingDegree()) {
+                        featureCharacteristic.setNestingDegree(cNode.getChildren().size());
+                    }
+                    //RQ3: NOTLB OR NONTLB
+                    if (cNode.getParent().getParent().getLocalCondition().equals("BASE")) {
+                        featureCharacteristic.setNumberOfTopLevelBranches(featureCharacteristic.getNumberOfTopLevelBranches() + 1);
+                    } else {
+                        if (cNode instanceof ELSECondition || cNode instanceof ELIFCondition) {
+                            ConditionalNode ifblock = cNode.getParent().getParent().getParent().getIfBlock();
+                            if (ifblock.getParent().getParent().getLocalCondition().equals("BASE")) {
+                                featureCharacteristic.setNumberOfTopLevelBranches(featureCharacteristic.getNumberOfTopLevelBranches() + 1);
+                            } else {
+                                featureCharacteristic.setNumberOfNonTopLevelBranches(featureCharacteristic.getNumberOfNonTopLevelBranches() + 1);
+                            }
                         } else {
                             featureCharacteristic.setNumberOfNonTopLevelBranches(featureCharacteristic.getNumberOfNonTopLevelBranches() + 1);
                         }
-                    } else {
-                        featureCharacteristic.setNumberOfNonTopLevelBranches(featureCharacteristic.getNumberOfNonTopLevelBranches() + 1);
                     }
+                    FeatureCharacteristic finalFeatureCharacteristic = featureCharacteristic;
+                    featureMap.computeIfAbsent(featsConditionalStatement, v -> finalFeatureCharacteristic);
+                    featureMap.computeIfPresent(featsConditionalStatement, (k, v) -> finalFeatureCharacteristic);
                 }
-                FeatureCharacteristic finalFeatureCharacteristic = featureCharacteristic;
-                featureMap.computeIfAbsent(featsConditionalStatement, v -> finalFeatureCharacteristic);
-                featureMap.computeIfPresent(featsConditionalStatement, (k, v) -> finalFeatureCharacteristic);
             }
         }
         //featureMap.put(feature, featureCharacteristic);
+        for (Map.Entry<Feature, FeatureCharacteristic> featCharac : featureMap.entrySet()) {
+            File featureCSV = new File(folder, featCharac.getKey().getName() + ".csv");
+            FeatureCharacteristic characteristic = featCharac.getValue();
+            if (!featureCSV.exists()) {
+                try {
+                    FileWriter csvWriter = new FileWriter(featureCSV);
+                    List<List<String>> headerRows = Arrays.asList(
+                            Arrays.asList("Commit Nr", "LOC", "SD IF", "SD File", "TD IF", "TD File", "ND IFs", "NOTLB", "NONTLB")
+                    );
+                    for (List<String> rowData : headerRows) {
+                        csvWriter.append(String.join(",", rowData));
+                        csvWriter.append("\n");
+                    }
+                    csvWriter.flush();
+                    csvWriter.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            try {
+                FileAppender csvAppender = new FileAppender(featureCSV);
+                Integer tangIFs = 0;
+                if (characteristic.getTanglingDegreeIFs().size() > 0)
+                    tangIFs = Collections.max(characteristic.getTanglingDegreeIFs().keySet());
+                List<List<String>> contentRows = Arrays.asList(
+                        Arrays.asList(Long.toString(commitNr), String.valueOf(characteristic.getLinesOfCode()), String.valueOf(characteristic.getScatteringDegreeIFs()), String.valueOf(characteristic.getScatteringDegreeFiles().size()), String.valueOf(tangIFs),
+                                String.valueOf(characteristic.getTanglingDegreeFiles()), String.valueOf(characteristic.getNestingDegree()), String.valueOf(characteristic.getNumberOfTopLevelBranches()), String.valueOf(characteristic.getNumberOfNonTopLevelBranches())));
+                for (List<String> rowData : contentRows) {
+                    csvAppender.append(String.join(",", rowData));
+                }
+                csvAppender.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        }
         return featureMap;
     }
 }

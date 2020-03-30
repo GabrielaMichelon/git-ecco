@@ -22,15 +22,15 @@ public class App extends Thread{
 
     //private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\test-featureid";
     //private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin";
-    private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\systems\\Bison\\bison";
+    private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\systems\\curl\\curl";
     //private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite\\sqlite";
     //private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\libssh-mirror\\libssh-mirror";
     // "C:\\obermanndavid\\git-to-ecco\\test_repo5"
     // "C:\\obermanndavid\\git-ecco-test\\test_featureid\\betaflight"
     // "C:\\obermanndavid\\git-ecco-test\\test_featureid\\Marlin"
     //private final static String CSV_PATH = "C:\\Users\\gabil\\Desktop\\results\\results.csv";
-    private final static String CSV_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\systems\\feature_identification\\results_bison.csv";
-    private final static String FEATURES_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\systems\\feature_identification\\bison\\";
+    private final static String CSV_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\systems\\feature_identification\\results_curl.csv";
+    private final static String FEATURES_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\systems\\feature_identification\\curl\\";
     private final static boolean DISPOSE = true;
     private final static boolean DEBUG = true;
     private final static int MAX_COMMITS = 500;
@@ -146,7 +146,10 @@ public class App extends Thread{
         writer.writeNext(new String[]{"Label/FeatureName","#total", "#external", "#internal", "#transient"});
 
         //write each feature/label with: Name, totalOcc, InternalOcc, externalOcc, transientOcc.
+        String feats = "{";
         for (TraceableFeature feature : features) {
+            if(feature.getExternalOcc()==feature.getTotalOcc())
+                feats+="\""+feature.getName()+"\",";
             writer.writeNext(
                     new String[]{
                             feature.getName(),
@@ -156,6 +159,7 @@ public class App extends Thread{
                             feature.getTransientOcc().toString()
             });
             FileWriter commitList = null;
+
             try {
                 //second parameter is boolean for appending --> never append
                 final File featureFile = new File(FEATURES_PATH+feature.getName()+".csv");
@@ -172,12 +176,16 @@ public class App extends Thread{
 
         }
 
+        System.out.println(feats+"}");
+
         // closing writer connection
         try {
             writer.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
+
     }
+
 
 }
