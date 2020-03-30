@@ -23,7 +23,7 @@ public class MiningTest {
     private final static boolean EVERYCOMMIT = false;
     private final static int STARTCOMMIT = 0;
     private final static int ENDCOMMIT = 50;
-    private final static int EVERY_NTH_COMMIT = 3;
+    private final static int EVERY_NTH_COMMIT = 1;
     private final static boolean MAX_COMMITS_ENA = true;
     private final static boolean PARALLEL = false;
     private final static ArrayList<Feature> featureList = new ArrayList<>();
@@ -37,8 +37,6 @@ public class MiningTest {
 
         final GitHelper gitHelper = new GitHelper(REPO_PATH, null);
         final GitCommitList commitList = new GitCommitList(gitHelper);
-
-        final List<TraceableFeature> evaluation = Collections.synchronizedList(new ArrayList<>());
         final List<Future<?>> tasks = new ArrayList<>();
         final ExecutorService executorService = Executors.newFixedThreadPool(30);
         addFeatures();
