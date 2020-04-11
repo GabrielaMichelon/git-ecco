@@ -7,10 +7,10 @@ import java.util.Map;
 public class FeatureCharacteristic {
     private Integer linesOfCode;
     private Integer scatteringDegreeIFs;
+    private Integer scatteringDegreeNIFs;
     private ArrayList<String> scatteringDegreeFiles;
     //number of features with the analyzed #IFDEF of a feature revision and number of lines inside its block
     private Map<Integer,Integer> tanglingDegreeIFs;
-    private Integer tanglingDegreeFiles;
     private Integer nestingDegree;
     private Integer numberOfTopLevelBranches;
     private Integer numberOfNonTopLevelBranches;
@@ -18,9 +18,9 @@ public class FeatureCharacteristic {
     public FeatureCharacteristic() {
         this.linesOfCode = 0;
         this.scatteringDegreeIFs = 0;
+        this.scatteringDegreeNIFs = 0;
         this.scatteringDegreeFiles = new ArrayList<>();
         this.tanglingDegreeIFs = new HashMap<>();
-        this.tanglingDegreeFiles = 0;
         this.nestingDegree = 0;
         this.numberOfTopLevelBranches = 0;
         this.numberOfNonTopLevelBranches = 0;
@@ -54,16 +54,16 @@ public class FeatureCharacteristic {
         return tanglingDegreeIFs;
     }
 
+    public Integer getScatteringDegreeNIFs() {
+        return scatteringDegreeNIFs;
+    }
+
+    public void setScatteringDegreeNIFs(Integer scatteringDegreeNIFs) {
+        this.scatteringDegreeNIFs = scatteringDegreeNIFs;
+    }
+
     public void addTanglingDegreeIFs(Integer numberFeatures, Integer numberlines) {
         this.tanglingDegreeIFs.put(numberFeatures,numberlines);
-    }
-
-    public Integer getTanglingDegreeFiles() {
-        return tanglingDegreeFiles;
-    }
-
-    public void setTanglingDegreeFiles(Integer tanglingDegreeFiles) {
-        this.tanglingDegreeFiles = tanglingDegreeFiles;
     }
 
     public Integer getNestingDegree() {

@@ -10,11 +10,15 @@ import at.jku.isse.gitecco.core.tree.visitor.GetAllFeaturesVisitor;
 import at.jku.isse.gitecco.core.type.Feature;
 import at.jku.isse.gitecco.translation.constraintcomputation.util.ConstraintComputer;
 import at.jku.isse.gitecco.translation.visitor.GetNodesForChangeVisitor;
+import org.anarres.cpp.Source;
 import org.glassfish.grizzly.http.server.accesslog.FileAppender;
+import org.glassfish.grizzly.utils.ArraySet;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -23,7 +27,7 @@ public class ComputeRQMetrics {
 
     //RQ1
     public static void CharacteristicsChange(String[] featuresToAdd, String repoPath) throws Exception {
-        final int MAXCOMMITS = 200;
+        final int MAXCOMMITS = 5000;
         //set as true to generate PP variants
         final boolean generateOriginalVariants = false;
         //TODO: planned arguments: DEBUG, dispose tree, max commits, repo path, csv path(feature id), outpath for ecco
@@ -85,8 +89,8 @@ public class ComputeRQMetrics {
             System.out.println(gc.getCommitName() + ":");
 
             GetNodesForChangeVisitor visitor = new GetNodesForChangeVisitor();
-            Set<ConditionalNode> changedNodes = new HashSet<>();
-            Set<ConditionalNode> deletedNodes = new HashSet<>();
+            ArrayList<ConditionalNode> changedNodes = new ArrayList<>();
+            ArrayList<ConditionalNode> deletedNodes = new  ArrayList<>();
             Map<Feature, ChangeCharacteristic> featureMap = new HashMap<>();
 
             if (gc.getNumber() == 0) {
@@ -101,10 +105,11 @@ public class ComputeRQMetrics {
                 }
             }
 
-            Map<Change, FileNode> changesInsert = new HashMap<>();
+            Map<Change, FileNode> changesDelete = new HashMap<>();
             //retrieve changed nodes
             for (FileNode child : gc.getTree().getChildren()) {
                 if (child instanceof SourceFileNode) {
+
                     Change[] changes = null;
                     try {
                         changes = gitHelper.getFileDiffs(gc, child, false);
@@ -114,13 +119,18 @@ public class ComputeRQMetrics {
                     }
 
                     for (Change change : changes) {
-                        if (change.getChangeType() == null) {
+                        if (change.getChangeType().equals("INSERT")) {
                             visitor.setChange(change);
                             child.accept(visitor);
                             changedNodes.addAll(visitor.getchangedNodes());
-                        } else {
-                            changesInsert.put(change, child);
+                        } else if (change.getChangeType().equals("DELETE")) {
+                            changesDelete.put(change, child);
+                        } else if (change.getChangeType().equals("CHANGE")) {
+                            visitor.setChange(change);
+                            child.accept(visitor);
+                            changedNodes.addAll(visitor.getchangedNodes());
                         }
+
                     }
                 }
                 if (gc.getNumber() == 0) {
@@ -164,7 +174,7 @@ public class ComputeRQMetrics {
                             }
                         }
                     }
-                    for (Map.Entry<Change, FileNode> changeInsert : changesInsert.entrySet()) {
+                    for (Map.Entry<Change, FileNode> changeInsert : changesDelete.entrySet()) {
                         Change change = changeInsert.getKey();
                         FileNode childAux = changeInsert.getValue();
                         FileNode child = gcPrevious[0].getTree().getChild(childAux.getFilePath());
@@ -188,7 +198,7 @@ public class ComputeRQMetrics {
             Integer count = 0;
 
             //if there is no changed node then there must be a change in the binary files --> commit base.
-            if (changedNodes.size() == 0 && gcl.size() > 1 && gc.getTree().getChildren().size() > 0)
+            if (changedNodes.size() + deletedNodes.size() == 0 && gcl.size() > 1 && gc.getTree().getChildren().size() > 0)
                 changedNodes.add(new BaseNode(null, 0));
             else if (changedNodes.size() == 0 && deletedNodes.size() == 0 && gc.getTree().getChildren().size() > 0) {
                 changedNodes.add(new BaseNode(null, 0));
@@ -248,24 +258,35 @@ public class ComputeRQMetrics {
                                 eccoConfig += "," + configFeature.getKey().toString() + "." + version;
                             else
                                 eccoConfig += "," + configFeature.getKey().toString() + ".$$";
+
+                            //RQ1.
+                            ChangeCharacteristic changeCharacteristic;
+                            if (featureMap.get(configFeature.getKey()) == null) {
+                                changeCharacteristic = new ChangeCharacteristic();
+                                featureMap.put(configFeature.getKey(), new ChangeCharacteristic());
+                            } else {
+                                changeCharacteristic = featureMap.get(configFeature.getKey());
+                            }
+                            int aux = 0;
+                            if(changedNode.getLineNumberInserts().size()>0) {
+                                for (int i = 2; i < changedNode.getLineNumberInserts().size(); i += 3) {
+                                    aux+=changedNode.getLineNumberInserts().get(i);
+                                }
+                                if (!(changedNode instanceof BaseNode) && !(configFeature.getKey().equals(base)))
+                                    aux -=2;
+                                changeCharacteristic.setLinesOfCodeAdded(changeCharacteristic.getLinesOfCodeAdded() + aux);
+                                changedNode.getLineNumberInserts().removeAll(changedNode.getLineNumberInserts());
+                            }
+
+                            changeCharacteristic.addTanglingDegree(config.size());
+                            if (!changeCharacteristic.getScatteringDegreeFiles().contains(file)) {
+                                changeCharacteristic.addScatteringDegreeFiles(file);
+                            }
+                            changeCharacteristic.setScatteringDegreeIfs(changeCharacteristic.getScatteringDegreeIfs() + 1);
+                            ChangeCharacteristic finalChangeCharacteristic = changeCharacteristic;
+                            featureMap.computeIfAbsent(configFeature.getKey(), v -> finalChangeCharacteristic);
+                            featureMap.computeIfPresent(configFeature.getKey(), (k, v) -> finalChangeCharacteristic);
                         }
-                        //RQ1.
-                        ChangeCharacteristic changeCharacteristic;
-                        if (featureMap.get(configFeature.getKey()) == null) {
-                            changeCharacteristic = new ChangeCharacteristic();
-                            featureMap.put(configFeature.getKey(), new ChangeCharacteristic());
-                        } else {
-                            changeCharacteristic = featureMap.get(configFeature.getKey());
-                        }
-                        changeCharacteristic.setLinesOfCodeAdded(changeCharacteristic.getLinesOfCodeAdded() -1 + (changedNode.getLineTo() - changedNode.getLineFrom()));
-                        changeCharacteristic.addTanglingDegree(config.size());
-                        if (!changeCharacteristic.getScatteringDegreeFiles().contains(file)) {
-                            changeCharacteristic.addScatteringDegreeFiles(file);
-                        }
-                        changeCharacteristic.setScatteringDegreeIfs(changeCharacteristic.getScatteringDegreeIfs() + 1);
-                        ChangeCharacteristic finalChangeCharacteristic = changeCharacteristic;
-                        featureMap.computeIfAbsent(configFeature.getKey(), v -> finalChangeCharacteristic);
-                        featureMap.computeIfPresent(configFeature.getKey(), (k, v) -> finalChangeCharacteristic);
                     }
                     if (!eccoConfig.contains("BASE")) {
                         eccoConfig += "," + "BASE.$$";
@@ -291,7 +312,9 @@ public class ComputeRQMetrics {
             }
 
             if (deletedNodes.size() != 0) {
+                String file = "";
                 for (ConditionalNode deletedNode : deletedNodes) {
+                    file = deletedNode.getContainingFile().getFilePath();
                     //compute the config for the var gen
                     config = constraintComputer.computeConfig(deletedNode, gcPrevious[0].getTree());
                     if (config != null && !config.isEmpty()) {
@@ -324,15 +347,28 @@ public class ComputeRQMetrics {
                                 else
                                     eccoConfig += "," + configFeature.getKey().toString() + ".$$";
 
+
+                                //RQ1. deleted lines
+                                ChangeCharacteristic changeCharacteristic = featureMap.get(configFeature.getKey());
+                                if (changeCharacteristic == null)
+                                    changeCharacteristic = new ChangeCharacteristic();
+                                int aux = 0;
+                                if(deletedNode.getLineNumberDeleted().size()>0) {
+                                    for (int i = 2; i < deletedNode.getLineNumberDeleted().size(); i += 3) {
+                                        aux+=deletedNode.getLineNumberDeleted().get(i);
+                                    }
+                                    changeCharacteristic.setLinesOfCodeRemoved(changeCharacteristic.getLinesOfCodeRemoved() + aux);
+                                    deletedNode.getLineNumberDeleted().removeAll(deletedNode.getLineNumberDeleted());
+                                }
+                                changeCharacteristic.addTanglingDegree(config.size());
+                                if (!changeCharacteristic.getScatteringDegreeFiles().contains(file)) {
+                                    changeCharacteristic.addScatteringDegreeFiles(file);
+                                }
+                                changeCharacteristic.setScatteringDegreeIfs(changeCharacteristic.getScatteringDegreeIfs() + 1);
+                                ChangeCharacteristic finalChangeCharacteristic = changeCharacteristic;
+                                featureMap.computeIfAbsent(configFeature.getKey(), v -> finalChangeCharacteristic);
+                                featureMap.computeIfPresent(configFeature.getKey(), (k, v) -> finalChangeCharacteristic);
                             }
-                            //RQ1. deleted lines
-                            ChangeCharacteristic changeCharacteristic = featureMap.get(configFeature.getKey());
-                            if (changeCharacteristic == null)
-                                changeCharacteristic = new ChangeCharacteristic();
-                            changeCharacteristic.setScatteringDegreeIfs(changeCharacteristic.getScatteringDegreeIfs() + 1);
-                            ChangeCharacteristic finalChangeCharacteristic = changeCharacteristic;
-                            featureMap.computeIfAbsent(configFeature.getKey(), v -> finalChangeCharacteristic);
-                            featureMap.computeIfPresent(configFeature.getKey(), (k, v) -> finalChangeCharacteristic);
                         }
                         if (!eccoConfig.contains("BASE")) {
                             eccoConfig += "," + "BASE.$$";
@@ -470,7 +506,7 @@ public class ComputeRQMetrics {
 
         //set second parameter as "NULLCOMMIT" when the first commit is 0, or null when the first commit is another (when startcommit is > 0)
         //gitHelper.getEveryNthCommit(commitList, "NULLCOMMIT", 0, 50, 1);
-        gitHelper.getEveryNthCommit(commitList, "NULLCOMMIT", 0, 49, 1);
+        gitHelper.getEveryNthCommit(commitList, "NULLCOMMIT", 0, 967, 1);
         //gitHelper.getAllCommits(commitList);
 
 
@@ -482,7 +518,7 @@ public class ComputeRQMetrics {
      * @param tree
      * @return
      */
-    public static Map<Feature, FeatureCharacteristic> CharacteristicsFeature(String folderProject, Long commitNr, RootNode tree, List<Feature> features, List<String> featureNamesList) {
+    public static Map<Feature, FeatureCharacteristic> CharacteristicsFeature(String folderProject, Long commitNr, RootNode tree, List<Feature> features, ArrayList<String> featureNamesList) {
 
         Map<Feature, FeatureCharacteristic> featureMap = new HashMap<>();
         GetAllConditionalStatementsVisitor visitor = new GetAllConditionalStatementsVisitor();
@@ -495,7 +531,10 @@ public class ComputeRQMetrics {
             if (child instanceof SourceFileNode) {
                 int from = ((SourceFileNode) child).getBaseNode().getLineFrom();
                 int to = ((SourceFileNode) child).getBaseNode().getLineTo();
-                Change changes = new Change(from, to, null);
+                ArrayList<Integer> lines = new ArrayList<>();
+                lines.add(from);
+                lines.add(to);
+                Change changes = new Change(from, to, lines, null);
                 visitor.setChange(changes);
                 child.accept(visitor);
                 conditionalNodes.addAll(visitor.getConditionalNodes());
@@ -538,7 +577,7 @@ public class ComputeRQMetrics {
                         featureMap.computeIfPresent(baseFeature, (k, v) -> finalFeatureCharacteristic);
                     }
                     if (last != to) {
-                        int add = to - last -1;
+                        int add = to - last - 1;
                         if (featureCharacteristic == null)
                             featureCharacteristic = new FeatureCharacteristic();
                         featureCharacteristic.setLinesOfCode(featureCharacteristic.getLinesOfCode() + (add));
@@ -553,7 +592,7 @@ public class ComputeRQMetrics {
                     if (!featureCharacteristic.getScatteringDegreeFiles().contains(file)) {
                         featureCharacteristic.addScatteringDegreeFiles(file);
                     }
-                    featureCharacteristic.setLinesOfCode(featureCharacteristic.getLinesOfCode()-1 + (to - from));
+                    featureCharacteristic.setLinesOfCode(featureCharacteristic.getLinesOfCode() - 1 + (to - from));
                     FeatureCharacteristic finalFeatureCharacteristic = featureCharacteristic;
                     featureMap.computeIfAbsent(baseFeature, v -> finalFeatureCharacteristic);
                     featureMap.computeIfPresent(baseFeature, (k, v) -> finalFeatureCharacteristic);
@@ -595,7 +634,7 @@ public class ComputeRQMetrics {
 
 
                 for (Map.Entry<Feature, Integer> featsConditionalStatement : config.entrySet()) {
-                    if (featsConditionalStatement.getValue() != 0) {
+                    if (featsConditionalStatement.getValue() != 0 && featureNamesList.contains(featsConditionalStatement.getKey().getName())) {
                         FeatureCharacteristic featureCharacteristic = featureMap.get(featsConditionalStatement.getKey());
                         if (featureCharacteristic == null)
                             featureCharacteristic = new FeatureCharacteristic();
@@ -654,7 +693,7 @@ public class ComputeRQMetrics {
                 }
 
                 for (Map.Entry<Feature, Integer> feat : config.entrySet()) {
-                    if (feat.getValue() != 0) {
+                    if (feat.getValue() != 0 && featureNamesList.contains(feat.getKey().getName())) {
                         changed.add(feat.getKey());
                     }
                 }
@@ -666,7 +705,7 @@ public class ComputeRQMetrics {
                     //RQ3.LOC
                     featureCharacteristic.setLinesOfCode(featureCharacteristic.getLinesOfCode() - 1 + (cNode.getLineTo() - cNode.getLineFrom()));
                     //RQ3: SD #ifdef
-                    featureCharacteristic.setScatteringDegreeIFs(featureCharacteristic.getScatteringDegreeIFs() + 1);
+                    featureCharacteristic.setScatteringDegreeNIFs(featureCharacteristic.getScatteringDegreeNIFs() + 1);
                     String file = cNode.getParent().getParent().getContainingFile().getFilePath();
                     //RQ3: SD files
                     if (!featureCharacteristic.getScatteringDegreeFiles().contains(file)) {
@@ -709,7 +748,7 @@ public class ComputeRQMetrics {
                 try {
                     FileWriter csvWriter = new FileWriter(featureCSV);
                     List<List<String>> headerRows = Arrays.asList(
-                            Arrays.asList("Commit Nr", "LOC", "SD IF", "SD File", "TD IF", "TD File", "ND IFs", "NOTLB", "NONTLB")
+                            Arrays.asList("Commit Nr", "LOC", "SD IF", "SF NIF", "SD File", "TD IF", "ND IFs", "NOTLB", "NONTLB")
                     );
                     for (List<String> rowData : headerRows) {
                         csvWriter.append(String.join(",", rowData));
@@ -727,8 +766,7 @@ public class ComputeRQMetrics {
                 if (characteristic.getTanglingDegreeIFs().size() > 0)
                     tangIFs = Collections.max(characteristic.getTanglingDegreeIFs().keySet());
                 List<List<String>> contentRows = Arrays.asList(
-                        Arrays.asList(Long.toString(commitNr), String.valueOf(characteristic.getLinesOfCode()), String.valueOf(characteristic.getScatteringDegreeIFs()), String.valueOf(characteristic.getScatteringDegreeFiles().size()), String.valueOf(tangIFs),
-                                String.valueOf(characteristic.getTanglingDegreeFiles()), String.valueOf(characteristic.getNestingDegree()), String.valueOf(characteristic.getNumberOfTopLevelBranches()), String.valueOf(characteristic.getNumberOfNonTopLevelBranches())));
+                        Arrays.asList(Long.toString(commitNr), String.valueOf(characteristic.getLinesOfCode()), String.valueOf(characteristic.getScatteringDegreeIFs()), String.valueOf(characteristic.getScatteringDegreeNIFs()), String.valueOf(characteristic.getScatteringDegreeFiles().size()), String.valueOf(tangIFs), String.valueOf(characteristic.getNestingDegree()), String.valueOf(characteristic.getNumberOfTopLevelBranches()), String.valueOf(characteristic.getNumberOfNonTopLevelBranches())));
                 for (List<String> rowData : contentRows) {
                     csvAppender.append(String.join(",", rowData));
                 }

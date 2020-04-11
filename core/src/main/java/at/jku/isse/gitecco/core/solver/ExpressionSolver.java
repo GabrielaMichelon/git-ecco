@@ -89,6 +89,10 @@ public class ExpressionSolver {
     public Map<Feature, Integer> solve() {
         Map<Feature, Integer> assignments = new HashMap<>();
 
+        if(this.expr.equals("('A' == '\\301') && (!(SQLITEINT_H)) && (BASE)"))
+            this.expr = "(A == 301) && (!(SQLITEINT_H)) && (BASE)";
+        if(this.expr.equals("(__has_feature(address_sanitizer)) && (__has_feature) && (BASE)"))
+            this.expr = "(__has_feature) && (BASE)";
         //add the parsed problem to the solver model
         model.post(getBoolVarFromExpr(this.expr).extension());
 
@@ -188,7 +192,10 @@ public class ExpressionSolver {
         } else if (expr instanceof NumberLiteral) {
             try {
                 //contains little workaround for marlin Long number notation 160000L
-                stack.push(model.intVar(Double.valueOf((((NumberLiteral) expr).getToken().getText().replaceAll("L", ""))).intValue()));
+                if(((NumberLiteral) expr).getToken().getText().equals("2147483647"))
+                    stack.push(model.intVar(Short.MIN_VALUE, Short.MAX_VALUE));
+                else
+                    stack.push(model.intVar(Double.valueOf((((NumberLiteral) expr).getToken().getText().replaceAll("L", ""))).intValue()));
             } catch (NumberFormatException e) {
                 try {
                     stack.push(model.intVar(Long.decode((((NumberLiteral) expr).getToken().getText().replaceAll("L", ""))).intValue()));

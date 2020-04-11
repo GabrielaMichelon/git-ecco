@@ -197,10 +197,13 @@ public class GitHelper {
 
         if (deletedFile) {
             git.checkout().setName(newCommit.getDiffCommitName()).call();
-            if(filePath.contains("arent"))
-                filePath = filePath.replace("arent"+File.separator,"");
+            if (filePath.contains("arent"))
+                filePath = filePath.replace("arent" + File.separator, "");
             String newPath = pathUrl + "\\" + filePath;
-            changes.add(new Change(0, Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size(),null));
+            ArrayList<Integer> lines = new ArrayList<>();
+            lines.add(0);
+            lines.add(Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size() - 1);
+            changes.add(new Change(0, Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size(), lines, "DELETE"));
             git.checkout().setName(newCommit.getCommitName()).call();
 
         } else {
@@ -227,7 +230,10 @@ public class GitHelper {
                     //System.out.println("file diff: " + newPath);
                     if (entry.getChangeType().toString().equals("ADD")) {
                         newPath = pathUrl + "\\" + newPath;
-                        changes.add(new Change(0, Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size(),null));
+                        ArrayList<Integer> lines = new ArrayList<>();
+                        lines.add(0);
+                        lines.add(Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size() - 1);
+                        changes.add(new Change(0, Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size(), lines, "INSERT"));
                     } else if (entry.getChangeType().toString().equals("MODIFY")) {
                         List<String> actual = new ArrayList<>();
                         List<String> old = new ArrayList<>();
@@ -259,19 +265,40 @@ public class GitHelper {
                         git.checkout().setName(newCommit.getCommitName()).call();
                         // Compute diff. Get the Patch object. Patch is the container for computed deltas.
                         Patch<String> patch = null;
-                        patch = DiffUtils.diff(actual, old);
+                        patch = DiffUtils.diff(old, actual);
                         for (Delta delta : patch.getDeltas()) {
                             String changeType = null;
-                            Integer first, last;
-                            if(delta.getType().toString().equals("INSERT")){
+                            Integer first = 0, last = 0;
+                            if (delta.getType().toString().equals("DELETE")) {
+                                changeType = delta.getType().toString();
+                                first = delta.getOriginal().getPosition();
+                                last = delta.getOriginal().getPosition() + delta.getOriginal().getLines().size();
+                                ArrayList<Integer> lines = new ArrayList<>();
+                                lines.add(first);
+                                lines.add(last - 1);
+                                changes.add(new Change(first, last, lines, changeType));
+                            } else if (delta.getType().toString().equals("INSERT")) {
                                 changeType = delta.getType().toString();
                                 first = delta.getRevised().getPosition();
                                 last = delta.getRevised().getPosition() + delta.getRevised().getLines().size();
-                            }else {
-                                first = delta.getOriginal().getPosition();
-                                last = delta.getOriginal().getPosition() + delta.getOriginal().getLines().size();
+                                ArrayList<Integer> lines = new ArrayList<>();
+                                lines.add(first);
+                                lines.add(last - 1);
+                                changes.add(new Change(first, last, lines, changeType));
+                            } else if (delta.getType().toString().equals("CHANGE")) {
+                                first = delta.getRevised().getPosition();
+                                ArrayList<Integer> lines = new ArrayList<>();
+                                last = delta.getRevised().getPosition() + delta.getRevised().getLines().size();
+                                lines.add(first);
+                                lines.add(last - 1);
+                                changes.add(new Change(first, last, lines, "INSERT"));
+                                last = delta.getRevised().getPosition() + delta.getOriginal().getLines().size();
+                                lines = new ArrayList<>();
+                                lines.add(first);
+                                lines.add(last - 1);
+                                changes.add(new Change(first, last, lines, "DELETE"));
+
                             }
-                            changes.add(new Change(first, last, changeType));
                         }
 
                     }

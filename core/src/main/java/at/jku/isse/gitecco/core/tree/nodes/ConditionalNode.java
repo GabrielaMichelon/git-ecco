@@ -2,10 +2,7 @@ package at.jku.isse.gitecco.core.tree.nodes;
 
 import at.jku.isse.gitecco.core.git.Change;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -15,6 +12,8 @@ import java.util.stream.Collectors;
 public abstract class ConditionalNode extends ConditionNode {
     private int lineFrom = -1;
     private int lineTo = -1;
+    private ArrayList<Integer> lineNumberInserts;
+    private ArrayList<Integer> lineNumberDeletes;
     private final List<ConditionBlockNode> children;
     private final ConditionBlockNode parent;
     private final List<NonConditionalNode> definesAndIncludes = new ArrayList<>();
@@ -22,8 +21,10 @@ public abstract class ConditionalNode extends ConditionNode {
     //private final List<IncludeNode> includeNodes = new ArrayList<>();
 
     public ConditionalNode(ConditionBlockNode parent) {
-        children = new ArrayList<ConditionBlockNode>();
+        this.children = new ArrayList<ConditionBlockNode>();
         this.parent = parent;
+        this.lineNumberInserts =  new ArrayList<Integer>();
+        this.lineNumberDeletes =  new ArrayList<Integer>();
     }
 
     /**
@@ -99,6 +100,38 @@ public abstract class ConditionalNode extends ConditionNode {
     public ConditionBlockNode addChild(ConditionBlockNode n) {
         this.children.add(n);
         return n;
+    }
+
+    /**
+     * Sets the number of lines that were deleted in the block
+     * @param line
+     */
+    public void addLinesDeleted(Integer line) {
+        this.lineNumberDeletes.add(line);
+    }
+
+    /**
+     * Sets the number of lines that were added in the block
+     * @param line
+     */
+    public void addLinesInserted(Integer line) {
+        this.lineNumberInserts.add(line);
+    }
+
+    /**
+     * Retrieves the number of lines that were added in the block
+     * @return
+     */
+    public ArrayList<Integer> getLineNumberInserts() {
+        return lineNumberInserts;
+    }
+
+    /**
+     * Retrieves the number of lines that were deleted in the block
+     * @return
+     */
+    public ArrayList<Integer> getLineNumberDeleted() {
+        return lineNumberDeletes;
     }
 
     /**

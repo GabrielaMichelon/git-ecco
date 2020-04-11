@@ -22,25 +22,25 @@ public class App extends Thread{
 
     //private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\test-featureid";
     //private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin";
-    private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\systems\\curl\\curl";
+    private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\systems\\\\MPSolve";
     //private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite\\sqlite";
     //private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\libssh-mirror\\libssh-mirror";
     // "C:\\obermanndavid\\git-to-ecco\\test_repo5"
     // "C:\\obermanndavid\\git-ecco-test\\test_featureid\\betaflight"
     // "C:\\obermanndavid\\git-ecco-test\\test_featureid\\Marlin"
     //private final static String CSV_PATH = "C:\\Users\\gabil\\Desktop\\results\\results.csv";
-    private final static String CSV_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\systems\\feature_identification\\results_curl.csv";
-    private final static String FEATURES_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\systems\\feature_identification\\curl\\";
+    private final static String CSV_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\systems\\feature_identification\\results_mpsolve4.csv";
+    private final static String FEATURES_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\systems\\feature_identification\\mpsolve2\\";
     private final static boolean DISPOSE = true;
     private final static boolean DEBUG = true;
-    private final static int MAX_COMMITS = 500;
+    private final static int MAX_COMMITS = 5200;
     private final static boolean EVERYCOMMIT = false;
     private final static int STARTCOMMIT = 0;
-    private final static int ENDCOMMIT = 50;
+    private final static int ENDCOMMIT = 967;
     private final static int EVERY_NTH_COMMIT = 1;
     private final static boolean MAX_COMMITS_ENA = true;
     private final static boolean PARALLEL = false;
-
+    private  static String feats = "{";
 
     public static void main(String... args) throws Exception {
         long measure = System.currentTimeMillis();
@@ -146,7 +146,7 @@ public class App extends Thread{
         writer.writeNext(new String[]{"Label/FeatureName","#total", "#external", "#internal", "#transient"});
 
         //write each feature/label with: Name, totalOcc, InternalOcc, externalOcc, transientOcc.
-        String feats = "{";
+
         for (TraceableFeature feature : features) {
             if(feature.getExternalOcc()==feature.getTotalOcc())
                 feats+="\""+feature.getName()+"\",";

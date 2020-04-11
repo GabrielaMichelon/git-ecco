@@ -29,23 +29,30 @@ public class MiningTest {
     private final static int MAX_COMMITS = 500;
     private final static boolean EVERYCOMMIT = false;
     private final static int STARTCOMMIT = 0;
-    private final static int ENDCOMMIT = 50;
+    private final static int ENDCOMMIT = 967;
     private final static int EVERY_NTH_COMMIT = 1;
-    private final static boolean MAX_COMMITS_ENA = true;
+    private final static boolean MAX_COMMITS_ENA = false;
     private final static boolean PARALLEL = false;
     private final static ArrayList<Feature> featureList = new ArrayList<>();
     private final static ArrayList<String> featureNamesList = new ArrayList<String>();
-    private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\systems\\curl\\curl";
-    private final static String featureFolder = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\systems\\curl";
-    public final String resultsCSVs_path = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\systems\\curl";
-    //curl
-    String[] features = {"HAVE_STDLIB_H","__sparc","HAVE_ALLOCA_H","__TURBOC__","HAVE_TCGETATTR","HAVE_OPENSSL_ERR_H","__BEOS__","HAVE_PEM_H","HAVE_STRCASECMP","MIME_SEPARATORS","HAVE_LIBDL","__STDC__","DPRINTF_DEBUG","CURL_SEPARATORS","__hpux","TELOPTS","HAVE_SYS_TIME_H","HAVE_ARPA_INET_H","_WIN32","HAVE_ISASCII","STDC_HEADERS","_MPRINTF_REPLACE","HAVE_UNAME","HAVE_SYS_PARAM_H","HAVE_SYS_SELECT_H","HAVE_FCNTL_H","HAVE_TCSETATTR","HAVE_ZLIB_H","TIME_WITH_SYS_TIME","fileno","HAVE_NETDB_H","__GNUC_MINOR__","YYLSP_NEEDED","_MSDOS","HAVE_NET_IF_H","HAVE_OPENSSL_X509_H","HAVE_SYS_STAT_H","HAVE_CRYPTO_H","HAVE_LIBCRYPTO","AUTH_NAMES","__MINGW32__","HAVE_UNISTD_H","sparc","HAVE_X509_H","USG","TELCMDS","HAVE_OPENSSL_CRYPTO_H","TEST","_WINSOCKAPI_","HAVE_ERR_H","_MSDOS_","DPRINTF_DEBUG2","HAVE_BCOPY","EINTR","HAVE_CONFIG_H","SIZEOF_LONG_LONG","YYERROR_VERBOSE","HAVE_OPENSSL_RSA_H","HAVE_SSL_H","__sgi","_NETRC_DEBUG","__sparc__","vms","SSL_VERIFY_CERT","HAVE_SYS_SOCKET_H","_AIX","__cplusplus","isascii","ENCRYPT_NAMES","HAVE_GETHOSTNAME","HAVE_SYS_TYPES_H","HAVE_TERMIO_H","emacs","YYPARSE_PARAM","HAVE_LIBZ","HAVE_STRFTIME","__GNUC__","PROTOTYPES","HAVE_INET_ADDR","HAVE_OPENSSL_SSL_H","OPENSSL_VERSION_NUMBER","HAVE_LIBSSL","_FORM_DEBUG","HAVE_IO_H","YYPURE","HAVE_DLOPEN","SIZEOF_LONG_DOUBLE","SSLEAY_VERSION_NUMBER","MULTIDOC","__i386","yyoverflow","HAVE_PERROR","ECONNREFUSED","HAVE_MEMCPY","__sun","HAVE_OPENSSL_PEM_H","BASE","HAVE_INET_NTOA","HAVE_RSA_H","GLOBURL","YYDEBUG","HAVE_SYS_SOCKIO_H","YYPRINT","HAVE_DLFCN_H","YYLEX_PARAM","__APPLE__"};
+    private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\systems\\MPSolve2\\MPSolve";
+    private final static String featureFolder = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\systems\\MPSolve2";
+    public final String resultsCSVs_path = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\systems\\feature_identification\\mpsolve2";
+    //String[] features = {"__TURBOC__","BB_MNC","NO_STDLIB_H","isgraph","lint","BB_FDFLUSH","BB_PRINTF","__STDC__","__alpha__","NFSERR_INVAL","atarist","PIO_FONTX","HAVE_SYS_SYSTEMINFO_H","FULL_SEARCH","S_IFNWK","__ZTC__","SYSNDIR","__linux__","VMS","BB_MATH","__GNU_LIBRARY__","ENOIOCTLCMD","isblank","S_IFBLK","DUMP_BL_TREE","__GLIBC_MINOR__","VAXC","NFS_MOUNT_DEBUG","TOSFS","BASE","AMIGA","OS2FAT","ATARI","PKZIP_BUG_WORKAROUND","EWFLUSH","S_IFMPB","NO_STRING_H","BB_CHOWN","S_IFLNK","BB_LENGTH","MACOS","FEATURE_RECURSIVE","BB_BLOCK_DEVICE","S_IFIFO","MPW","__sparc_v9__","__mips__","BB_MAKEDEVS","BB_DUTMP","TOPS20","PAGE_SIZE","NDIR","__OS2__","NO_ASM","S_IFCHR","SIGHUP","MEDIUM_MEM","S_IFDIR","__GLIBC__","NFS_MOUNT_VERSION","DEBUG","S_IFREG","unix","SI_ARCHITECTURE","UNALIGNED_OK","BB_MTAB","BB_HALT","pyr","__EMX__","__sparc__","__cplusplus","__GNUC__","HAVE_SYSINFO","_MSC_VER","BB_SFDISK","__50SERIES","WIN32","__MSDOS__","NTFAT","BB_MT","S_IFSOCK","NO_TIME_H","__BORLANDC__","FORCE_METHOD","MINIX2_SUPER_MAGIC2"};
+    //LibSSH
+    //String[] features = {"WITH_SERVER","HAVE_LIBZ","WORDS_BIGENDIAN","DEBUG_CRYPTO","HAVE_OPENSSL_AES_H","HAVE_GETHOSTBYNAME","OPENSSL_VERSION_NUMBER","HAVE_SYS_POLL_H","HAVE_OPENSSL_BLOWFISH_H","HAVE_SYS_TIME_H","BASE","HAVE_POLL","HAVE_SELECT","HAVE_GETHOSTBYADDR","__cplusplus","HAVE_SSH1","NO_SERVER","HAVE_PTY_H","HAVE_STDINT_H","HAVE_MEMORY_H","HAVE_LIBWSOCK32","HAVE_GETPWUID","DEBUG","HAVE_ERRNO_H","HAVE_CTYPE_H","HAVE_NETINET_IN_H","__CYGWIN__","HAVE_STRSEP","HAVE_GETUID","HAVE_STDIO_H","HAVE_CONFIG_H","HAVE_STRING_H","HAVE_ARPA_INET_H","HAVE_STRINGS_H","HAVE_SYS_SOCKET_H","HAVE_SYS_TYPES_H","HAVE_STRTOLL","HAVE_PWD_H","HAVE_FCNTL_H","HAVE_OPENNET_H","TIME_WITH_SYS_TIME","HAVE_DIRENT_H","HAVE_NETDB_H","__WIN32__","HAVE_INTTYPES_H","HAVE_LIBOPENNET","HAVE_SYS_STAT_H","__MINGW32__","HAVE_PAM_PAM_APPL_H","HAVE_SECURITY_PAM_APPL_H","HAVE_LIBGCRYPT","HAVE_OPENSSL_DES_H","HAVE_LIBCRYPTO","GCRYPT"};
+    //Marlin
+    //String[] features = {"F_FILE_DIR_DIRTY","F_UNUSED","F_FILE_UNBUFFERED_READ","__AVR_ATmega644P__","__AVR_ATmega644PA__","RAMPS_V_1_0","__AVR_ATmega2560__","F_CPU","F_OFLAG","__AVR_AT90USB1286__","WATCHPERIOD","THERMISTORBED","THERMISTORHEATER","PID_DEBUG","HEATER_USES_THERMISTOR","__AVR_ATmega328P__","__AVR_ATmega1280__","__AVR_ATmega168__","ADVANCE","PID_OPENLOOP","__AVR_ATmega32U4__","__AVR_ATmega328__","__AVR_ATmega644__","BASE","__AVR_AT90USB1287__","BED_USES_THERMISTOR","__AVR_AT90USB646__","SIMPLE_LCD","DEBUG_STEPS","BED_USES_AD595","ARDUINO","HEATER_1_USES_THERMISTOR","THERMISTORHEATER_2","THERMISTORHEATER_1","HEATER_2_USES_THERMISTOR","HEATER_USES_THERMISTOR_1","HEATER_2_USES_AD595","HEATER_1_MAXTEMP","THERMISTORHEATER_0","HEATER_1_MINTEMP","HEATER_0_USES_THERMISTOR","RESET_MANUAL","PID_PID","AUTOTEMP"};
+    //sqlite
+    //String[] features = {"ENCODER_TEST","HAVE_USLEEP","SQLITE_TEST","SQLITE_UTF8","TEST","__CYGWIN__","YYERRORSYMBOL","_WIN32","USE_TCL_STUBS","etCOMPATIBILITY","NDEBUG","NO_TCL","__MACOS__","SQLITE_PTR_SZ","TCLSH","_MSC_VER","__DJGPP__","HAVE_READLINE","SIGINT","WIN32","TCL_UTF_MAX","THREADSAFE","SQLITE_OMIT_AUTHORIZATION","COMPATIBILITY","VDBE_PROFILE","BASE","SQLITE_DISABLE_LFS","YYFALLBACK","__MINGW32__","__BORLANDC__","MEMORY_DEBUG","SQLITE_SOUNDEX"};//{"YYERRORSYMBOL","TEST_COMPARE","_WIN32","WIN32","TEST","NDEBUG","BASE","NO_READLINE","TCLSH"};
+    //mpsolve
+    //String[] features = {"mpz_swap","mpf_pow_ui","NOMPTEMP","mpz_tstbit","BASE","mpf_swap","RAND_VAL","boolean","mpq_swap","mpq_out_str"};
     //busybox
     //String[] features = {"PKZIP_BUG_WORKAROUND","__TURBOC__","BB_SWAPOFF","NO_STDLIB_H","isgraph","lint","S_IFMPB","NO_STRING_H","S_IFLNK","BB_SWAPON","__STDC__","BB_LOSETUP","MACOS","FEATURE_RECURSIVE","__alpha__","BB_BLOCK_DEVICE","S_IFIFO","MPW","LOCALTIME_CACHE","atarist","TOPS20","NDIR","RCSID","__OS2__","NO_ASM","FULL_SEARCH","S_IFCHR","SIGHUP","sparc","MEDIUM_MEM","S_IFNWK","S_IFDIR","__GLIBC__","SELECT","DEBUG","S_IFREG","__ZTC__","unix","SYSNDIR","UNALIGNED_OK","VMS","__GNU_LIBRARY__","pyr","__EMX__","__cplusplus","isblank","__GNUC__","_MSC_VER","S_IFBLK","DUMP_BL_TREE","__50SERIES","WIN32","__MSDOS__","VAXC","NTFAT","TOSFS","S_IFSOCK","BB_CHMOD","BASE","AMIGA","OS2FAT","NO_TIME_H","__BORLANDC__","FORCE_METHOD","ATARI","ERASE_STUFF","fooBar","foobar","PIO_FONTX","ENOIOCTLCMD","__sparc_v9__","__mips__","PAGE_SIZE","fooo","__sparc__","__GLIBC_MINOR__","MINIX2_SUPER_MAGIC2"};
     //BISON
-    //String[] features = {"BASE", "TRACE", "DEBUG", "MSDOS", "eta10", "__GO32__", "DONTDEF", "VMS", "HAVE_ALLOCA_H", "__GNUC__", "_AIX", "__STDC__", "HAVE_STDLIB_H", "HAVE_MEMORY_H", "STDC_HEADERS"};
-
-
+    //String[] features = {"HAVE_STDLIB_H","UINT64_MAX","HAVE_ALLOCA_H","HAVE_DECL_STRNLEN","HAVE_MEMORY_H","__PTRDIFF_TYPE__","HAVE_DECL_MEMRCHR","TESTING","HAVE_STDDEF_H","WITH_DMALLOC","memcpy","CRAY","_GNU_GETOPT_INTERFACE_VERSION","__STDC__","_LIBC","HAVE___SECURE_GETENV","ENABLE_CHECKING","HAVE_SYS_TIME_H","HAVE_STRING_H","HAVE_DECL_STRERROR","HAVE_STRERROR_R","_WIN32","USE_NONOPTION_FLAGS","HAVE_DECL_STRERROR_R","HAVE_ISASCII","STDC_HEADERS","text_set_element","HAVE_DECL_MEMCHR","static","alloca","HAVE_VPRINTF","HAVE_BP_SYM_H","HAVE_WCTYPE_H","HAVE_FCNTL_H","STRERROR_R_CHAR_P","S_IWRITE","HAVE_LOCALE_H","__GNUC_MINOR__","USE_DIFF_HASH","S_IEXEC","ENABLE_NLS","HAVE_STDBOOL_H","HAVE_STDINT_H","HAVE_DECL_STRCHR","HAVE_UNISTD_H","HAVE_DECL_STRSPN","STAT_MACROS_BROKEN","S_IREAD","DEBUG_I00AFUNC","CRAY_STACKSEG_END","HAVE_ISWPRINT","MSDOS","S_IFDIR","HAVE_DECL_STPCPY","__GLIBC__","_GNU_OBSTACK_INTERFACE_VERSION","HAVE_LIBINTL_H","HAVE_DECL_FREE","__STRICT_ANSI__","TEST","HAVE_CTYPE_H","USE_OBSTACK","VMS","CRAY2","HP_TIMING_AVAIL","__GNU_LIBRARY__","HAVE_WCHAR_H","HAVE_GETTIMEOFDAY","HAVE_CONFIG_H","HAVE_DECL_MALLOC","USE_IN_LIBIO","strlen","HAVE_DOPRNT","__cplusplus","_AIX","weak_alias","isascii","errno","TEST_DIRNAME","emacs","__GNUC__","PROTOTYPES","strerror_r","__NeXT__","HAVE_SETLOCALE","HAVE_STRERROR","HAVE_MBRTOWC","BASE","HAVE_C_BACKSLASH_A","C_ALLOCA","HAVE_LIMITS_H"};
+    String[] features = {"mpz_swap","mpf_pow_ui","NOMPTEMP","mpz_tstbit","BASE","mpf_swap","RAND_VAL","boolean","mpq_swap","mpq_out_str","mps_boolean","__MATLAB_MEX","__USE_BOOL_AS_BOOLEAN","__UNDEF_CPLUSPLUS",
+            "DISABLE_DEBUG","__STDC_VERSION__","__WINDOWS","NICE_DEBUG","THREAD_SAFE","WIN32","MPS_CATCH_FPE","__MPS_MATLAB_MODE","HAVE_FUNLOCKFILE","HAVE_FLOCKFILE","_MPS_PRIVATE","HAVE_CONFIG_H","__GCC__","HAVE_GETLINE","MPS_USE_BUILTIN_COMPLEX"}; //{"mpz_swap","__STDC_VERSION__","mpf_pow_ui","mpz_tstbit","__WINDOWS","__GCC__","DISABLE_DEBUG","__MPS_MATLAB_MODE","__UNDEF_CPLUSPLUS","mpf_swap","RAND_VAL","mpq_out_str","HAVE_FLOCKFILE","MPS_USE_BUILTIN_COMPLEX","_MPS_PRIVATE","HAVE_GETLINE","HAVE_CONFIG_H","NICE_DEBUG","MPS_CATCH_FPE","BASE","HAVE_FUNLOCKFILE","__cplusplus","mpq_swap"};
     @Test
     public void getFeatureDeletedTimes() throws IOException {
         addFeatures();
@@ -70,7 +77,7 @@ public class MiningTest {
                         if (commitNumber != (count + 1)) {
                             deletedTimes++;
                             Integer alreadyExist = deletePerGitCommit.computeIfPresent(commitNumber, (k, v) -> v + 1);
-                            if(alreadyExist!=1)
+                            if(alreadyExist==null)
                                 deletePerGitCommit.put(commitNumber,1);
                         }
                         count = commitNumber;
@@ -78,7 +85,7 @@ public class MiningTest {
 
                 }
                 //RQ.2 How many times one feature were deleted along a number of Git commits?
-                File featureCSV = new File(resultsCSVs_path,"deleteFeatures.csv");
+                File featureCSV = new File(featureFolder,"deleteFeatures.csv");
                 if(!featureCSV.exists()){
                     try {
                         FileWriter csvWriter = new FileWriter(featureCSV);

@@ -2,6 +2,8 @@ package at.jku.isse.gitecco.core.git;
 
 import at.jku.isse.gitecco.core.tree.nodes.ConditionalNode;
 
+import java.util.ArrayList;
+
 /**
  * Class to store a change.
  * A change is defined by two coordinates.<br>
@@ -11,6 +13,7 @@ import at.jku.isse.gitecco.core.tree.nodes.ConditionalNode;
 public class Change {
     private final int from;
     private final int to;
+    private final ArrayList<Integer> lines;
     private final String changeType;
 
 
@@ -20,9 +23,10 @@ public class Change {
      * @param from int value of the starting line number of the change.
      * @param cnt  int value which indicates how many lines are covered by this change.
      */
-    public Change(int from, int cnt, String changeType) {
+    public Change(int from, int cnt, ArrayList<Integer> lines, String changeType) {
         this.from = from;
         this.to = cnt;
+        this.lines = lines;
         this.changeType = changeType;
         //this.to = from+cnt;
     }
@@ -56,6 +60,18 @@ public class Change {
         return this.to;
     }
 
+
+    /**
+     * Gets number of lines of the change
+     * @return
+     */
+    public ArrayList<Integer> getLines() {
+        return lines;
+    }
+
+    public void addLines(int line){
+        this.lines.add(line);
+    }
 
     public String getChangeType() {
         return changeType;
