@@ -145,8 +145,12 @@ public class GitCommitList extends ArrayList<GitCommit> {
         gitCommit.setTree(tree);
 
         //trigger listeners, etc.
-        notifyObservers(gitCommit);
-        System.out.println("commit nr.:"+gitCommit.getNumber()+" branch: "+gitCommit.getBranch());
+        try {
+            notifyObservers(gitCommit);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        System.out.println("commit nr.:"+gitCommit.getNumber()+" branch: "+gitCommit.getBranch() + " hash: "+gitCommit.getCommitName());
         return super.add(gitCommit);
     }
 
@@ -247,7 +251,7 @@ public class GitCommitList extends ArrayList<GitCommit> {
         }
     }
 
-    private void notifyObservers(GitCommit gc) {
+    private void notifyObservers(GitCommit gc) throws IOException {
         for (GitCommitListener oc : observersC) {
             oc.onCommit(gc, this);
             /*for (GitCommitType gct : gc.getType()) {

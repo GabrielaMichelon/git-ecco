@@ -89,10 +89,10 @@ public class ExpressionSolver {
     public Map<Feature, Integer> solve() {
         Map<Feature, Integer> assignments = new HashMap<>();
 
-        if(this.expr.equals("('A' == '\\301') && (!(SQLITEINT_H)) && (BASE)"))
-            this.expr = "(A == 301) && (!(SQLITEINT_H)) && (BASE)";
-        if(this.expr.equals("(__has_feature(address_sanitizer)) && (__has_feature) && (BASE)"))
-            this.expr = "(__has_feature) && (BASE)";
+        if(this.expr.contains("'A' == '\\301'"))
+            this.expr =  this.expr.replace("'A' == '\\301'","A == 301");
+        if (this.expr.contains("__has_feature(address_sanitizer)"))
+            this.expr =  this.expr.replace("__has_feature(address_sanitizer)","__has_feature)");
         //add the parsed problem to the solver model
         model.post(getBoolVarFromExpr(this.expr).extension());
 
@@ -162,175 +162,180 @@ public class ExpressionSolver {
      *
      * @param expr the expression tree to be parsed.
      */
-    public void traverse(FeatureExpression expr) throws EmptyStackException {
-        if (expr == null) return;
-        ExpressionSolver ex = new ExpressionSolver();
-        BoolVar boolVar;
-        if (expr instanceof Name) {
-            String name = ((Name) expr).getToken().getText();
-            Variable check = checkVars(model, name);
-            if (check == null) {
-                if (isIntVar) {
-                    IntVar iv = model.intVar(name, Short.MIN_VALUE, Short.MAX_VALUE);
-                    vars.add(iv);
-                    stack.push(iv);
+    public void traverse(FeatureExpression expr) {
+        try {
+            if (expr == null) return;
+            ExpressionSolver ex = new ExpressionSolver();
+            BoolVar boolVar;
+            System.out.println(expr);
+            if (expr instanceof Name) {
+                String name = ((Name) expr).getToken().getText();
+                Variable check = checkVars(model, name);
+                if (check == null) {
+                    if (isIntVar) {
+                        IntVar iv = model.intVar(name, Short.MIN_VALUE, Short.MAX_VALUE);
+                        vars.add(iv);
+                        stack.push(iv);
+                    } else {
+                        IntVar iv = model.intVar(name, 0, 1);
+                        BoolVar bv = iv.ne(0).boolVar();
+                        vars.add(iv);
+                        stack.push(bv);
+                    }
                 } else {
-                    IntVar iv = model.intVar(name, 0, 1);
-                    BoolVar bv = iv.ne(0).boolVar();
-                    vars.add(iv);
-                    stack.push(bv);
+                    if (check instanceof IntVar && !isIntVar) {
+                        stack.push(((IntVar) check).ne(0).boolVar());
+                    } else {
+                        stack.push(check);
+                    }
                 }
-            } else {
-                if (check instanceof IntVar && !isIntVar) {
-                    stack.push(((IntVar) check).ne(0).boolVar());
-                } else {
-                    stack.push(check);
-                }
-            }
-        } else if (expr instanceof AssignExpr) {
-            System.err.println("AssignExpr should not appear in a normal condition!");
-        } else if (expr instanceof NumberLiteral) {
-            try {
-                //contains little workaround for marlin Long number notation 160000L
-                if(((NumberLiteral) expr).getToken().getText().equals("2147483647"))
-                    stack.push(model.intVar(Short.MIN_VALUE, Short.MAX_VALUE));
-                else
-                    stack.push(model.intVar(Double.valueOf((((NumberLiteral) expr).getToken().getText().replaceAll("L", ""))).intValue()));
-            } catch (NumberFormatException e) {
+            } else if (expr instanceof AssignExpr) {
+                System.err.println("AssignExpr should not appear in a normal condition!");
+            } else if (expr instanceof NumberLiteral) {
                 try {
-                    stack.push(model.intVar(Long.decode((((NumberLiteral) expr).getToken().getText().replaceAll("L", ""))).intValue()));
-                } catch (NumberFormatException e1) {
-                    System.err.println("the given number format is not compatible with the solver!" +
-                            "\n number: " + ((NumberLiteral) expr).getToken().getText());
-                    stack.push(model.intVar(Long.decode((((NumberLiteral) expr).getToken().getText().replaceAll("0000UL", ""))).intValue()));
+                    //contains little workaround for marlin Long number notation 160000L
+                    if (((NumberLiteral) expr).getToken().getText().equals("2147483647"))
+                        stack.push(model.intVar(Short.MIN_VALUE, Short.MAX_VALUE));
+                    else
+                        stack.push(model.intVar(Double.valueOf((((NumberLiteral) expr).getToken().getText().replaceAll("L", ""))).intValue()));
+                } catch (NumberFormatException e) {
+                    try {
+                        stack.push(model.intVar(Long.decode((((NumberLiteral) expr).getToken().getText().replaceAll("L", ""))).intValue()));
+                    } catch (NumberFormatException e1) {
+                        System.err.println("the given number format is not compatible with the solver!" +
+                                "\n number: " + ((NumberLiteral) expr).getToken().getText());
+                        stack.push(model.intVar(Long.decode((((NumberLiteral) expr).getToken().getText().replaceAll("0000UL", ""))).intValue()));
+                    }
                 }
-            }
-            isIntVar = true;
-        } else if (expr instanceof SingleTokenExpr) {
-            IntVar right;
-            IntVar left;
-            BoolVar bright;
-            BoolVar bleft;
-            SingleTokenExpr e = (SingleTokenExpr) expr;
-            switch (e.getToken().getType()) {
-                case Token.GE:      //greater than or equal ">="
-                    right = stack.pop().asIntVar();
-                    left = stack.pop().asIntVar();
-                    stack.push(left.ge(right).boolVar());
-                    break;
-                case Token.EQ:      //equal "=="
-                    if (isIntVar) {
+                isIntVar = true;
+            } else if (expr instanceof SingleTokenExpr) {
+                IntVar right;
+                IntVar left;
+                BoolVar bright;
+                BoolVar bleft;
+                SingleTokenExpr e = (SingleTokenExpr) expr;
+                switch (e.getToken().getType()) {
+                    case Token.GE:      //greater than or equal ">="
                         right = stack.pop().asIntVar();
                         left = stack.pop().asIntVar();
-                        stack.push(left.eq(right).intVar());
-                    } else {
-                        bright = stack.pop().asBoolVar();
-                        bleft = stack.pop().asBoolVar();
-                        stack.push(bleft.eq(bright).boolVar());
-                    }
-                    break;
-                case Token.LE:      //less than or equal "<="
-                    right = stack.pop().asIntVar();
-                    left = stack.pop().asIntVar();
-                    stack.push(left.le(right).boolVar());
-                    break;
-                case Token.LOR:     //logical or "||"
-                    bright = stack.pop().asBoolVar();
-                    bleft = stack.pop().asBoolVar();
-                    stack.push(bleft.or(bright).boolVar());
-                    break;
-                case Token.LAND:    //logical and "&&
-                    bright = stack.pop().asBoolVar();
-                    bleft = stack.pop().asBoolVar();
-                    stack.push(bleft.and(bright).boolVar());
-                    break;
-                case Token.NE:      //not equal "!="
-                    if (isIntVar) {
+                        stack.push(left.ge(right).boolVar());
+                        break;
+                    case Token.EQ:      //equal "=="
+                        if (isIntVar) {
+                            right = stack.pop().asIntVar();
+                            left = stack.pop().asIntVar();
+                            stack.push(left.eq(right).intVar());
+                        } else {
+                            bright = stack.pop().asBoolVar();
+                            bleft = stack.pop().asBoolVar();
+                            stack.push(bleft.eq(bright).boolVar());
+                        }
+                        break;
+                    case Token.LE:      //less than or equal "<="
                         right = stack.pop().asIntVar();
                         left = stack.pop().asIntVar();
-                        stack.push(left.ne(right).intVar());
-                    } else {
+                        stack.push(left.le(right).boolVar());
+                        break;
+                    case Token.LOR:     //logical or "||"
                         bright = stack.pop().asBoolVar();
                         bleft = stack.pop().asBoolVar();
-                        stack.push(bleft.ne(bright).boolVar());
-                    }
-                    break;
-                case 60:            //less than "<"
-                    right = stack.pop().asIntVar();
-                    left = stack.pop().asIntVar();
-                    stack.push(left.lt(right).boolVar());
-                    break;
-                case 62:            //greater than ">"
-                    right = stack.pop().asIntVar();
-                    left = stack.pop().asIntVar();
-                    stack.push(left.gt(right).boolVar());
-                    break;
-                case 33:            //not "!"
-                    bright = stack.pop().asBoolVar();
-                    stack.push(bright.not());
-                    break;
-                case 43:            //plus "+"
-                    right = stack.pop().asIntVar();
-                    left = stack.pop().asIntVar();
-                    stack.push(left.add(right).intVar());
-                    break;
-                case 45:            //minus "-"
-                    right = stack.pop().asIntVar();
-                    left = stack.pop().asIntVar();
-                    stack.push(left.intVar());
-                    stack.push(left.sub(right).intVar());
-                    break;
-                case 42:            //mul "*"
-                    right = stack.pop().asIntVar();
-                    left = stack.pop().asIntVar();
-                    stack.push(left.mul(right).intVar());
-                    break;
-                case 47:            //div "/"
-                    right = stack.pop().asIntVar();
-                    left = stack.pop().asIntVar();
-                    stack.push(left.div(right).intVar());
-                    break;
-                case 37:            //modulo "%"
-                    right = stack.pop().asIntVar();
-                    left = stack.pop().asIntVar();
-                    stack.push(left.mod(right).intVar());
-                    break;
-                case 94:            //pow "^"
-                    right = stack.pop().asIntVar();
-                    left = stack.pop().asIntVar();
-                    stack.push(left.pow(right).intVar());
-                    break;
-                default:
-                    System.err.println("unexpected token with token id: " + e.getToken().getType() + " and symbol: " + e.getToken().getText());
-                    break;
-            }
-        } else if (expr instanceof CondExpr) {
-            CondExpr e = (CondExpr) expr;
-            //idea: parse that created expression and attach it instead of the CondExpr and continue to traverse again.
-            String cond = "(!(" + e.getExpr() + ")||(" + e.getThenExpr() + "))&&((" + e.getExpr() + ")||(" + e.getElseExpr() + "))";
-            traverse(new FeatureExpressionParser(cond).parse());
-        } else if (expr instanceof PrefixExpr) {
-            isIntVar = false;
-            traverse(((PrefixExpr) expr).getExpr());
-            if (((PrefixExpr) expr).getOperator().getToken().getType() == 45) {
-                IntVar ivar = stack.pop().asIntVar();
-                ivar.mul(-1);
-                stack.push(ivar);
+                        stack.push(bleft.or(bright).boolVar());
+                        break;
+                    case Token.LAND:    //logical and "&&
+                        bright = stack.pop().asBoolVar();
+                        bleft = stack.pop().asBoolVar();
+                        stack.push(bleft.and(bright).boolVar());
+                        break;
+                    case Token.NE:      //not equal "!="
+                        if (isIntVar) {
+                            right = stack.pop().asIntVar();
+                            left = stack.pop().asIntVar();
+                            stack.push(left.ne(right).intVar());
+                        } else {
+                            bright = stack.pop().asBoolVar();
+                            bleft = stack.pop().asBoolVar();
+                            stack.push(bleft.ne(bright).boolVar());
+                        }
+                        break;
+                    case 60:            //less than "<"
+                        right = stack.pop().asIntVar();
+                        left = stack.pop().asIntVar();
+                        stack.push(left.lt(right).boolVar());
+                        break;
+                    case 62:            //greater than ">"
+                        right = stack.pop().asIntVar();
+                        left = stack.pop().asIntVar();
+                        stack.push(left.gt(right).boolVar());
+                        break;
+                    case 33:            //not "!"
+                        bright = stack.pop().asBoolVar();
+                        stack.push(bright.not());
+                        break;
+                    case 43:            //plus "+"
+                        right = stack.pop().asIntVar();
+                        left = stack.pop().asIntVar();
+                        stack.push(left.add(right).intVar());
+                        break;
+                    case 45:            //minus "-"
+                        right = stack.pop().asIntVar();
+                        left = stack.pop().asIntVar();
+                        stack.push(left.intVar());
+                        stack.push(left.sub(right).intVar());
+                        break;
+                    case 42:            //mul "*"
+                        right = stack.pop().asIntVar();
+                        left = stack.pop().asIntVar();
+                        stack.push(left.mul(right).intVar());
+                        break;
+                    case 47:            //div "/"
+                        right = stack.pop().asIntVar();
+                        left = stack.pop().asIntVar();
+                        stack.push(left.div(right).intVar());
+                        break;
+                    case 37:            //modulo "%"
+                        right = stack.pop().asIntVar();
+                        left = stack.pop().asIntVar();
+                        stack.push(left.mod(right).intVar());
+                        break;
+                    case 94:            //pow "^"
+                        right = stack.pop().asIntVar();
+                        left = stack.pop().asIntVar();
+                        stack.push(left.pow(right).intVar());
+                        break;
+                    default:
+                        System.err.println("unexpected token with token id: " + e.getToken().getType() + " and symbol: " + e.getToken().getText());
+                        break;
+                }
+            } else if (expr instanceof CondExpr) {
+                CondExpr e = (CondExpr) expr;
+                //idea: parse that created expression and attach it instead of the CondExpr and continue to traverse again.
+                String cond = "(!(" + e.getExpr() + ")||(" + e.getThenExpr() + "))&&((" + e.getExpr() + ")||(" + e.getElseExpr() + "))";
+                traverse(new FeatureExpressionParser(cond).parse());
+            } else if (expr instanceof PrefixExpr) {
+                isIntVar = false;
+                traverse(((PrefixExpr) expr).getExpr());
+                if (((PrefixExpr) expr).getOperator().getToken().getType() == 45) {
+                    IntVar ivar = stack.pop().asIntVar();
+                    ivar.mul(-1);
+                    stack.push(ivar);
+                } else {
+                    traverse(((PrefixExpr) expr).getOperator());
+                }
+            } else if (expr instanceof InfixExpr) {
+                checkIntVar((InfixExpr) expr);
+                traverse(((InfixExpr) expr).getLeftHandSide());
+                checkIntVar((InfixExpr) expr);
+                traverse(((InfixExpr) expr).getRightHandSide());
+                checkIntVar((InfixExpr) expr);
+                traverse(((InfixExpr) expr).getOperator());
+            } else if (expr instanceof ParenthesizedExpr) {
+                isIntVar = false;
+                traverse(((ParenthesizedExpr) expr).getExpr());
             } else {
-                traverse(((PrefixExpr) expr).getOperator());
+                System.err.println("unexpected node in AST: " + expr.toString() + " " + expr.getClass());
             }
-        } else if (expr instanceof InfixExpr) {
-            checkIntVar((InfixExpr) expr);
-            traverse(((InfixExpr) expr).getLeftHandSide());
-            checkIntVar((InfixExpr) expr);
-            traverse(((InfixExpr) expr).getRightHandSide());
-            checkIntVar((InfixExpr) expr);
-            traverse(((InfixExpr) expr).getOperator());
-        } else if (expr instanceof ParenthesizedExpr) {
-            isIntVar = false;
-            traverse(((ParenthesizedExpr) expr).getExpr());
-        } else {
-            System.err.println("unexpected node in AST: " + expr.toString() + " " + expr.getClass());
+        } catch (EmptyStackException emptyStackException) {
+            System.out.println(expr);
         }
     }
 

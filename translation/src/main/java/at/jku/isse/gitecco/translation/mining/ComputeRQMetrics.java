@@ -26,8 +26,8 @@ import java.util.*;
 public class ComputeRQMetrics {
 
     //RQ1
-    public static void CharacteristicsChange(String[] featuresToAdd, String repoPath) throws Exception {
-        final int MAXCOMMITS = 5000;
+    public static void characteristicsChange(String[] featuresToAdd, String repoPath) throws Exception {
+        final int MAXCOMMITS = 50000;
         //set as true to generate PP variants
         final boolean generateOriginalVariants = false;
         //TODO: planned arguments: DEBUG, dispose tree, max commits, repo path, csv path(feature id), outpath for ecco
@@ -83,23 +83,27 @@ public class ComputeRQMetrics {
         List<String> changedFilesNext = new ArrayList<>();
         final GitCommit[] gcPrevious = {null};
         final Boolean[] previous = {true};
+        boolean firstCommit = true;
         commitList.addGitCommitListener((gc, gcl) -> {
+
             if (gcl.size() >= MAXCOMMITS) System.exit(0);
             List<String> configurations = new ArrayList<>();
             System.out.println(gc.getCommitName() + ":");
 
             GetNodesForChangeVisitor visitor = new GetNodesForChangeVisitor();
             ArrayList<ConditionalNode> changedNodes = new ArrayList<>();
-            ArrayList<ConditionalNode> deletedNodes = new  ArrayList<>();
+            ArrayList<ConditionalNode> deletedNodes = new ArrayList<>();
             Map<Feature, ChangeCharacteristic> featureMap = new HashMap<>();
 
             if (gc.getNumber() == 0) {
                 gcPrevious[0] = new GitCommit(gc.getCommitName(), gc.getNumber(), gc.getDiffCommitName(), gc.getBranch(), gc.getRevCommit());
                 gcPrevious[0].setTree(gc.getTree());
             } else if (previous[0] || previous[0] != null) {
-                if (gc.getNumber() - 1 < 1) {
+                if (gc.getNumber() - 1 < 1 || gc.getNumber() == 15704) {
+                    System.out.println("---- commit name "+ gc.getCommitName());
                     previous[0] = false;
                 } else {
+                    String name = gc.getRevCommit().getParent(0).getName();
                     gcPrevious[0] = new GitCommit(gc.getRevCommit().getParent(0).getName(), gc.getNumber() - 1, gc.getRevCommit().getParent(0).getParent(0).getName(), gc.getBranch(), gc.getRevCommit().getParent(0));
                     gcl.addTreeParent(gcPrevious[0], gc.getCommitName());
                 }
@@ -228,7 +232,11 @@ public class ComputeRQMetrics {
                 if (config != null && !config.isEmpty()) {
                     //compute the marked as changed features.
                     changed = constraintComputer.computeChangedFeatures(changedNode, config);
-
+                    int tanglingDegree = 0;
+                    for (Map.Entry<Feature, Integer> feat : config.entrySet()) {
+                        if (featureList.contains(feat.getKey().getName()))
+                            tanglingDegree++;
+                    }
                     if (!changed.contains(base))
                         config.remove(base);
                     //map with the name of the feature and version and a boolean to set true when it is already incremented in the analysed commit
@@ -268,21 +276,20 @@ public class ComputeRQMetrics {
                                 changeCharacteristic = featureMap.get(configFeature.getKey());
                             }
                             int aux = 0;
-                            if(changedNode.getLineNumberInserts().size()>0) {
+                            if (changedNode.getLineNumberInserts().size() > 0) {
                                 for (int i = 2; i < changedNode.getLineNumberInserts().size(); i += 3) {
-                                    aux+=changedNode.getLineNumberInserts().get(i);
+                                    aux += changedNode.getLineNumberInserts().get(i);
                                 }
-                                if (!(changedNode instanceof BaseNode) && !(configFeature.getKey().equals(base)))
-                                    aux -=2;
                                 changeCharacteristic.setLinesOfCodeAdded(changeCharacteristic.getLinesOfCodeAdded() + aux);
                                 changedNode.getLineNumberInserts().removeAll(changedNode.getLineNumberInserts());
                             }
 
-                            changeCharacteristic.addTanglingDegree(config.size());
+                            changeCharacteristic.addTanglingDegree(tanglingDegree);
                             if (!changeCharacteristic.getScatteringDegreeFiles().contains(file)) {
                                 changeCharacteristic.addScatteringDegreeFiles(file);
                             }
-                            changeCharacteristic.setScatteringDegreeIfs(changeCharacteristic.getScatteringDegreeIfs() + 1);
+                            if (!(changedNode instanceof BaseNode))
+                                changeCharacteristic.setScatteringDegreeIfs(changeCharacteristic.getScatteringDegreeIfs() + 1);
                             ChangeCharacteristic finalChangeCharacteristic = changeCharacteristic;
                             featureMap.computeIfAbsent(configFeature.getKey(), v -> finalChangeCharacteristic);
                             featureMap.computeIfPresent(configFeature.getKey(), (k, v) -> finalChangeCharacteristic);
@@ -320,6 +327,11 @@ public class ComputeRQMetrics {
                     if (config != null && !config.isEmpty()) {
                         //compute the marked as changed features.
                         changed = constraintComputer.computeChangedFeatures(deletedNode, config);
+                        int tanglingDegree = 0;
+                        for (Map.Entry<Feature, Integer> feat : config.entrySet()) {
+                            if (featureList.contains(feat.getKey().getName()))
+                                tanglingDegree++;
+                        }
                         if (!changed.contains(base))
                             config.remove(base);
                         //map with the name of the feature and version and a boolean to set true when it is already incremented in the analysed commit
@@ -353,18 +365,19 @@ public class ComputeRQMetrics {
                                 if (changeCharacteristic == null)
                                     changeCharacteristic = new ChangeCharacteristic();
                                 int aux = 0;
-                                if(deletedNode.getLineNumberDeleted().size()>0) {
+                                if (deletedNode.getLineNumberDeleted().size() > 0) {
                                     for (int i = 2; i < deletedNode.getLineNumberDeleted().size(); i += 3) {
-                                        aux+=deletedNode.getLineNumberDeleted().get(i);
+                                        aux += deletedNode.getLineNumberDeleted().get(i);
                                     }
                                     changeCharacteristic.setLinesOfCodeRemoved(changeCharacteristic.getLinesOfCodeRemoved() + aux);
                                     deletedNode.getLineNumberDeleted().removeAll(deletedNode.getLineNumberDeleted());
                                 }
-                                changeCharacteristic.addTanglingDegree(config.size());
+                                changeCharacteristic.addTanglingDegree(tanglingDegree);
                                 if (!changeCharacteristic.getScatteringDegreeFiles().contains(file)) {
                                     changeCharacteristic.addScatteringDegreeFiles(file);
                                 }
-                                changeCharacteristic.setScatteringDegreeIfs(changeCharacteristic.getScatteringDegreeIfs() + 1);
+                                if (!(deletedNode instanceof BaseNode))
+                                    changeCharacteristic.setScatteringDegreeIfs(changeCharacteristic.getScatteringDegreeIfs() + 1);
                                 ChangeCharacteristic finalChangeCharacteristic = changeCharacteristic;
                                 featureMap.computeIfAbsent(configFeature.getKey(), v -> finalChangeCharacteristic);
                                 featureMap.computeIfPresent(configFeature.getKey(), (k, v) -> finalChangeCharacteristic);
@@ -450,24 +463,11 @@ public class ComputeRQMetrics {
             for (Map.Entry<Feature, Integer> featureRevision : featureVersions.entrySet()) {
                 System.out.println(featureRevision.getKey() + "." + featureRevision.getValue());
             }
-            //RQ.2 How many times one feature changed along a number of Git commits?
-            if (gc.getNumber() == commitList.size()) {
-                for (Map.Entry<Feature, Integer> featureRevision : featureVersions.entrySet()) {
-                    if (featureRevision.getValue() > 1)
-                        System.out.println(featureRevision.getKey() + " Changed " + (featureRevision.getValue() - 1) + " times.");
-                }
-            }
 
 
             for (Map.Entry<Feature, ChangeCharacteristic> changes : featureMap.entrySet()) {
                 ChangeCharacteristic changeCharacteristic = changes.getValue();
-                //System.out.println("Feature: "+changes.getKey());
-                //System.out.println("Lines of Code Added: "+changeCharacteristic.getLinesOfCodeAdded());
-                //System.out.println("Lines of Code Removed: "+changeCharacteristic.getLinesOfCodeRemoved());
-                //System.out.println("SD IFs: "+changeCharacteristic.getScatteringDegreeIfs());
-                //System.out.println("SD Files: "+changeCharacteristic.getScatteringDegreeFiles().size());
                 Collections.sort(changeCharacteristic.getTanglingDegree());
-                //System.out.println("TD IFs: "+changeCharacteristic.getTanglingDegree().get(changeCharacteristic.getTanglingDegree().size()-1));
                 File featureCSV = new File(changeFolder, changes.getKey().getName() + ".csv");
                 if (!featureCSV.exists()) {
                     try {
@@ -505,10 +505,15 @@ public class ComputeRQMetrics {
         });
 
         //set second parameter as "NULLCOMMIT" when the first commit is 0, or null when the first commit is another (when startcommit is > 0)
-        //gitHelper.getEveryNthCommit(commitList, "NULLCOMMIT", 0, 50, 1);
-        gitHelper.getEveryNthCommit(commitList, "NULLCOMMIT", 0, 967, 1);
-        //gitHelper.getAllCommits(commitList);
+        //GitCommitList commitListAux = gitHelper.getEveryNthCommit2(commitList, null, "f044b7153a46d7b2f3de4730c042c780a400b748", "55bcaf6829131233488f57035bc8c2dc6bbdaed1", 1);
 
+        //gitHelper.getEveryNthCommit(commitList, "NULLCOMMIT", 15546, 15876, 1);
+        //gitHelper.getAllCommits(commitList);
+        //RQ.2 How many times one feature changed along a number of Git commits?
+        for (Map.Entry<Feature, Integer> featureRevision : featureVersions.entrySet()) {
+            if (featureRevision.getValue() > 1)
+                System.out.println(featureRevision.getKey() + " Changed " + (featureRevision.getValue() - 1) + " times.");
+        }
 
     }
 
@@ -518,14 +523,13 @@ public class ComputeRQMetrics {
      * @param tree
      * @return
      */
-    public static Map<Feature, FeatureCharacteristic> CharacteristicsFeature(String folderProject, Long commitNr, RootNode tree, List<Feature> features, ArrayList<String> featureNamesList) {
+    public static Map<Feature, FeatureCharacteristic> characteristicsFeature(File folderProject, Long commitNr, RootNode tree, ArrayList<String> featureNamesList) {
 
         Map<Feature, FeatureCharacteristic> featureMap = new HashMap<>();
         GetAllConditionalStatementsVisitor visitor = new GetAllConditionalStatementsVisitor();
         Set<ConditionalNode> conditionalNodes = new HashSet<>();
         Set<ConditionalNode> negatedConditionalNodes = new HashSet<>();
         final ConstraintComputer constraintComputer = new ConstraintComputer(featureNamesList);
-        final File folder = new File(folderProject, "FeatureCharacteristic");
         Feature baseFeature = new Feature("BASE");
         for (FileNode child : tree.getChildren()) {
             if (child instanceof SourceFileNode) {
@@ -602,32 +606,16 @@ public class ComputeRQMetrics {
         }
         visitor.reset();
         Set<Feature> changed = new HashSet<>();
-
         for (ConditionalNode cNode : conditionalNodes) {
-            GetAllFeaturesVisitor visitorFeatures = new GetAllFeaturesVisitor();
-            cNode.accept(visitorFeatures);
-            List<Feature> featureInteractions = new ArrayList<>();
-            featureInteractions.addAll(visitorFeatures.getAllFeatures());
-            featureInteractions.remove(baseFeature);
             int count = 0;
-            if (featureInteractions.size() > 1) {
-                for (Feature featInteraction : featureInteractions) {
-                    if (features.contains(featInteraction)) {
-                        count++;
-                    }
-                }
+            for (Feature feature : Feature.parseCondition(cNode.getCondition())) {
+                if (!featureMap.containsKey(feature))
+                    count++;
             }
-
             Map<Feature, Integer> config;
             config = constraintComputer.computeConfig(cNode, tree);
             changed = new HashSet<>();
             if (config != null && !config.isEmpty()) {
-                //compute the marked as changed features.
-                //for (Map.Entry<Feature, Integer> feat : config.entrySet()) {
-                //  if (feat.getValue() != 0) {
-                //     changed.add(feat.getKey());
-                //}
-                //}
                 changed = constraintComputer.computeChangedFeatures(cNode, config);
                 if (!changed.contains(baseFeature))
                     config.remove(baseFeature);
@@ -669,18 +657,10 @@ public class ComputeRQMetrics {
             }
         }
         for (ConditionalNode cNode : negatedConditionalNodes) {
-            GetAllFeaturesVisitor visitorFeatures = new GetAllFeaturesVisitor();
-            cNode.accept(visitorFeatures);
-            List<Feature> featureInteractions = new ArrayList<>();
-            featureInteractions.addAll(visitorFeatures.getAllFeatures());
-            featureInteractions.remove(baseFeature);
             int count = 0;
-            if (featureInteractions.size() > 1) {
-                for (Feature featInteraction : featureInteractions) {
-                    if (features.contains(featInteraction)) {
-                        count++;
-                    }
-                }
+            for (Feature feature : Feature.parseCondition(cNode.getCondition())) {
+                if (!featureMap.containsKey(feature))
+                    count++;
             }
             Map<Feature, Integer> config;
             config = constraintComputer.computeConfig(cNode, tree);
@@ -740,15 +720,15 @@ public class ComputeRQMetrics {
                 }
             }
         }
-        //featureMap.put(feature, featureCharacteristic);
+
         for (Map.Entry<Feature, FeatureCharacteristic> featCharac : featureMap.entrySet()) {
-            File featureCSV = new File(folder, featCharac.getKey().getName() + ".csv");
+            File featureCSV = new File(folderProject, featCharac.getKey().getName() + ".csv");
             FeatureCharacteristic characteristic = featCharac.getValue();
             if (!featureCSV.exists()) {
                 try {
                     FileWriter csvWriter = new FileWriter(featureCSV);
                     List<List<String>> headerRows = Arrays.asList(
-                            Arrays.asList("Commit Nr", "LOC", "SD IF", "SF NIF", "SD File", "TD IF", "ND IFs", "NOTLB", "NONTLB")
+                            Arrays.asList("Commit Nr", "LOC", "SD IF", "SD NIF", "SD File", "TD IF", "ND IFs", "NOTLB", "NONTLB")
                     );
                     for (List<String> rowData : headerRows) {
                         csvWriter.append(String.join(",", rowData));
@@ -765,6 +745,8 @@ public class ComputeRQMetrics {
                 Integer tangIFs = 0;
                 if (characteristic.getTanglingDegreeIFs().size() > 0)
                     tangIFs = Collections.max(characteristic.getTanglingDegreeIFs().keySet());
+                else
+                    tangIFs = 1;
                 List<List<String>> contentRows = Arrays.asList(
                         Arrays.asList(Long.toString(commitNr), String.valueOf(characteristic.getLinesOfCode()), String.valueOf(characteristic.getScatteringDegreeIFs()), String.valueOf(characteristic.getScatteringDegreeNIFs()), String.valueOf(characteristic.getScatteringDegreeFiles().size()), String.valueOf(tangIFs), String.valueOf(characteristic.getNestingDegree()), String.valueOf(characteristic.getNumberOfTopLevelBranches()), String.valueOf(characteristic.getNumberOfNonTopLevelBranches())));
                 for (List<String> rowData : contentRows) {

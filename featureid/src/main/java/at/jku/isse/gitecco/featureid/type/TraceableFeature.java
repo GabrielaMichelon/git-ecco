@@ -12,16 +12,16 @@ public class TraceableFeature extends Feature {
 
 	public TraceableFeature(String name) {
 		super(name);
-		externalOcc = 0;
-		internalOcc = 0;
-		transientOcc = 0;
+		this.externalOcc = 0;
+		this.internalOcc = 0;
+		this.transientOcc = 0;
 	}
 
 	public TraceableFeature(Feature f) {
 		super(f.getName());
-		externalOcc = 0;
-		internalOcc = 0;
-		transientOcc = 0;
+		this.externalOcc = 0;
+		this.internalOcc = 0;
+		this.transientOcc = 0;
 	}
 
 	public void setListcommit(Long commit, boolean present){
@@ -61,7 +61,8 @@ public class TraceableFeature extends Feature {
 	}
 
 	public Integer getTotalOcc() {
-		return externalOcc + internalOcc + transientOcc;
+		int total = externalOcc + internalOcc + transientOcc;
+		return total;
 	}
 
 	public Map<Long, Boolean> getCommitList() {

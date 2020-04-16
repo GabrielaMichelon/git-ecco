@@ -22,21 +22,21 @@ public class App extends Thread{
 
     //private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\test-featureid";
     //private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\TestMarlin\\Marlin\\Marlin\\Marlin";
-    private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\systems\\\\MPSolve";
+    private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\systems\\Sqlite - Copy\\sqlite";
     //private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\sqllite\\sqlite";
     //private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\libssh-mirror\\libssh-mirror";
     // "C:\\obermanndavid\\git-to-ecco\\test_repo5"
     // "C:\\obermanndavid\\git-ecco-test\\test_featureid\\betaflight"
     // "C:\\obermanndavid\\git-ecco-test\\test_featureid\\Marlin"
     //private final static String CSV_PATH = "C:\\Users\\gabil\\Desktop\\results\\results.csv";
-    private final static String CSV_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\systems\\feature_identification\\results_mpsolve4.csv";
-    private final static String FEATURES_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\systems\\feature_identification\\mpsolve2\\";
+    private final static String CSV_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\systems\\feature_identification\\results_sqlite3.13.0.csv";
+    private final static String FEATURES_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\systems\\feature_identification\\sqlite-versions\\3.13.0\\";
     private final static boolean DISPOSE = true;
     private final static boolean DEBUG = true;
-    private final static int MAX_COMMITS = 5200;
+    private final static int MAX_COMMITS = 20000;
     private final static boolean EVERYCOMMIT = false;
-    private final static int STARTCOMMIT = 0;
-    private final static int ENDCOMMIT = 967;
+    private final static int STARTCOMMIT = 15063;
+    private final static int ENDCOMMIT = 15067;
     private final static int EVERY_NTH_COMMIT = 1;
     private final static boolean MAX_COMMITS_ENA = true;
     private final static boolean PARALLEL = false;
@@ -101,7 +101,8 @@ public class App extends Thread{
         if(EVERYCOMMIT) {
             gitHelper.getAllCommits(commitList);
         } else {
-            gitHelper.getEveryNthCommit(commitList, null,STARTCOMMIT, ENDCOMMIT, EVERY_NTH_COMMIT);
+            //gitHelper.getEveryNthCommit(commitList, null,STARTCOMMIT, ENDCOMMIT, EVERY_NTH_COMMIT);
+            //gitHelper.getEveryNthCommit2(commitList, null,"f044b7153a46d7b2f3de4730c042c780a400b748", "55bcaf6829131233488f57035bc8c2dc6bbdaed1",EVERY_NTH_COMMIT);
         }
 
         while(PARALLEL && !isDone(tasks)) sleep(100);
@@ -148,7 +149,7 @@ public class App extends Thread{
         //write each feature/label with: Name, totalOcc, InternalOcc, externalOcc, transientOcc.
 
         for (TraceableFeature feature : features) {
-            if(feature.getExternalOcc()==feature.getTotalOcc())
+            if(feature.getExternalOcc()==feature.getTotalOcc() || feature.getExternalOcc() == feature.getCommitList().size())
                 feats+="\""+feature.getName()+"\",";
             writer.writeNext(
                     new String[]{

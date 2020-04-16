@@ -5,7 +5,6 @@ import at.jku.isse.gitecco.core.tree.nodes.FileNode;
 import difflib.Delta;
 import difflib.DiffUtils;
 import difflib.Patch;
-import org.eclipse.collections.api.set.primitive.CharSet;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -23,8 +22,6 @@ import org.eclipse.jgit.treewalk.TreeWalk;
 
 
 import java.io.*;
-import java.nio.charset.Charset;
-import java.nio.charset.CharsetEncoder;
 import java.nio.charset.MalformedInputException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -33,6 +30,8 @@ import java.nio.file.Paths;
 import java.util.*;
 
 import static java.nio.file.Files.copy;
+import static org.eclipse.jgit.revwalk.filter.RevFilter.ALL;
+import static org.eclipse.jgit.revwalk.filter.RevFilter.NO_MERGES;
 
 /**
  * HelperClass for working with JGit.
@@ -517,7 +516,6 @@ public class GitHelper {
 
 
         for (Ref ref : allRefs) revWalk.markStart(revWalk.parseCommit(ref.getObjectId()));
-
         long number = 0;
         String parent = firstDiff;
         boolean enter = false;
@@ -544,6 +542,114 @@ public class GitHelper {
         }
 
         return commits;
+    }
+
+
+
+
+
+    /**
+     * Method to retrieve every nth commit from a repository and put it to a GitCommitList.
+     * starts with a certain commit number and ends with a certain commit number
+     *
+     * @param commits the GitCommitList to which the commits are saved to.
+     * @return The GitCommitList which was passed to the method.
+     * @throws GitAPIException
+     * @throws IOException
+     */
+    public GitCommitList getEveryNthCommit2(GitCommitList commits, String release, String firstDiff, int startcommit, int endcommit, int n) throws Exception {
+        final Repository repository = git.getRepository();
+        List<Ref> tags = new ArrayList<Ref>(repository.getTags().values());
+        RevWalk revWalk = new RevWalk(repository);
+        revWalk.setRetainBody(false);
+        revWalk.sort(RevSort.REVERSE, true);
+
+        for (Ref ref : tags){
+            if(ref.getName().equals(release)) {
+                revWalk.markStart(revWalk.parseCommit(ref.getObjectId()));
+                break;
+            }
+        }
+        long number = 0;
+        String parent = firstDiff;
+        boolean enter = false;
+        if(startcommit!=0)
+            startcommit-=1;
+        for (RevCommit rc : revWalk) {
+            if (number > endcommit) break;
+
+            if (number >= startcommit) {
+                String branch = getBranchOfCommit(rc.getName());
+
+                if (parent == null || enter) {
+                    try {
+                        parent = rc.getParent(0).getName();
+                    } catch (ArrayIndexOutOfBoundsException e) {
+                        parent = "NULLCOMMIT";
+                    }
+                } else {
+                    enter = true;
+                }
+
+                commits.add(new GitCommit(rc.getName(), number, parent, branch, rc));
+            }
+
+            number += number < startcommit ? 1 : n;
+        }
+
+        return commits;
+    }
+
+    /**
+     * Method to retrieve every tags and each commit number where each release is finished
+     *
+     * @return The a map with commit number of each release/tag of the repository.
+     * @throws GitAPIException
+     * @throws IOException
+     */
+    public Map<Long, String> getCommitNumberTag() throws Exception {
+        final Repository repository = git.getRepository();
+        List<Ref> tags = new ArrayList<Ref>(repository.getTags().values());
+        RevWalk revWalk = new RevWalk(repository);
+        revWalk.setRetainBody(false);
+        revWalk.sort(RevSort.REVERSE, true);
+        revWalk.sort(RevSort.COMMIT_TIME_DESC);
+
+        Map<Long, String> tagsCommits = new HashMap<>();
+        ArrayList<Long> tagsNumberCommits = new ArrayList<>();
+
+        for (Ref ref : tags) {
+            revWalk.markStart(revWalk.parseCommit(ref.getObjectId()));
+            long number = 0;
+            for (RevCommit rc : revWalk) {
+                number++;
+            }
+            tagsCommits.put(number, ref.getName());
+            tagsNumberCommits.add(number);
+            revWalk.dispose();
+        }
+
+        Collections.sort(tagsNumberCommits);
+        for (Long nr : tagsNumberCommits) {
+            System.out.println("Commit number: " + nr + " tag: " + tagsCommits.get(nr));
+
+        }
+
+        /*revWalk.markStart( revWalk.parseCommit( git.getRepository().resolve( "version-3.10.0" ) ) );
+        RevCommit next = revWalk.next();
+        while( next != null ) {
+            // ::pseudo code::
+            // in real, iterate over allTags and compare each tag.getObjectId() with next
+            System.out.println(next);
+            if(tags.contains( next ) ) {
+
+                // remember next and exit while loop
+            }
+            next = revWalk.next();
+        }
+        revWalk.close();*/
+        return tagsCommits;
+
     }
 
 

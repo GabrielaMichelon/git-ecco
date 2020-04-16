@@ -54,7 +54,6 @@ public class GetNodesForChangeVisitor implements TreeVisitor {
         if(change != null && (c.containsChange(change) || change.contains(c))) {
             int lines=0;
             int i= change.getLines().get(0);
-
                 while (i <= change.getLines().get(1) && i <= c.getLineTo()) {
                     if (i >= c.getLineFrom() && i <= c.getLineTo()) {
                         lines++;

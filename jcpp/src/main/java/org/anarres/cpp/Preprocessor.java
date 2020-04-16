@@ -2000,9 +2000,13 @@ public class Preprocessor implements Closeable {
                     if (getFeature(Feature.CSYNTAX))
                         error(tok, String.valueOf(tok.getValue()));
                     return tok;
-
                 default:
-                    throw new InternalException("Bad token " + tok);
+                    if(tok.getType() == PASTE)
+                        return tok;
+                    else if(tok.getText().equals("#"))
+                        return tok;
+                    else
+                        throw new InternalException("Bad token " + tok);
                     // break;
 
                 case HASH:
