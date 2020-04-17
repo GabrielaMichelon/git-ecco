@@ -193,7 +193,8 @@ public class GitHelper {
     public Change[] getFileDiffs(GitCommit newCommit, String filePath, Boolean deletedFile) throws Exception {
 
         List<Change> changes = new ArrayList<Change>();
-
+        git.checkout().setName(newCommit.getCommitName()).call();
+        System.out.println("Checked out: "+newCommit.getCommitName());
         if (deletedFile) {
             git.checkout().setName(newCommit.getDiffCommitName()).call();
             if (filePath.contains("arent"))
@@ -204,7 +205,6 @@ public class GitHelper {
             lines.add(Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size() - 1);
             changes.add(new Change(0, Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size(), lines, "DELETE"));
             git.checkout().setName(newCommit.getCommitName()).call();
-
         } else {
             //prepare for file path filter.
             //String filterPath = filePath.substring(pathUrl.length()+1).replace("\\", "/");
