@@ -7,6 +7,7 @@ import org.anarres.cpp.featureExpr.*;
 import org.chocosolver.solver.Model;
 import org.chocosolver.solver.Solution;
 import org.chocosolver.solver.constraints.nary.cnf.LogOp;
+import org.chocosolver.solver.expression.discrete.relational.ReExpression;
 import org.chocosolver.solver.variables.BoolVar;
 import org.chocosolver.solver.variables.IntVar;
 import org.chocosolver.solver.variables.Variable;
@@ -89,10 +90,12 @@ public class ExpressionSolver {
     public Map<Feature, Integer> solve() {
         Map<Feature, Integer> assignments = new HashMap<>();
 
-        if(this.expr.contains("'A' == '\\301'"))
-            this.expr =  this.expr.replace("'A' == '\\301'","A == 301");
-        if (this.expr.contains("__has_feature(address_sanitizer)"))
-            this.expr =  this.expr.replace("__has_feature(address_sanitizer)","__has_feature)");
+        //if(this.expr.contains("'A' == '\\301'"))
+        //    this.expr =  this.expr.replace("'A' == '\\301'","A == 301");
+        //if (this.expr.contains("__has_feature(address_sanitizer)"))
+        //    this.expr =  this.expr.replace("__has_feature(address_sanitizer)","__has_feature)");
+        if (this.expr.contains("QT_VERSION_CHECK(5, 0, 0)"))
+            this.expr = this.expr.replace("QT_VERSION_CHECK(5, 0, 0)", "QT_VERSION_CHECK");
         //add the parsed problem to the solver model
         model.post(getBoolVarFromExpr(this.expr).extension());
 
@@ -150,6 +153,9 @@ public class ExpressionSolver {
      */
     public BoolVar getBoolVarFromExpr(String expr) {
         isIntVar = false;
+        if(expr.contains(" - 0"))
+            expr = expr.replace(" - 0","");
+        System.out.println(expr);
         traverse(new FeatureExpressionParser(expr).parse());
         Variable var = stack.pop();
 
@@ -167,7 +173,6 @@ public class ExpressionSolver {
             if (expr == null) return;
             ExpressionSolver ex = new ExpressionSolver();
             BoolVar boolVar;
-            System.out.println(expr);
             if (expr instanceof Name) {
                 String name = ((Name) expr).getToken().getText();
                 Variable check = checkVars(model, name);
@@ -242,10 +247,10 @@ public class ExpressionSolver {
                         stack.push(bleft.or(bright).boolVar());
                         break;
                     case Token.LAND:    //logical and "&&
-                        bright = stack.pop().asBoolVar();
-                        bleft = stack.pop().asBoolVar();
-                        stack.push(bleft.and(bright).boolVar());
-                        break;
+                            bright = stack.pop().asBoolVar();
+                            bleft = stack.pop().asBoolVar();
+                            stack.push(bleft.and(bright).boolVar());
+                            break;
                     case Token.NE:      //not equal "!="
                         if (isIntVar) {
                             right = stack.pop().asIntVar();

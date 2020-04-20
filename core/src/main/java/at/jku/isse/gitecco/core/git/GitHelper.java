@@ -193,10 +193,10 @@ public class GitHelper {
     public Change[] getFileDiffs(GitCommit newCommit, String filePath, Boolean deletedFile) throws Exception {
 
         List<Change> changes = new ArrayList<Change>();
-        git.checkout().setName(newCommit.getCommitName()).call();
-        System.out.println("Checked out: "+newCommit.getCommitName());
+
         if (deletedFile) {
-            git.checkout().setName(newCommit.getDiffCommitName()).call();
+            if(newCommit.getNumber()!=Long.valueOf(0))
+                git.checkout().setName(newCommit.getDiffCommitName()).call();
             if (filePath.contains("arent"))
                 filePath = filePath.replace("arent" + File.separator, "");
             String newPath = pathUrl + "\\" + filePath;
@@ -208,6 +208,8 @@ public class GitHelper {
         } else {
             //prepare for file path filter.
             //String filterPath = filePath.substring(pathUrl.length()+1).replace("\\", "/");
+            git.checkout().setName(newCommit.getCommitName()).call();
+            //System.out.println("Checked out: "+newCommit.getCommitName());
             List<DiffEntry> diff;
             diff = git.diff().
                     setOldTree(prepareTreeParser(git.getRepository(), newCommit.getDiffCommitName())).
@@ -402,7 +404,7 @@ public class GitHelper {
 
     private Git cloneRepo(String url, String dirPath) {
         File dir = new File(dirPath);
-        System.out.println("Cloning from " + url + " to " + dir);
+        //System.out.println("Cloning from " + url + " to " + dir);
 
         Git git = null;
         try {
@@ -415,7 +417,7 @@ public class GitHelper {
             e.printStackTrace();
         }
 
-        System.out.println("Having repository: " + git.getRepository().getDirectory() + "\n");
+        //System.out.println("Having repository: " + git.getRepository().getDirectory() + "\n");
 
         return git;
     }
@@ -433,10 +435,10 @@ public class GitHelper {
                 .setNewTree(prepareTreeParser(git.getRepository(), newCommit.getCommitName()))
                 .call();
 
-        System.out.println("Found: " + diffs.size() + " differences");
+        //System.out.println("Found: " + diffs.size() + " differences");
         for (DiffEntry diff : diffs) {
-            System.out.println("Diff: " + diff.getChangeType() + ": " +
-                    (diff.getOldPath().equals(diff.getNewPath()) ? diff.getNewPath() : diff.getOldPath() + " -> " + diff.getNewPath()));
+            //System.out.println("Diff: " + diff.getChangeType() + ": " +
+             //       (diff.getOldPath().equals(diff.getNewPath()) ? diff.getNewPath() : diff.getOldPath() + " -> " + diff.getNewPath()));
         }
     }
 
@@ -584,8 +586,10 @@ public class GitHelper {
                 if (parent == null || enter) {
                     try {
                         parent = rc.getParent(0).getName();
+                        enter = true;
                     } catch (ArrayIndexOutOfBoundsException e) {
                         parent = "NULLCOMMIT";
+                        enter = true;
                     }
                 } else {
                     enter = true;
@@ -634,6 +638,8 @@ public class GitHelper {
             System.out.println("Commit number: " + nr + " tag: " + tagsCommits.get(nr));
 
         }
+        tags.clear();
+        tagsNumberCommits.clear();
 
         /*revWalk.markStart( revWalk.parseCommit( git.getRepository().resolve( "version-3.10.0" ) ) );
         RevCommit next = revWalk.next();
@@ -715,7 +721,6 @@ public class GitHelper {
             try (ObjectReader reader = repository.newObjectReader()) {
                 treeParser.reset(reader, tree.getId());
             }
-
             walk.dispose();
 
             return treeParser;

@@ -42,10 +42,11 @@ public class ID {
         FeatureType type;
 
         for (FileNode child : tree.getChildren()) {
-            allincVisitor.reset();
-            allDefines.clear();
+            allincVisitor =  new GetAllFeaturesDefinesIncludesVisitor();//.reset();
+            allDefines = new ArrayList<>();//.clear();
 
             if (child instanceof SourceFileNode) {
+
                 child.accept(allincVisitor);
 
                 // use includes to get all other defines.
