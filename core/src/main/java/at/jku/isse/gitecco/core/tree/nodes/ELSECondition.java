@@ -34,13 +34,13 @@ public final class ELSECondition extends ConditionalNode implements Visitable {
     }
 
     @Override
-    public void accept(TreeVisitor v) {
+    public void accept(TreeVisitor v, String feature) {
         for (ConditionBlockNode child : getChildren()) {
-            child.accept(v);
+            child.accept(v, feature);
         }
         for (NonConditionalNode node : getDefinesAndIncludes()) {
-            node.accept(v);
+            node.accept(v, feature);
         }
-        v.visit(this);
+        v.visit(this, feature);
     }
 }

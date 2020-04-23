@@ -32,70 +32,82 @@ public class GetAllDefinesVisitor implements TreeVisitor {
     }
 
     @Override
-    public void visit(RootNode n) {
+    public void visit(RootNode n,String feature) {
 
     }
 
     @Override
-    public void visit(BinaryFileNode n) {
+    public void visit(BinaryFileNode n, String feature) {
 
     }
 
     @Override
-    public void visit(SourceFileNode n) {
+    public void visit(SourceFileNode n, String feature) {
 
     }
 
     @Override
-    public void visit(ConditionBlockNode n) {
+    public void visit(ConditionBlockNode n, String feature) {
 
     }
 
     @Override
-    public void visit(IFCondition c) {
+    public void visit(IFCondition c, String feature) {
 
     }
 
     @Override
-    public void visit(IFDEFCondition c) {
+    public void visit(IFDEFCondition c, String feature) {
 
     }
 
     @Override
-    public void visit(IFNDEFCondition c) {
+    public void visit(IFNDEFCondition c, String feature) {
 
     }
 
     @Override
-    public void visit(ELSECondition c) {
+    public void visit(ELSECondition c, String feature) {
 
     }
 
     @Override
-    public void visit(ELIFCondition c) {
+    public void visit(ELIFCondition c, String feature) {
 
     }
 
     @Override
-    public void visit(Define d) {
-        defines.add(d);
-    }
-
-    @Override
-    public void visit(Undef d) {
-        defines.add(d);
-    }
-
-    @Override
-    public void visit(IncludeNode n) {
-        FileNode file = tree.getChild(n.getFileName());
-        if(file != null) {
-            file.accept(this);
+    public void visit(Define d, String feature) {
+        if(feature!=null) {
+            if (d.getCondition().equals(feature))
+                defines.add(d);
+        }else {
+            defines.add(d);
         }
     }
 
     @Override
-    public void visit(BaseNode n) {
+    public void visit(Undef d, String feature) {
+        if(feature!=null) {
+            if (d.getCondition().equals(feature))
+                defines.add(d);
+        }else {
+            defines.add(d);
+        }
+    }
+
+    @Override
+    public void visit(IncludeNode n, String feature) {
+        if(feature==null) {
+            FileNode file = tree.getChild(n.getFileName());
+            if (file != null) {
+                file.accept(this, feature);
+            }
+        }
+    }
+
+    @Override
+    public void visit(BaseNode n, String feature) {
 
     }
 }

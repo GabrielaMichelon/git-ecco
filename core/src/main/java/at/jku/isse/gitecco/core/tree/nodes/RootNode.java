@@ -53,10 +53,10 @@ public final class RootNode extends Node implements Visitable {
     }
 
     @Override
-    public void accept(TreeVisitor v) {
+    public void accept(TreeVisitor v, String feature) {
         for (FileNode child : children) {
-            v.visit(this);
-            child.accept(v);
+            v.visit(this,feature);
+            child.accept(v,feature);
         }
     }
 

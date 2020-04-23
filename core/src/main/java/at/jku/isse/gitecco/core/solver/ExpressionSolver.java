@@ -96,6 +96,8 @@ public class ExpressionSolver {
         //    this.expr =  this.expr.replace("__has_feature(address_sanitizer)","__has_feature)");
         if (this.expr.contains("QT_VERSION_CHECK(5, 0, 0)"))
             this.expr = this.expr.replace("QT_VERSION_CHECK(5, 0, 0)", "QT_VERSION_CHECK");
+        if(this.expr.contains("'$' == 0x24 && '@' == 0x40 && '`' == 0x60 && '~' == 0x7e"))
+            return null;
         //add the parsed problem to the solver model
         model.post(getBoolVarFromExpr(this.expr).extension());
 
@@ -155,7 +157,7 @@ public class ExpressionSolver {
         isIntVar = false;
         if(expr.contains(" - 0"))
             expr = expr.replace(" - 0","");
-        System.out.println(expr);
+        //System.out.println(expr);
         traverse(new FeatureExpressionParser(expr).parse());
         Variable var = stack.pop();
 
@@ -340,7 +342,7 @@ public class ExpressionSolver {
                 System.err.println("unexpected node in AST: " + expr.toString() + " " + expr.getClass());
             }
         } catch (EmptyStackException emptyStackException) {
-            System.out.println(expr);
+            System.out.println(this.expr);
         }
     }
 

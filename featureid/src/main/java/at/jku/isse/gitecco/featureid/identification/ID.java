@@ -2,15 +2,17 @@ package at.jku.isse.gitecco.featureid.identification;
 
 import at.jku.isse.gitecco.core.tree.nodes.*;
 import at.jku.isse.gitecco.core.type.Feature;
-import at.jku.isse.gitecco.featureid.featuretree.visitor.GetAllDefinesVisitor;
 import at.jku.isse.gitecco.featureid.featuretree.visitor.GetAllFeaturesDefinesIncludesVisitor;
 import at.jku.isse.gitecco.featureid.type.FeatureType;
 import at.jku.isse.gitecco.featureid.type.TraceableFeature;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ID {
 
+    public static Map<Feature, Integer> mapOfFeatures =  new HashMap<>();
+    public static List<DefineNode> allDefines = new ArrayList<>();
     /**
      * Identifies all features and their types that occur in a tree of a commit.
      *
@@ -37,17 +39,54 @@ public class ID {
          */
         Map<Feature, FeatureType> featureMap = new HashMap<>();
         GetAllFeaturesDefinesIncludesVisitor allincVisitor = new GetAllFeaturesDefinesIncludesVisitor();
-        GetAllDefinesVisitor definesVisitor = new GetAllDefinesVisitor(tree);
-        List<DefineNode> allDefines = new ArrayList<>();
         FeatureType type;
+        boolean sameName;
+        int lineResult;
+        //FileNode tmpF = null;
 
         for (FileNode child : tree.getChildren()) {
-            allincVisitor =  new GetAllFeaturesDefinesIncludesVisitor();//.reset();
-            allDefines = new ArrayList<>();//.clear();
+            if (child instanceof SourceFileNode) {
+                allincVisitor.reset();
+                child.accept(allincVisitor, null);
+                allDefines.addAll(allincVisitor.getDefines());
+                mapOfFeatures.putAll(allincVisitor.getFeatureMap());
+            }
+        }
+
+        for (Map.Entry<Feature, Integer> entry : mapOfFeatures.entrySet()) {
+            List<DefineNode> filteredDefines = allDefines.stream()
+                    .filter(s -> entry.getKey().getName().equals(s.getMacroName()))
+                    .collect(Collectors.toList());
+            for (DefineNode define : filteredDefines) {
+                type = featureMap.get(entry.getKey());
+                sameName = entry.getKey().getName().equals(define.getMacroName());
+                lineResult = entry.getValue().compareTo(define.getLineInfo());
+                if (sameName && lineResult < 0) {
+                    //feature is defined but also appears before its define:
+                    featureMap.put(entry.getKey(), FeatureType.TRANSIENT);
+                    //System.err.println("Feature: " + entry.getKey().getName() + " is transient at some point!");
+                    break;
+                } else if (sameName && lineResult >= 0) {
+                    //feature is defined, and never (at least until this define) appears before its define:
+                    if (type == null || !type.equals(FeatureType.TRANSIENT))
+                        featureMap.put(entry.getKey(), FeatureType.INTERNAL);
+                }
+            }
+
+            type = featureMap.get(entry.getKey());
+            //if the feature has never been defined in this file it is external:
+            if (type == null || type.equals(FeatureType.EXTERNAL))
+                featureMap.put(entry.getKey(), FeatureType.EXTERNAL);
+        }
+
+
+        /*for (FileNode child : tree.getChildren()) {
+            allincVisitor.reset();
+            allDefines.clear();
 
             if (child instanceof SourceFileNode) {
 
-                child.accept(allincVisitor);
+                child.accept(allincVisitor, null);
 
                 // use includes to get all other defines.
                 //idea:  - for each include retrieve the subtree
@@ -57,9 +96,10 @@ public class ID {
                 //       - proceed as usual.
 
                 //retrieve virtual defines from all includes
-                for (IncludeNode include : allincVisitor.getIncludes()) {
+               /* for (IncludeNode include : allincVisitor.getIncludes()) {
                     definesVisitor.reset();
-                    FileNode tmpF = tree.getChild(include.getFileName());
+                    tmpF = tree.getChild(include.getFileName());
+                    System.out.println("for includes ID1!");
                     if (tmpF != null) tmpF.accept(definesVisitor);
                     for (DefineNode define : definesVisitor.getDefines()) {
                         //just acting like undefs are just defines because in this scenario it does not matter
@@ -71,10 +111,28 @@ public class ID {
                 allDefines.addAll(allincVisitor.getDefines());
 
                 for (Map.Entry<Feature, Integer> entry : allincVisitor.getFeatureMap().entrySet()) {
+                    allDefines.clear();
+                    includeVisitor.reset();
+                    allDefines.addAll(allincVisitor.getDefines());
+                    //retrieve virtual defines from all includes
+                    for (IncludeNode include : allincVisitor.getIncludes()) {
+                        definesVisitor.reset();
+                        tmpF = tree.getChild(include.getFileName());
+                        if (tmpF != null) {
+                            tmpF.accept(definesVisitor, entry.getKey().getName());
+                            tmpF.accept(includeVisitor, entry.getKey().getName());
+                        }
+
+                        for (DefineNode define : definesVisitor.getDefines()) {
+                            //just acting like undefs are just defines because in this scenario it does not matter
+                            allDefines.add(new Define(define.getMacroName(), null, include.getLineInfo(), (ConditionalNode) include.getParent()));
+                        }
+                    }
+
                     for (DefineNode define : allDefines) {
                         type = featureMap.get(entry.getKey());
-                        boolean sameName = entry.getKey().getName().equals(define.getMacroName());
-                        int lineResult = entry.getValue().compareTo(define.getLineInfo());
+                        sameName = entry.getKey().getName().equals(define.getMacroName());
+                        lineResult = entry.getValue().compareTo(define.getLineInfo());
                         if (sameName && lineResult < 0) {
                             //feature is defined but also appears before its define:
                             featureMap.put(entry.getKey(), FeatureType.TRANSIENT);
@@ -93,7 +151,7 @@ public class ID {
                         featureMap.put(entry.getKey(), FeatureType.EXTERNAL);
                 }
             }
-        }
+        } */
         return featureMap;
     }
 

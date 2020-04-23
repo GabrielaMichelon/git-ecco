@@ -125,13 +125,13 @@ public class ComputeRQMetrics {
                     for (Change change : changes) {
                         if (change.getChangeType().equals("INSERT")) {
                             visitor.setChange(change);
-                            child.accept(visitor);
+                            child.accept(visitor,null);
                             changedNodes.addAll(visitor.getchangedNodes());
                         } else if (change.getChangeType().equals("DELETE")) {
                             changesDelete.put(change, child);
                         } else if (change.getChangeType().equals("CHANGE")) {
                             visitor.setChange(change);
-                            child.accept(visitor);
+                            child.accept(visitor,null);
                             changedNodes.addAll(visitor.getchangedNodes());
                         }
 
@@ -172,7 +172,7 @@ public class ComputeRQMetrics {
 
                                 for (Change change : changes) {
                                     visitor.setChange(change);
-                                    child.accept(visitor);
+                                    child.accept(visitor,null);
                                     deletedNodes.addAll(visitor.getchangedNodes());
                                 }
                             }
@@ -183,7 +183,7 @@ public class ComputeRQMetrics {
                         FileNode childAux = changeInsert.getValue();
                         FileNode child = gcPrevious[0].getTree().getChild(childAux.getFilePath());
                         visitor.setChange(change);
-                        child.accept(visitor);
+                        child.accept(visitor,null);
                         deletedNodes.addAll(visitor.getchangedNodes());
                     }
                 }
@@ -540,7 +540,7 @@ public class ComputeRQMetrics {
                 lines.add(to);
                 Change changes = new Change(from, to, lines, null);
                 visitor.setChange(changes);
-                child.accept(visitor);
+                child.accept(visitor,null);
                 conditionalNodes.addAll(visitor.getConditionalNodes());
                 negatedConditionalNodes.addAll(visitor.getNegatedConditionalNodes());
                 String file = child.getFilePath();

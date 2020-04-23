@@ -88,13 +88,13 @@ public final class ConditionBlockNode extends ConditionNode implements Visitable
     }
 
     @Override
-    public void accept(TreeVisitor v) {
-        if(elseBlock != null) elseBlock.accept(v);
+    public void accept(TreeVisitor v,String feature) {
+        if(elseBlock != null) elseBlock.accept(v,feature);
         for (ELIFCondition elseIfBlock : elseIfBlocks) {
-            elseIfBlock.accept(v);
+            elseIfBlock.accept(v,feature);
         }
-        if(ifBlock != null) ifBlock.accept(v);
-        v.visit(this);
+        if(ifBlock != null) ifBlock.accept(v,feature);
+        v.visit(this,feature);
     }
 
     @Override

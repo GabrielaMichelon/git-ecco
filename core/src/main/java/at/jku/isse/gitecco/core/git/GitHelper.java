@@ -15,6 +15,7 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevSort;
 import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.revwalk.filter.RevFilter;
 import org.eclipse.jgit.treewalk.AbstractTreeIterator;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.eclipse.jgit.treewalk.EmptyTreeIterator;
@@ -477,6 +478,7 @@ public class GitHelper {
         RevWalk revWalk = new RevWalk(repository);
         revWalk.sort(RevSort.TOPO, true);
         revWalk.sort(RevSort.REVERSE, true);
+        revWalk.setRevFilter(RevFilter.NO_MERGES);
 
         //revWalk.markStart(revWalk.parseCommit(((List<Ref>) allRefs).get(0).getObjectId()));
         for (Ref ref : allRefs) revWalk.markStart(revWalk.parseCommit(ref.getObjectId()));
@@ -565,6 +567,8 @@ public class GitHelper {
         RevWalk revWalk = new RevWalk(repository);
         revWalk.setRetainBody(false);
         revWalk.sort(RevSort.REVERSE, true);
+        revWalk.setRevFilter(RevFilter.NO_MERGES);
+        revWalk.setRetainBody(false);
 
         for (Ref ref : tags){
             if(ref.getName().equals(release)) {
@@ -617,7 +621,9 @@ public class GitHelper {
         RevWalk revWalk = new RevWalk(repository);
         revWalk.setRetainBody(false);
         revWalk.sort(RevSort.REVERSE, true);
+        revWalk.setRevFilter(RevFilter.NO_MERGES);
         revWalk.sort(RevSort.COMMIT_TIME_DESC);
+        revWalk.setRetainBody(false);
 
         Map<Long, String> tagsCommits = new HashMap<>();
         ArrayList<Long> tagsNumberCommits = new ArrayList<>();

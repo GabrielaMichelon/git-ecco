@@ -52,27 +52,27 @@ public class GetAllConditionalStatementsVisitor implements TreeVisitor {
     }
 
     @Override
-    public void visit(RootNode n) {
+    public void visit(RootNode n, String feature) {
 
     }
 
     @Override
-    public void visit(BinaryFileNode n) {
+    public void visit(BinaryFileNode n, String feature) {
 
     }
 
     @Override
-    public void visit(SourceFileNode n) {
+    public void visit(SourceFileNode n, String feature) {
 
     }
 
     @Override
-    public void visit(ConditionBlockNode n) {
+    public void visit(ConditionBlockNode n, String feature) {
 
     }
 
     @Override
-    public void visit(IFCondition c) {
+    public void visit(IFCondition c, String feature) {
         if(change != null && (c.containsChange(change) || change.contains(c))) {
             this.conditionalNodes.add(c);
             this.linesConditionalNodes.put(c.getLineFrom(),c.getLineTo());
@@ -83,7 +83,7 @@ public class GetAllConditionalStatementsVisitor implements TreeVisitor {
     }
 
     @Override
-    public void visit(IFDEFCondition c) {
+    public void visit(IFDEFCondition c, String feature) {
         if(change != null && (c.containsChange(change) || change.contains(c))) {
             this.conditionalNodes.add(c);
             this.linesConditionalNodes.put(c.getLineFrom(),c.getLineTo());
@@ -92,7 +92,7 @@ public class GetAllConditionalStatementsVisitor implements TreeVisitor {
     }
 
     @Override
-    public void visit(IFNDEFCondition c) {
+    public void visit(IFNDEFCondition c, String feature) {
         if(change != null && (c.containsChange(change) || change.contains(c))) {
             this.negatedConditionalNodes.add(c);
             this.linesConditionalNodes.put(c.getLineFrom(),c.getLineTo());
@@ -101,7 +101,7 @@ public class GetAllConditionalStatementsVisitor implements TreeVisitor {
     }
 
     @Override
-    public void visit(ELSECondition c) {
+    public void visit(ELSECondition c, String feature) {
         if(change != null && (c.containsChange(change) || change.contains(c))) {
             this.negatedConditionalNodes.add(c);
             this.linesConditionalNodes.put(c.getLineFrom(),c.getLineTo());
@@ -110,7 +110,7 @@ public class GetAllConditionalStatementsVisitor implements TreeVisitor {
     }
 
     @Override
-    public void visit(ELIFCondition c) {
+    public void visit(ELIFCondition c, String feature) {
         if(change != null && (c.containsChange(change) || change.contains(c))) {
             this.conditionalNodes.add(c);
             this.linesConditionalNodes.put(c.getLineFrom(),c.getLineTo());
@@ -119,22 +119,22 @@ public class GetAllConditionalStatementsVisitor implements TreeVisitor {
     }
 
     @Override
-    public void visit(Define d) {
+    public void visit(Define d, String feature) {
 
     }
 
     @Override
-    public void visit(Undef d) {
+    public void visit(Undef d, String feature) {
 
     }
 
     @Override
-    public void visit(IncludeNode n) {
+    public void visit(IncludeNode n, String feature) {
 
     }
 
     @Override
-    public void visit(BaseNode n) {
+    public void visit(BaseNode n, String feature) {
 
     }
 }

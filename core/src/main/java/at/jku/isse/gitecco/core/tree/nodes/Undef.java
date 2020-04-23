@@ -33,7 +33,7 @@ public final class Undef extends DefineNode implements Visitable {
     }
 
     @Override
-    public void accept(TreeVisitor v) {
-        v.visit(this);
+    public void accept(TreeVisitor v,String feature) {
+        v.visit(this,feature);
     }
 }

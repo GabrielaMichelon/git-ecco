@@ -2,12 +2,11 @@ package at.jku.isse.gitecco.translation.constraintcomputation.util;
 
 
 import at.jku.isse.gitecco.core.solver.ExpressionSolver;
-import at.jku.isse.gitecco.core.tree.nodes.BaseNode;
-import at.jku.isse.gitecco.core.tree.nodes.ConditionalNode;
-import at.jku.isse.gitecco.core.tree.nodes.RootNode;
+import at.jku.isse.gitecco.core.tree.nodes.*;
 import at.jku.isse.gitecco.core.type.Feature;
 import at.jku.isse.gitecco.core.type.FeatureImplication;
 import at.jku.isse.gitecco.translation.visitor.BuildImplicationsVisitor;
+import org.glassfish.grizzly.compression.lzma.impl.Base;
 
 
 import java.util.*;
@@ -37,45 +36,86 @@ public class ConstraintComputer {
             return ret;
         }
 
+        //get the changedNode condition give to us the global condition, which give as if exist a parent node
+        //and if yes it gives to us the features of this parent node until reach BASE
+        //and if we just have external features, we do not need to look for defines, because any block above
+        //and any block that covers (in cases that the changedNode has parents besides Base) will be selected
+        //or not if user selects. So, we need to give 1/true for all these literals.
+        Feature feature = new Feature("");
         ExpressionSolver solver = new ExpressionSolver();
         Map<Feature, Queue<FeatureImplication>> implMap = new HashMap<>();
-
-        //setup and build constraint queues
-        BuildImplicationsVisitor visitor = new BuildImplicationsVisitor(implMap, tree, changedNode.getLineFrom());
-        changedNode.getContainingFile().accept(visitor);
-
-        //hand the expression of the condition for the changed node to the solver.
         solver.setExpr(changedNode.getCondition());
-        Feature feature = new Feature("");
-        ArrayList<Feature> literalsExpression = feature.parseConditionArray(changedNode.getCondition());
-        ArrayList<Feature> newliteralsToConsider = new ArrayList<>();
-        Map<Feature, Queue<FeatureImplication>> implMapFeaturesExpression = new HashMap<>();
 
-        for (Feature literalToConsider : literalsExpression) {
-            for (Map.Entry<Feature, Queue<FeatureImplication>> implMapAux : implMap.entrySet()) {
-                Queue<FeatureImplication> queueAux = new LinkedList<>();
-                for (FeatureImplication featureimplication : implMapAux.getValue()) {
-                    if (featureimplication.getCondition().contains(literalToConsider.getName())) {
-                        queueAux.add(featureimplication);
-                        if (!(literalsExpression.contains(implMapAux.getKey())) && !(newliteralsToConsider.contains(implMapAux.getKey()))) {
-                            newliteralsToConsider.add(implMapAux.getKey());
-                        }
-                    }
-                }
-                implMapFeaturesExpression.put(implMapAux.getKey(), queueAux);
+        ArrayList<Feature> literalsExpression = feature.parseConditionArray(changedNode.getCondition());
+        Boolean onlyExternal = true;
+        for (Feature feat : literalsExpression) {
+            if (!featureList.contains(feat.getName())) {
+                onlyExternal = false;
             }
         }
-        while (newliteralsToConsider.size() > 0) {
-            ArrayList<Feature> literalsAux = newliteralsToConsider;
-            literalsExpression.addAll(newliteralsToConsider);
-            newliteralsToConsider = new ArrayList<>();
-            for (Feature literalToConsider : literalsAux) {
+        if (!onlyExternal) {
+
+
+            //setup and build constraint queues
+            BuildImplicationsVisitor visitor = new BuildImplicationsVisitor(implMap, tree, changedNode.getLineFrom());
+            try {
+                changedNode.getContainingFile().accept(visitor, null);
+            } catch (StackOverflowError stackOverflowError) {
+                System.out.println("DO SOMETHING");
+            }
+        /*BuildImplicationsVisitor visitorInclude, visitorIncludeAux;
+        List<IncludeNode> includeNodes = visitor.getIncludeNodes();
+        ArrayList<IncludeNode> includeNodesAux3 =  new ArrayList<>();
+        List<IncludeNode> includeNodesAux =  new ArrayList<>();
+        List<IncludeNode> includeNodesAux4 =  includeNodes;
+        for (IncludeNode includeNode : includeNodesAux4) {
+            FileNode sfn = tree.getChild(includeNode.getFileName());
+            if(sfn != null){
+                visitorInclude = new BuildImplicationsVisitor(implMap, tree, includeNode);
+                sfn.accept(visitorInclude,null);
+                FileNode sfnAAux;
+                if(visitorInclude.getIncludeNodes().size()>0){
+                    includeNodesAux = visitorInclude.getIncludeNodes();
+                    List<IncludeNode> includeNodesAux2 =  new ArrayList<>();
+                    for (IncludeNode inclInsideIncl:includeNodesAux) {
+                        if(!includeNodes.contains(inclInsideIncl) && tree.getChild(inclInsideIncl.getFileName()) != null) {
+                            includeNodesAux2.add(inclInsideIncl);
+                            includeNodes.add(inclInsideIncl);
+                        }
+                    }
+                    includeNodesAux3.addAll(includeNodesAux2);
+                    while (includeNodesAux3.size()>0){
+                        includeNodesAux2 =  new ArrayList<>();
+                        for (IncludeNode includeNode1 : includeNodesAux3){
+                            if(!includeNodes.contains(includeNode1) && tree.getChild(includeNode1.getFileName()) != null) {
+                                visitorIncludeAux = new BuildImplicationsVisitor(implMap, tree, includeNode1);
+                                sfnAAux = tree.getChild(includeNode1.getFileName());
+                                sfnAAux.accept(visitorIncludeAux,null);
+                                includeNodes.add(includeNode1);
+                                if(visitorIncludeAux.getIncludeNodes().size()>0)
+                                    includeNodesAux2.addAll(visitorIncludeAux.getIncludeNodes());
+                            }
+                        }
+                        if(includeNodesAux2.size()>0)
+                            includeNodesAux3.addAll(includeNodesAux2);
+                    }
+                }
+            }
+        }*/
+
+            //hand the expression of the condition for the changed node to the solver.
+
+            feature = new Feature("");
+            //ArrayList<Feature> literalsExpression = feature.parseConditionArray(changedNode.getCondition());
+            ArrayList<Feature> newliteralsToConsider = new ArrayList<>();
+            Map<Feature, Queue<FeatureImplication>> implMapFeaturesExpression = new HashMap<>();
+
+            for (Feature literalToConsider : literalsExpression) {
                 for (Map.Entry<Feature, Queue<FeatureImplication>> implMapAux : implMap.entrySet()) {
                     Queue<FeatureImplication> queueAux = new LinkedList<>();
                     for (FeatureImplication featureimplication : implMapAux.getValue()) {
                         if (featureimplication.getCondition().contains(literalToConsider.getName())) {
                             queueAux.add(featureimplication);
-                            literalsExpression.add(literalToConsider);
                             if (!(literalsExpression.contains(implMapAux.getKey())) && !(newliteralsToConsider.contains(implMapAux.getKey()))) {
                                 newliteralsToConsider.add(implMapAux.getKey());
                             }
@@ -84,12 +124,32 @@ public class ConstraintComputer {
                     implMapFeaturesExpression.put(implMapAux.getKey(), queueAux);
                 }
             }
+            while (newliteralsToConsider.size() > 0) {
+                ArrayList<Feature> literalsAux = newliteralsToConsider;
+                literalsExpression.addAll(newliteralsToConsider);
+                newliteralsToConsider = new ArrayList<>();
+                for (Feature literalToConsider : literalsAux) {
+                    for (Map.Entry<Feature, Queue<FeatureImplication>> implMapAux : implMap.entrySet()) {
+                        Queue<FeatureImplication> queueAux = new LinkedList<>();
+                        for (FeatureImplication featureimplication : implMapAux.getValue()) {
+                            if (featureimplication.getCondition().contains(literalToConsider.getName())) {
+                                queueAux.add(featureimplication);
+                                literalsExpression.add(literalToConsider);
+                                if (!(literalsExpression.contains(implMapAux.getKey())) && !(newliteralsToConsider.contains(implMapAux.getKey()))) {
+                                    newliteralsToConsider.add(implMapAux.getKey());
+                                }
+                            }
+                        }
+                        implMapFeaturesExpression.put(implMapAux.getKey(), queueAux);
+                    }
+                }
 
-        }
+            }
 
-        //add the built constraint queues to the solver which further constructs all the internal constraints
-        for (Map.Entry<Feature, Queue<FeatureImplication>> featureQueueEntry : implMapFeaturesExpression.entrySet()) {
-            solver.addClause(featureQueueEntry.getKey(), featureQueueEntry.getValue());
+            //add the built constraint queues to the solver which further constructs all the internal constraints
+            for (Map.Entry<Feature, Queue<FeatureImplication>> featureQueueEntry : implMapFeaturesExpression.entrySet()) {
+                solver.addClause(featureQueueEntry.getKey(), featureQueueEntry.getValue());
+            }
         }
 
         //solve, filter for global features only and return the solution/configuration.
@@ -161,7 +221,7 @@ public class ConstraintComputer {
             ret.add(new Feature("BASE"));
         }
         //if ret > 1 means it contains a changed node of a feature, so we do not consider BASE, only consider BASE when the changed node does not belong to any feature
-        if(ret.size() > 1){
+        if (ret.size() > 1) {
             Feature feature = new Feature("BASE");
             ret.remove(feature);
         }

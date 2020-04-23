@@ -5,9 +5,7 @@ import at.jku.isse.gitecco.core.tree.visitor.TreeVisitor;
 import at.jku.isse.gitecco.core.type.Feature;
 import at.jku.isse.gitecco.core.type.FeatureImplication;
 
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Queue;
+import java.util.*;
 
 public class BuildImplicationsVisitor implements TreeVisitor {
 
@@ -15,6 +13,7 @@ public class BuildImplicationsVisitor implements TreeVisitor {
     private final String precondition;
     private final RootNode root;
     private final Integer line;
+    private ArrayList<IncludeNode> includeNodes;
 
 
     public BuildImplicationsVisitor(Map<Feature, Queue<FeatureImplication>> implMap, RootNode root, int line) {
@@ -22,13 +21,24 @@ public class BuildImplicationsVisitor implements TreeVisitor {
         this.precondition = null;
         this.root = root;
         this.line = line;
+        this.includeNodes = new ArrayList<>();
     }
 
-    private BuildImplicationsVisitor(Map<Feature, Queue<FeatureImplication>> implMap, RootNode root, IncludeNode include) {
+
+    public BuildImplicationsVisitor(Map<Feature, Queue<FeatureImplication>> implMap, RootNode tree, IncludeNode includeNode, ArrayList<IncludeNode> includeNodes) {
         this.implMap = implMap;
-        this.precondition = include.getCondition();
-        this.root = root;
+        this.precondition = includeNode.getCondition();
+        this.root = tree;
         this.line = null;
+        this.includeNodes = includeNodes;
+    }
+
+    public ArrayList<IncludeNode> getIncludeNodes() {
+        return includeNodes;
+    }
+
+    public void addIncludeNodes(IncludeNode includeNode) {
+        this.includeNodes.add(includeNode);
     }
 
     public Map<Feature, Queue<FeatureImplication>> getImplMap() {
@@ -36,52 +46,52 @@ public class BuildImplicationsVisitor implements TreeVisitor {
     }
 
     @Override
-    public void visit(RootNode n) {
+    public void visit(RootNode n, String feature) {
 
     }
 
     @Override
-    public void visit(BinaryFileNode n) {
+    public void visit(BinaryFileNode n, String feature) {
 
     }
 
     @Override
-    public void visit(SourceFileNode n) {
+    public void visit(SourceFileNode n, String feature) {
 
     }
 
     @Override
-    public void visit(ConditionBlockNode n) {
+    public void visit(ConditionBlockNode n, String feature) {
 
     }
 
     @Override
-    public void visit(IFCondition c) {
+    public void visit(IFCondition c, String feature) {
 
     }
 
     @Override
-    public void visit(IFDEFCondition c) {
+    public void visit(IFDEFCondition c, String feature) {
 
     }
 
     @Override
-    public void visit(IFNDEFCondition c) {
+    public void visit(IFNDEFCondition c, String feature) {
 
     }
 
     @Override
-    public void visit(ELSECondition c) {
+    public void visit(ELSECondition c, String feature) {
 
     }
 
     @Override
-    public void visit(ELIFCondition c) {
+    public void visit(ELIFCondition c, String feature) {
 
     }
 
     @Override
-    public void visit(Define d) {
+    public void visit(Define d, String feature) {
         if( line != null && d.getLineInfo() > line) return;
 
         if((d.getParent() instanceof IFNDEFCondition) && (d.getLineInfo()-1 == d.getParent().getLineFrom())) {
@@ -91,41 +101,48 @@ public class BuildImplicationsVisitor implements TreeVisitor {
         String cond = precondition == null ? d.getCondition() : "(" + precondition + ") && (" + d.getCondition() + ")";
         FeatureImplication impl = new FeatureImplication(cond, d.getMacroName() + " == " + d.getMacroExpansion());
 
-        Feature feature = new Feature(d.getMacroName());
+        Feature feat = new Feature(d.getMacroName());
 
-        if(implMap.containsKey(feature)) {
-            implMap.get(feature).add(impl);
+        if(implMap.containsKey(feat)) {
+            implMap.get(feat).add(impl);
         } else {
-            implMap.put(feature, new LinkedList<FeatureImplication>());
+            implMap.put(feat, new LinkedList<FeatureImplication>());
         }
     }
 
     @Override
-    public void visit(Undef d) {
+    public void visit(Undef d, String feature) {
         if( line != null && d.getLineInfo() > line) return;
 
         String cond = precondition == null ? d.getCondition() : "(" + precondition + ") && (" + d.getCondition() + ")";
         FeatureImplication impl = new FeatureImplication(cond, d.getMacroName() + " == 0");
 
-        Feature feature = new Feature(d.getMacroName());
+        Feature feat = new Feature(d.getMacroName());
 
-        if(implMap.containsKey(feature)) {
-            implMap.get(feature).add(impl);
+        if(implMap.containsKey(feat)) {
+            implMap.get(feat).add(impl);
         } else {
-            implMap.put(feature, new LinkedList<FeatureImplication>());
+            implMap.put(feat, new LinkedList<FeatureImplication>());
         }
     }
 
     @Override
-    public void visit(IncludeNode n) {
-        BuildImplicationsVisitor v = new BuildImplicationsVisitor(implMap, root, n);
+    public void visit(IncludeNode n, String feature) {
+        if(this.includeNodes.contains(n)) return;
+        if(line != null && n.getLineInfo()>line){
+            this.includeNodes.add(n);
+            return;
+        }
+
+        this.includeNodes.add(n);
+        BuildImplicationsVisitor v = new BuildImplicationsVisitor(implMap, root, n, this.getIncludeNodes());
         FileNode sfn = root.getChild(n.getFileName());
-        if(sfn != null) sfn.accept(v);
+        if(sfn != null) sfn.accept(v,null);
         //else System.out.println(n.getFileName() + " cannot be found in the repository");
     }
 
     @Override
-    public void visit(BaseNode n) {
+    public void visit(BaseNode n, String feature) {
 
     }
 }

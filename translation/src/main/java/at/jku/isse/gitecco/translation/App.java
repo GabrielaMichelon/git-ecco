@@ -214,7 +214,7 @@ public class App {
                     for (Change change : changes) {
                         if (change.getChangeType() == null) {
                             visitor.setChange(change);
-                            child.accept(visitor);
+                            child.accept(visitor,null);
                             changedNodes.addAll(visitor.getchangedNodes());
                         } else {
                             changesInsert.put(change, child);
@@ -256,7 +256,7 @@ public class App {
 
                                 for (Change change : changes) {
                                     visitor.setChange(change);
-                                    child.accept(visitor);
+                                    child.accept(visitor,null);
                                     deletedNodes.addAll(visitor.getchangedNodes());
                                 }
                             }
@@ -267,7 +267,7 @@ public class App {
                         FileNode childAux = changeInsert.getValue();
                         FileNode child = gcPrevious[0].getTree().getChild(childAux.getFilePath());
                         visitor.setChange(change);
-                        child.accept(visitor);
+                        child.accept(visitor,null);
                         deletedNodes.addAll(visitor.getchangedNodes());
                     }
                 }
