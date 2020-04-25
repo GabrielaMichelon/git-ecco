@@ -13,7 +13,7 @@ public class BuildImplicationsVisitor implements TreeVisitor {
     private final String precondition;
     private final RootNode root;
     private final Integer line;
-    private ArrayList<IncludeNode> includeNodes;
+    private ArrayList<String> includeNodes;
 
 
     public BuildImplicationsVisitor(Map<Feature, Queue<FeatureImplication>> implMap, RootNode root, int line) {
@@ -25,7 +25,7 @@ public class BuildImplicationsVisitor implements TreeVisitor {
     }
 
 
-    public BuildImplicationsVisitor(Map<Feature, Queue<FeatureImplication>> implMap, RootNode tree, IncludeNode includeNode, ArrayList<IncludeNode> includeNodes) {
+    public BuildImplicationsVisitor(Map<Feature, Queue<FeatureImplication>> implMap, RootNode tree, IncludeNode includeNode, ArrayList<String> includeNodes) {
         this.implMap = implMap;
         this.precondition = includeNode.getCondition();
         this.root = tree;
@@ -33,11 +33,11 @@ public class BuildImplicationsVisitor implements TreeVisitor {
         this.includeNodes = includeNodes;
     }
 
-    public ArrayList<IncludeNode> getIncludeNodes() {
+    public ArrayList<String> getIncludeNodes() {
         return includeNodes;
     }
 
-    public void addIncludeNodes(IncludeNode includeNode) {
+    public void addIncludeNodes(String includeNode) {
         this.includeNodes.add(includeNode);
     }
 
@@ -128,13 +128,13 @@ public class BuildImplicationsVisitor implements TreeVisitor {
 
     @Override
     public void visit(IncludeNode n, String feature) {
-        if(this.includeNodes.contains(n)) return;
+        if(this.includeNodes.contains(n.getFileName())) return;
         if(line != null && n.getLineInfo()>line){
-            this.includeNodes.add(n);
+            this.includeNodes.add(n.getFileName());
             return;
         }
 
-        this.includeNodes.add(n);
+        this.includeNodes.add(n.getFileName());
         BuildImplicationsVisitor v = new BuildImplicationsVisitor(implMap, root, n, this.getIncludeNodes());
         FileNode sfn = root.getChild(n.getFileName());
         if(sfn != null) sfn.accept(v,null);

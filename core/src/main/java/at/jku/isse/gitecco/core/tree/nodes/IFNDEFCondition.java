@@ -8,7 +8,7 @@ import at.jku.isse.gitecco.core.tree.visitor.Visitable;
  * Which means the condition of this Node must not be defined to be evaluated as true.
  */
 public final class IFNDEFCondition extends ConditionalNode implements Visitable {
-    private final String condition;
+    private String condition;
 
     public IFNDEFCondition(ConditionBlockNode parent, String condition) {
         super(parent);
@@ -43,6 +43,11 @@ public final class IFNDEFCondition extends ConditionalNode implements Visitable 
         }
         //return expression;
             //return this.condition;
+    }
+
+    @Override
+    public void setConString(String newCondition) {
+        this.condition = newCondition;
     }
 
     @Override

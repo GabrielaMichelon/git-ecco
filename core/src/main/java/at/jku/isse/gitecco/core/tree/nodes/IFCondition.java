@@ -8,7 +8,7 @@ import at.jku.isse.gitecco.core.tree.visitor.Visitable;
  * Name speaks for itself.
  */
 public final class IFCondition extends ConditionalNode implements Visitable {
-    private final String condition;
+    private String condition;
 
     public IFCondition(ConditionBlockNode parent, String condition) {
         super(parent);
@@ -30,6 +30,11 @@ public final class IFCondition extends ConditionalNode implements Visitable {
             return expression;
         }
         return expression;
+    }
+
+    @Override
+    public void setConString(String newCondition) {
+        this.condition = newCondition;
     }
 
     @Override

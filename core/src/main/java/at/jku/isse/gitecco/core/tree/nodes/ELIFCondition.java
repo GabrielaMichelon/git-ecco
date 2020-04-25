@@ -4,7 +4,7 @@ import at.jku.isse.gitecco.core.tree.visitor.TreeVisitor;
 
 public final class ELIFCondition extends ConditionalNode {
 
-    private final String condition;
+    private String condition;
 
     public ELIFCondition(ConditionBlockNode parent, String condition) {
         super(parent);
@@ -34,6 +34,11 @@ public final class ELIFCondition extends ConditionalNode {
         }
 
         return ret.toString();
+    }
+
+    @Override
+    public void setConString(String newCondition) {
+        this.condition = newCondition;
     }
 
     @Override

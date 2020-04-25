@@ -28,6 +28,11 @@ public final class ELSECondition extends ConditionalNode implements Visitable {
     }
 
     @Override
+    public void setConString(String newCondition) {
+
+    }
+
+    @Override
     public String getLocalCondition() {
         return getCondition();
         //return "";

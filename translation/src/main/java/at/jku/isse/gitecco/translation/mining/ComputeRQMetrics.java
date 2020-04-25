@@ -100,7 +100,7 @@ public class ComputeRQMetrics {
                 gcPrevious[0].setTree(gc.getTree());
             } else if (previous[0] || previous[0] != null) {
                 if (gc.getNumber() - 1 < 1 || gc.getNumber() == 15704) {
-                    System.out.println("---- commit name "+ gc.getCommitName());
+                    System.out.println("---- commit name " + gc.getCommitName());
                     previous[0] = false;
                 } else {
                     String name = gc.getRevCommit().getParent(0).getName();
@@ -125,13 +125,13 @@ public class ComputeRQMetrics {
                     for (Change change : changes) {
                         if (change.getChangeType().equals("INSERT")) {
                             visitor.setChange(change);
-                            child.accept(visitor,null);
+                            child.accept(visitor, null);
                             changedNodes.addAll(visitor.getchangedNodes());
                         } else if (change.getChangeType().equals("DELETE")) {
                             changesDelete.put(change, child);
                         } else if (change.getChangeType().equals("CHANGE")) {
                             visitor.setChange(change);
-                            child.accept(visitor,null);
+                            child.accept(visitor, null);
                             changedNodes.addAll(visitor.getchangedNodes());
                         }
 
@@ -172,7 +172,7 @@ public class ComputeRQMetrics {
 
                                 for (Change change : changes) {
                                     visitor.setChange(change);
-                                    child.accept(visitor,null);
+                                    child.accept(visitor, null);
                                     deletedNodes.addAll(visitor.getchangedNodes());
                                 }
                             }
@@ -183,7 +183,7 @@ public class ComputeRQMetrics {
                         FileNode childAux = changeInsert.getValue();
                         FileNode child = gcPrevious[0].getTree().getChild(childAux.getFilePath());
                         visitor.setChange(change);
-                        child.accept(visitor,null);
+                        child.accept(visitor, null);
                         deletedNodes.addAll(visitor.getchangedNodes());
                     }
                 }
@@ -540,7 +540,7 @@ public class ComputeRQMetrics {
                 lines.add(to);
                 Change changes = new Change(from, to, lines, null);
                 visitor.setChange(changes);
-                child.accept(visitor,null);
+                child.accept(visitor, null);
                 conditionalNodes.addAll(visitor.getConditionalNodes());
                 negatedConditionalNodes.addAll(visitor.getNegatedConditionalNodes());
                 String file = child.getFilePath();
@@ -608,50 +608,66 @@ public class ComputeRQMetrics {
         Set<Feature> changed = new HashSet<>();
         for (ConditionalNode cNode : conditionalNodes) {
             int count = 0;
+            int counttrio_minimal = 0;
             for (Feature feature : Feature.parseCondition(cNode.getCondition())) {
                 if (!featureMap.containsKey(feature))
                     count++;
             }
-            Map<Feature, Integer> config;
-            config = constraintComputer.computeConfig(cNode, tree);
-            changed = new HashSet<>();
-            if (config != null && !config.isEmpty()) {
-                changed = constraintComputer.computeChangedFeatures(cNode, config);
-                if (!changed.contains(baseFeature))
-                    config.remove(baseFeature);
+
+            System.out.println("ConditionalNode: " + cNode.getCondition());
+            System.out.println(cNode.getContainingFile().getFilePath());
+            if (cNode.getCondition().contains("!TRIO_MINIMAL")) {
+                String[] countTrioMininal = cNode.getCondition().split("&&");
+                for (String string : countTrioMininal) {
+                    if (string.contains("TRIO_MINIMAL") && !string.contains("!"))
+                        counttrio_minimal++;
+                }
+
+            }
+            if (counttrio_minimal > 0) {
+                System.out.println("Não é possível avaliar esta condição!");
+            } else {
+                Map<Feature, Integer> config;
+                config = constraintComputer.computeConfig(cNode, tree);
+                changed = new HashSet<>();
+                if (config != null && !config.isEmpty()) {
+                    changed = constraintComputer.computeChangedFeatures(cNode, config);
+                    if (!changed.contains(baseFeature))
+                        config.remove(baseFeature);
 
 
-                for (Map.Entry<Feature, Integer> featsConditionalStatement : config.entrySet()) {
-                    if (featsConditionalStatement.getValue() != 0 && featureNamesList.contains(featsConditionalStatement.getKey().getName())) {
-                        FeatureCharacteristic featureCharacteristic = featureMap.get(featsConditionalStatement.getKey());
-                        if (featureCharacteristic == null)
-                            featureCharacteristic = new FeatureCharacteristic();
-                        //RQ3.LOC
-                        featureCharacteristic.setLinesOfCode(featureCharacteristic.getLinesOfCode() - 1 + (cNode.getLineTo() - cNode.getLineFrom()));
-                        //RQ3: SD #ifdef
-                        featureCharacteristic.setScatteringDegreeIFs(featureCharacteristic.getScatteringDegreeIFs() + 1);
-                        String file = cNode.getParent().getParent().getContainingFile().getFilePath();
-                        //RQ3: SD files
-                        if (!featureCharacteristic.getScatteringDegreeFiles().contains(file)) {
-                            featureCharacteristic.addScatteringDegreeFiles(file);
+                    for (Map.Entry<Feature, Integer> featsConditionalStatement : config.entrySet()) {
+                        if (featsConditionalStatement.getValue() != 0 && featureNamesList.contains(featsConditionalStatement.getKey().getName())) {
+                            FeatureCharacteristic featureCharacteristic = featureMap.get(featsConditionalStatement.getKey());
+                            if (featureCharacteristic == null)
+                                featureCharacteristic = new FeatureCharacteristic();
+                            //RQ3.LOC
+                            featureCharacteristic.setLinesOfCode(featureCharacteristic.getLinesOfCode() - 1 + (cNode.getLineTo() - cNode.getLineFrom()));
+                            //RQ3: SD #ifdef
+                            featureCharacteristic.setScatteringDegreeIFs(featureCharacteristic.getScatteringDegreeIFs() + 1);
+                            String file = cNode.getParent().getParent().getContainingFile().getFilePath();
+                            //RQ3: SD files
+                            if (!featureCharacteristic.getScatteringDegreeFiles().contains(file)) {
+                                featureCharacteristic.addScatteringDegreeFiles(file);
+                            }
+                            //RQ3: TD #ifdef
+                            if (count > 1) {
+                                featureCharacteristic.addTanglingDegreeIFs(count, cNode.getLineTo() - cNode.getLineFrom());
+                            }
+                            //RQ3: ND #ifdef
+                            if (cNode.getChildren().size() > featureCharacteristic.getNestingDegree()) {
+                                featureCharacteristic.setNestingDegree(cNode.getChildren().size());
+                            }
+                            //RQ3: NOTLB OR NONTLB
+                            if (cNode.getParent().getParent().getLocalCondition().equals("BASE")) {
+                                featureCharacteristic.setNumberOfTopLevelBranches(featureCharacteristic.getNumberOfTopLevelBranches() + 1);
+                            } else {
+                                featureCharacteristic.setNumberOfNonTopLevelBranches(featureCharacteristic.getNumberOfNonTopLevelBranches() + 1);
+                            }
+                            FeatureCharacteristic finalFeatureCharacteristic = featureCharacteristic;
+                            featureMap.computeIfAbsent(featsConditionalStatement.getKey(), v -> finalFeatureCharacteristic);
+                            featureMap.computeIfPresent(featsConditionalStatement.getKey(), (k, v) -> finalFeatureCharacteristic);
                         }
-                        //RQ3: TD #ifdef
-                        if (count > 1) {
-                            featureCharacteristic.addTanglingDegreeIFs(count, cNode.getLineTo() - cNode.getLineFrom());
-                        }
-                        //RQ3: ND #ifdef
-                        if (cNode.getChildren().size() > featureCharacteristic.getNestingDegree()) {
-                            featureCharacteristic.setNestingDegree(cNode.getChildren().size());
-                        }
-                        //RQ3: NOTLB OR NONTLB
-                        if (cNode.getParent().getParent().getLocalCondition().equals("BASE")) {
-                            featureCharacteristic.setNumberOfTopLevelBranches(featureCharacteristic.getNumberOfTopLevelBranches() + 1);
-                        } else {
-                            featureCharacteristic.setNumberOfNonTopLevelBranches(featureCharacteristic.getNumberOfNonTopLevelBranches() + 1);
-                        }
-                        FeatureCharacteristic finalFeatureCharacteristic = featureCharacteristic;
-                        featureMap.computeIfAbsent(featsConditionalStatement.getKey(), v -> finalFeatureCharacteristic);
-                        featureMap.computeIfPresent(featsConditionalStatement.getKey(), (k, v) -> finalFeatureCharacteristic);
                     }
                 }
             }
@@ -661,7 +677,12 @@ public class ComputeRQMetrics {
             for (Feature feature : Feature.parseCondition(cNode.getCondition())) {
                 if (!featureMap.containsKey(feature))
                     count++;
+                System.out.println("FEATURE: " + feature);
             }
+
+            System.out.println("NegatedConditionalNodes: " + cNode.getCondition());
+            System.out.println(cNode.getContainingFile().getFilePath());
+
             Map<Feature, Integer> config;
             config = constraintComputer.computeConfig(cNode, tree);
             changed = new HashSet<>();

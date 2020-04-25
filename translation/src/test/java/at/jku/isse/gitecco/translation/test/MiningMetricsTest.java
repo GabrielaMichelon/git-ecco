@@ -36,8 +36,8 @@ public class MiningMetricsTest {
     private final static int EVERY_NTH_COMMIT = 1;
     private final static ArrayList<Feature> featureList = new ArrayList<>();
     private final static ArrayList<String> featureNamesList = new ArrayList<String>();
-    private final static String REPO_PATH = "D:\\Mining\\Bison\\bison";
-    private final static String FEATURES_PATH = "D:\\Mining\\Bison\\Mining\\test";
+    private final static String REPO_PATH = "D:\\Mining\\Gnome\\libxml2";
+    private final static String FEATURES_PATH = "D:\\Mining\\Gnome\\Mining\\test";
     String fileReportFeature = "features_report_each_project_commit.csv";
     String fileStoreConfig = "configurations.csv";
     List<String> changedFiles = new ArrayList<>();
@@ -72,8 +72,8 @@ public class MiningMetricsTest {
             int i = 0;
             Boolean analyze = false;
             for (Map.Entry<Long, String> releases : orderedMap.entrySet()) {
-                  System.out.println("TAG: " + releases.getValue());
-                if (releases.getValue().contains("v1.875") || analyze) {
+                System.out.println("TAG: " + releases.getValue());
+                if (releases.getValue().contains("LIBXML_2_4_25") || analyze) {
                     analyze = true;
                     gitHelper.getEveryNthCommit2(commitList, releases.getValue(), null, i, Math.toIntExact(releases.getKey()), EVERY_NTH_COMMIT);
                     i = Math.toIntExact(releases.getKey()) + 1;
@@ -107,10 +107,10 @@ public class MiningMetricsTest {
                     for (Map.Entry<Feature, Integer> featureRevision : featureVersions.entrySet()) {
                         if (featureRevision.getValue() > 1)
                             writerTXT.println(featureRevision.getKey() + " Changed " + (featureRevision.getValue() - 1) + " times.");
-                        }
+                    }
                     writerTXT.close();
                     commitList = new GitCommitList(gitHelper);
-                }else{
+                } else {
                     i = Math.toIntExact(releases.getKey()) + 1;
                 }
             }
@@ -194,13 +194,13 @@ public class MiningMetricsTest {
                 for (Change change : changes) {
                     if (change.getChangeType().equals("INSERT")) {
                         visitor.setChange(change);
-                        child.accept(visitor,null);
+                        child.accept(visitor, null);
                         changedNodes.addAll(visitor.getchangedNodes());
                     } else if (change.getChangeType().equals("DELETE")) {
                         changesDelete.put(change, child);
                     } else if (change.getChangeType().equals("CHANGE")) {
                         visitor.setChange(change);
-                        child.accept(visitor,null);
+                        child.accept(visitor, null);
                         changedNodes.addAll(visitor.getchangedNodes());
                     }
 
@@ -241,7 +241,7 @@ public class MiningMetricsTest {
 
                             for (Change change : changes) {
                                 visitor.setChange(change);
-                                child.accept(visitor,null);
+                                child.accept(visitor, null);
                                 deletedNodes.addAll(visitor.getchangedNodes());
                             }
                         }
@@ -252,7 +252,7 @@ public class MiningMetricsTest {
                     FileNode childAux = changeInsert.getValue();
                     FileNode child = gcPrevious.getTree().getChild(childAux.getFilePath());
                     visitor.setChange(change);
-                    child.accept(visitor,null);
+                    child.accept(visitor, null);
                     deletedNodes.addAll(visitor.getchangedNodes());
                 }
             }
@@ -326,7 +326,7 @@ public class MiningMetricsTest {
                                 else
                                     countFeaturesChanged++;
                             }
-                            if(version == 0 && !(changed.contains(configFeature.getKey()))) {
+                            if (version == 0 && !(changed.contains(configFeature.getKey()))) {
                                 newFeatures++;
                                 version = 1;
                             }
@@ -579,7 +579,7 @@ public class MiningMetricsTest {
         String csvFile = release.substring(release.lastIndexOf("/") + 1);
         int count = 0;
         for (GitCommit commit : commitList) {
-            System.out.println("for git identifyFeatures"+commit.getCommitName());
+            System.out.println("for git identifyFeatures" + commit.getCommitName());
             ID.evaluateFeatureMap(evaluation, ID.id(commit.getTree()), commit.getNumber());
             //dispose tree if it is not needed -> for memory saving reasons.
             if (count == commitList.size() - 1) {

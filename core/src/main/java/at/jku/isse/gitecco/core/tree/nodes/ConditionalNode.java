@@ -194,6 +194,9 @@ public abstract class ConditionalNode extends ConditionNode {
      */
     public abstract String getCondition();
 
+
+    public abstract void setConString(String newCondition);
+
     /**
      * Returns just the local (immediate) condition of this node.
      * @return

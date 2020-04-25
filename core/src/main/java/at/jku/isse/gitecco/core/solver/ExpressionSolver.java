@@ -157,6 +157,11 @@ public class ExpressionSolver {
         isIntVar = false;
         if(expr.contains(" - 0"))
             expr = expr.replace(" - 0","");
+        if((expr.contains("(])")))
+            expr = expr.replace("(]) &&", "");
+        if(expr.contains("]") && !expr.contains("[")) {
+            expr = expr.replace("]", "");
+        }
         //System.out.println(expr);
         traverse(new FeatureExpressionParser(expr).parse());
         Variable var = stack.pop();
@@ -308,6 +313,11 @@ public class ExpressionSolver {
                         right = stack.pop().asIntVar();
                         left = stack.pop().asIntVar();
                         stack.push(left.pow(right).intVar());
+                        break;
+                    case 124:     // "|"
+                        bright = stack.pop().asBoolVar();
+                        bleft = stack.pop().asBoolVar();
+                        stack.push(bleft.or(bright).boolVar());
                         break;
                     default:
                         System.err.println("unexpected token with token id: " + e.getToken().getType() + " and symbol: " + e.getToken().getText());

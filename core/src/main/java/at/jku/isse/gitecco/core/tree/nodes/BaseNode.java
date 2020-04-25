@@ -27,6 +27,11 @@ public final class BaseNode extends ConditionalNode implements Visitable {
     }
 
     @Override
+    public void setConString(String newCodition) {
+
+    }
+
+    @Override
     public String getLocalCondition() {
         return "BASE";
     }
