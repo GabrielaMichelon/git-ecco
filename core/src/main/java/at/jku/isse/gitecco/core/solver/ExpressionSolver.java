@@ -90,10 +90,10 @@ public class ExpressionSolver {
     public Map<Feature, Integer> solve() {
         Map<Feature, Integer> assignments = new HashMap<>();
 
-        //if(this.expr.contains("'A' == '\\301'"))
-        //    this.expr =  this.expr.replace("'A' == '\\301'","A == 301");
-        //if (this.expr.contains("__has_feature(address_sanitizer)"))
-        //    this.expr =  this.expr.replace("__has_feature(address_sanitizer)","__has_feature)");
+        if(this.expr.contains("'A' == '\\301'"))
+            this.expr =  this.expr.replace("'A' == '\\301'","A == 301");
+        if (this.expr.contains("__has_feature(address_sanitizer)"))
+            return null;
         if (this.expr.contains("QT_VERSION_CHECK(5, 0, 0)"))
             this.expr = this.expr.replace("QT_VERSION_CHECK(5, 0, 0)", "QT_VERSION_CHECK");
         if(this.expr.contains("'$' == 0x24 && '@' == 0x40 && '`' == 0x60 && '~' == 0x7e"))

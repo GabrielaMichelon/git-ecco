@@ -200,7 +200,7 @@ public class GitHelper {
                 git.checkout().setName(newCommit.getDiffCommitName()).call();
             if (filePath.contains("arent"))
                 filePath = filePath.replace("arent" + File.separator, "");
-            String newPath = pathUrl + "\\" + filePath;
+            String newPath = pathUrl + File.separator + filePath;
             ArrayList<Integer> lines = new ArrayList<>();
             lines.add(0);
             lines.add(Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size() - 1);
@@ -226,12 +226,12 @@ public class GitHelper {
 
 
             for (DiffEntry entry : diff) {
-                String newPath = entry.getNewPath().replace("/", "\\");
-                String oldPath = entry.getOldPath().replace("/", "\\");
+                String newPath = entry.getNewPath();//.replace("/", "\\");
+                String oldPath = entry.getOldPath();//.replace("/", "\\");
                 if (filePath.equals(newPath)) {
                     //System.out.println("file diff: " + newPath);
                     if (entry.getChangeType().toString().equals("ADD")) {
-                        newPath = pathUrl + "\\" + newPath;
+                        newPath = pathUrl + File.separator + newPath;
                         ArrayList<Integer> lines = new ArrayList<>();
                         lines.add(0);
                         lines.add(Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size() - 1);
@@ -239,7 +239,7 @@ public class GitHelper {
                     } else if (entry.getChangeType().toString().equals("MODIFY")) {
                         List<String> actual = new ArrayList<>();
                         List<String> old = new ArrayList<>();
-                        File filenew = new File(pathUrl + "\\" + newPath);
+                        File filenew = new File(pathUrl + File.separator + newPath);
                         try {
                             actual = Files.readAllLines(filenew.toPath());
                         } catch (MalformedInputException e) {
@@ -252,7 +252,7 @@ public class GitHelper {
                             br.close();
                         }
                         git.checkout().setName(newCommit.getDiffCommitName()).call();
-                        File fileold = new File(pathUrl + "\\" + oldPath);
+                        File fileold = new File(pathUrl + File.separator + oldPath);
                         try {
                             old = Files.readAllLines(fileold.toPath());
                         } catch (MalformedInputException e) {
@@ -354,7 +354,7 @@ public class GitHelper {
             for (DiffEntry entry : diffs) {
                 if (entry.getChangeType() != DiffEntry.ChangeType.DELETE) {
                     //if needed prepend pathURL + "\\" to get the absolute path
-                    paths.add(entry.getNewPath().replace('/', '\\'));
+                    paths.add(entry.getNewPath());//.replace('/', '\\'));
                 }
             }
         } catch (GitAPIException | IOException e) {
@@ -439,7 +439,7 @@ public class GitHelper {
         //System.out.println("Found: " + diffs.size() + " differences");
         for (DiffEntry diff : diffs) {
             //System.out.println("Diff: " + diff.getChangeType() + ": " +
-             //       (diff.getOldPath().equals(diff.getNewPath()) ? diff.getNewPath() : diff.getOldPath() + " -> " + diff.getNewPath()));
+            //       (diff.getOldPath().equals(diff.getNewPath()) ? diff.getNewPath() : diff.getOldPath() + " -> " + diff.getNewPath()));
         }
     }
 

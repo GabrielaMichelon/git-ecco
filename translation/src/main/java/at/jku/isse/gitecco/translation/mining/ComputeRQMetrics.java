@@ -608,25 +608,25 @@ public class ComputeRQMetrics {
         Set<Feature> changed = new HashSet<>();
         for (ConditionalNode cNode : conditionalNodes) {
             int count = 0;
-            int counttrio_minimal = 0;
+            //int counttrio_minimal = 0;
             for (Feature feature : Feature.parseCondition(cNode.getCondition())) {
                 if (!featureMap.containsKey(feature))
                     count++;
             }
 
-            System.out.println("ConditionalNode: " + cNode.getCondition());
-            System.out.println(cNode.getContainingFile().getFilePath());
-            if (cNode.getCondition().contains("!TRIO_MINIMAL")) {
+            //System.out.println("ConditionalNode: " + cNode.getCondition());
+            //System.out.println(cNode.getContainingFile().getFilePath());
+            /*if (cNode.getCondition().contains("!TRIO_MINIMAL")) {
                 String[] countTrioMininal = cNode.getCondition().split("&&");
                 for (String string : countTrioMininal) {
                     if (string.contains("TRIO_MINIMAL") && !string.contains("!"))
                         counttrio_minimal++;
                 }
 
-            }
-            if (counttrio_minimal > 0) {
+            }*/
+            //if (counttrio_minimal > 0) {
                 System.out.println("Não é possível avaliar esta condição!");
-            } else {
+            //} else {
                 Map<Feature, Integer> config;
                 config = constraintComputer.computeConfig(cNode, tree);
                 changed = new HashSet<>();
@@ -670,18 +670,18 @@ public class ComputeRQMetrics {
                         }
                     }
                 }
-            }
+           // }
         }
         for (ConditionalNode cNode : negatedConditionalNodes) {
             int count = 0;
             for (Feature feature : Feature.parseCondition(cNode.getCondition())) {
                 if (!featureMap.containsKey(feature))
                     count++;
-                System.out.println("FEATURE: " + feature);
+                //System.out.println("FEATURE: " + feature);
             }
 
-            System.out.println("NegatedConditionalNodes: " + cNode.getCondition());
-            System.out.println(cNode.getContainingFile().getFilePath());
+            //System.out.println("NegatedConditionalNodes: " + cNode.getCondition());
+            //System.out.println(cNode.getContainingFile().getFilePath());
 
             Map<Feature, Integer> config;
             config = constraintComputer.computeConfig(cNode, tree);

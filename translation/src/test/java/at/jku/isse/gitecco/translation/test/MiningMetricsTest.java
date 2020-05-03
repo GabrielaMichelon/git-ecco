@@ -36,8 +36,8 @@ public class MiningMetricsTest {
     private final static int EVERY_NTH_COMMIT = 1;
     private final static ArrayList<Feature> featureList = new ArrayList<>();
     private final static ArrayList<String> featureNamesList = new ArrayList<String>();
-    private final static String REPO_PATH = "D:\\Mining\\Gnome\\libxml2";
-    private final static String FEATURES_PATH = "D:\\Mining\\Gnome\\Mining\\test";
+    private final static String REPO_PATH = "D:\\Mining\\SQLite\\sqlite";
+    private final static String FEATURES_PATH = "D:\\Mining\\sqlite-versions2\\END";
     String fileReportFeature = "features_report_each_project_commit.csv";
     String fileStoreConfig = "configurations.csv";
     List<String> changedFiles = new ArrayList<>();
@@ -73,7 +73,7 @@ public class MiningMetricsTest {
             Boolean analyze = false;
             for (Map.Entry<Long, String> releases : orderedMap.entrySet()) {
                 System.out.println("TAG: " + releases.getValue());
-                if (releases.getValue().contains("LIBXML_2_4_25") || analyze) {
+                if (releases.getValue().contains("experimental") || analyze) {
                     analyze = true;
                     gitHelper.getEveryNthCommit2(commitList, releases.getValue(), null, i, Math.toIntExact(releases.getKey()), EVERY_NTH_COMMIT);
                     i = Math.toIntExact(releases.getKey()) + 1;

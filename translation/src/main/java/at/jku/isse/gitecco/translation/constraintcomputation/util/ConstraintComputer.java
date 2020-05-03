@@ -61,7 +61,7 @@ public class ConstraintComputer {
             try {
                 changedNode.getContainingFile().accept(visitor, null);
             } catch (StackOverflowError stackOverflowError) {
-                System.out.println("DO SOMETHING");
+                //.out.println("DO SOMETHING");
             }
         /*BuildImplicationsVisitor visitorInclude, visitorIncludeAux;
         List<IncludeNode> includeNodes = visitor.getIncludeNodes();
