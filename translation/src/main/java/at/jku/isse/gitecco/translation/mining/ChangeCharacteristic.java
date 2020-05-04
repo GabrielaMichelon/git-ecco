@@ -43,7 +43,7 @@ public class ChangeCharacteristic {
     }
 
     public Integer getScatteringDegreeIfs() {
-        return scatteringDegreeIfs;
+        return this.scatteringDegreeIfs;
     }
 
     public void setScatteringDegreeIfs(Integer scatteringDegreeIfs) {

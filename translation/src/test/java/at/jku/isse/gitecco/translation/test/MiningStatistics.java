@@ -13,10 +13,10 @@ import java.util.Map;
 
 public class MiningStatistics {
 
-    private final String releasePath = "D:\\Mining\\Ready\\Bison\\Mining";
-    //private final String releasePath = "D:\\Mining\\Ready\\SQLite";
-    //private final String releasePath = "D:\\Mining\\Ready\\LibSSH\\Mining";
-    //private final String releasePath = "D:\\Mining\\Ready\\Irssi\\Mining\\Mining";
+    //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\Ready\\Bison\\Mining";
+    //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\Ready\\SQLite";
+    //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\Ready\\LibSSH\\Mining";
+    private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\Ready\\Irssi\\Mining\\Mining";
     //private final String releasePath = "D:\\Mining\\Test_statistics";
 
 
@@ -306,6 +306,101 @@ public class MiningStatistics {
         printMaps(nontlb);
     }
 
+
+    @Test
+    public void hotSpotfeaturesCharacteristics() throws IOException {
+        File[] releasesDirectories = new File(releasePath).listFiles(File::isDirectory);
+
+        String l = "";
+        for (File directory : releasesDirectories) {
+            if (directory == null) {
+                System.out.println("Either dir does not exist or is not a directory");
+            } else {
+                File featuresFolder = new File(directory, "FeatureCharacteristic");
+                File[] files = featuresFolder.listFiles();
+
+                for (File f : files) {
+                    if (f.getName().equals("HAVE_OPENSSL.csv")) {
+                        //System.out.println(directory.getName() + " file " + f.getName());
+                        BufferedReader br = new BufferedReader(new FileReader(f));
+                        String line = "";
+                        Boolean firstLine = true;
+                        while ((line = br.readLine()) != null) {
+                            if (firstLine) {
+                                firstLine = false;
+                            } else {
+                                l += line + "\n";
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        System.out.println(l);
+
+    }
+
+    @Test
+    public void firstandLastRelease() throws IOException {
+        File[] releasesDirectories = new File(releasePath).listFiles(File::isDirectory);
+        Map<String, String> firstRelease = new HashMap<>();
+        Map<String, String> lastRelease = new HashMap<>();
+        String l = "";
+        for (File directory : releasesDirectories) {
+            if (directory == null) {
+                System.out.println("Either dir does not exist or is not a directory");
+            } else if (directory.getName().contains("0.7.16")) {
+                File featuresFolder = new File(directory, "FeatureCharacteristic");
+                File[] files = featuresFolder.listFiles();
+
+                for (File f : files) {
+                    //System.out.println(directory.getName() + " file " + f.getName());
+                    BufferedReader br = new BufferedReader(new FileReader(f));
+                    String line = "";
+                    Boolean firstLine = true;
+                    while ((line = br.readLine()) != null) {
+                        if (firstLine) {
+                            firstLine = false;
+                        } else {
+                            l = line;
+                        }
+                    }
+                    firstRelease.put(f.getName().substring(0,f.getName().indexOf(".csv")),l);
+                }
+            }else if (directory.getName().contains("1.2.2")) {
+                File featuresFolder = new File(directory, "FeatureCharacteristic");
+                File[] files = featuresFolder.listFiles();
+
+                for (File f : files) {
+                    //System.out.println(directory.getName() + " file " + f.getName());
+                    BufferedReader br = new BufferedReader(new FileReader(f));
+                    String line = "";
+                    Boolean firstLine = true;
+                    while ((line = br.readLine()) != null) {
+                        if (firstLine) {
+                            firstLine = false;
+                        } else {
+                            l = line;
+                        }
+                    }
+                    lastRelease.put(f.getName().substring(0,f.getName().indexOf(".csv")),l);
+                }
+            }
+        }
+        String first="";
+        String last ="";
+        for (Map.Entry<String, String> map : firstRelease.entrySet()) {
+            if(lastRelease.containsKey(map.getKey())) {
+                first += map.getKey() + "," + map.getValue() + "\n";
+                last += map.getKey() + "," + lastRelease.get(map.getKey()) + "\n";
+            }
+        }
+        System.out.println(first);
+        System.out.println("!!!!!!");
+        System.out.println(last);
+    }
+
+
     @Test
     public void linesOfCodefeaturesCharacteristics() throws IOException {
         File[] releasesDirectories = new File(releasePath).listFiles(File::isDirectory);
@@ -334,13 +429,13 @@ public class MiningStatistics {
                                 String[] cols = line.split(",");
                                 //Commit Nr,LOC,SD IF,SD NIF,SD File,TD IF,ND IFs,NOTLB,NONTLB
                                 if (locFeatures.get(cols[0]) == null) {
-                                    locFeatures.put(cols[0],Integer.valueOf(cols[1]));
+                                    locFeatures.put(cols[0], Integer.valueOf(cols[1]));
                                 } else {
-                                    locFeatures.put(cols[0],locFeatures.get(cols[0])+Integer.valueOf(cols[1]));
+                                    locFeatures.put(cols[0], locFeatures.get(cols[0]) + Integer.valueOf(cols[1]));
                                 }
                             }
                         }
-                    }else{
+                    } else {
                         BufferedReader br = new BufferedReader(new FileReader(f));
                         String line = "";
                         Boolean firstLine = true;
@@ -351,9 +446,9 @@ public class MiningStatistics {
                                 String[] cols = line.split(",");
                                 //Commit Nr,LOC,SD IF,SD NIF,SD File,TD IF,ND IFs,NOTLB,NONTLB
                                 if (locBase.get(cols[0]) == null) {
-                                    locBase.put(cols[0],Integer.valueOf(cols[1]));
+                                    locBase.put(cols[0], Integer.valueOf(cols[1]));
                                 } else {
-                                    locBase.put(cols[0],locBase.get(cols[0])+Integer.valueOf(cols[1]));
+                                    locBase.put(cols[0], locBase.get(cols[0]) + Integer.valueOf(cols[1]));
                                 }
                             }
                         }
@@ -362,7 +457,7 @@ public class MiningStatistics {
             }
         }
         for (Map.Entry<String, Integer> map : locFeatures.entrySet()) {
-            System.out.println(map.getKey() + "," + map.getValue()+ ","+locBase.get(map.getKey()));
+            System.out.println(map.getKey() + "," + map.getValue() + "," + locBase.get(map.getKey()));
         }
     }
 
@@ -447,6 +542,62 @@ public class MiningStatistics {
         printMaps(locADD);
         System.out.println("-----------");
         printMaps(lofDel);
+    }
+
+
+    @Test
+    public void featureMostComplexChange() throws IOException {
+        File[] releasesDirectories = new File(releasePath).listFiles(File::isDirectory);
+        //Commit Nr,LOC A,LOC R,SD IF,SD File,TD IF
+        Integer sdif = 0;
+        Integer tdif = 0;
+        Integer sdfile = 0;
+        Integer loca = 0;
+        Integer locr = 0;
+        String featureName = "";
+        Integer commitNumber = 0;
+        String release = "";
+
+        for (File directory : releasesDirectories) {
+            if (directory == null) {
+                System.out.println("Either dir does not exist or is not a directory");
+            } else {
+                File featuresFolder = new File(directory, "ChangeCharacteristic");
+                File[] files = featuresFolder.listFiles();
+
+
+                for (File f : files) {
+                    if (!f.getName().equals("BASE.csv")) {
+                        //System.out.println(directory.getName() + " file " + f.getName());
+                        BufferedReader br = new BufferedReader(new FileReader(f));
+                        String line = "";
+                        Boolean firstLine = true;
+                        while ((line = br.readLine()) != null) {
+                            if (firstLine) {
+                                firstLine = false;
+                            } else {
+                                String[] cols = line.split(",");
+                                //Commit Nr,LOC A,LOC R,SD IF,SD File,TD IF
+                                if (tdif < Integer.valueOf(cols[5])) {
+                                    sdif = Integer.valueOf(cols[3]);
+                                    tdif = Integer.valueOf(cols[5]);
+                                    sdfile = Integer.valueOf(cols[4]);
+                                    ;
+                                    loca = Integer.valueOf(cols[1]);
+                                    ;
+                                    locr = Integer.valueOf(cols[2]);
+                                    featureName = f.getName();
+                                    commitNumber = Integer.valueOf(cols[0]);
+                                    release = directory.getName();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        System.out.println(release + "," + featureName + "," + commitNumber + "," + loca + "," + locr + "," + sdif + "," + sdfile + "," + tdif);
     }
 
 
