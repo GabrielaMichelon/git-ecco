@@ -226,8 +226,8 @@ public class GitHelper {
 
 
             for (DiffEntry entry : diff) {
-                String newPath = entry.getNewPath();//.replace("/", "\\");
-                String oldPath = entry.getOldPath();//.replace("/", "\\");
+                String newPath = entry.getNewPath().replace("/", "\\");
+                String oldPath = entry.getOldPath().replace("/", "\\");
                 if (filePath.equals(newPath)) {
                     //System.out.println("file diff: " + newPath);
                     if (entry.getChangeType().toString().equals("ADD")) {
@@ -354,7 +354,7 @@ public class GitHelper {
             for (DiffEntry entry : diffs) {
                 if (entry.getChangeType() != DiffEntry.ChangeType.DELETE) {
                     //if needed prepend pathURL + "\\" to get the absolute path
-                    paths.add(entry.getNewPath());//.replace('/', '\\'));
+                    paths.add(entry.getNewPath().replace('/', '\\'));
                 }
             }
         } catch (GitAPIException | IOException e) {

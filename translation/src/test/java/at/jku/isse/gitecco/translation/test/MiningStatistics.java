@@ -8,16 +8,177 @@ import scala.Int;
 import scala.util.parsing.combinator.testing.Str;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
 public class MiningStatistics {
 
-    //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\Ready\\Bison\\Mining";
+    private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\Ready\\Bison\\Mining";
     //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\Ready\\SQLite";
     //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\Ready\\LibSSH\\Mining";
-    private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\Ready\\Irssi\\Mining\\Mining";
+    //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\Ready\\Irssi\\Mining\\Mining";
     //private final String releasePath = "D:\\Mining\\Test_statistics";
+
+
+    @Test
+    public void featuresPerCommit() throws IOException {
+        File[] releasesDirectories = new File(releasePath).listFiles(File::isDirectory);
+
+        Map<Integer, Integer> featPerCommit = new HashMap<>();
+
+        for (File directory : releasesDirectories) {
+            if (directory == null) {
+                System.out.println("Either dir does not exist or is not a directory");
+            } else {
+                File featuresFolder = new File(directory, "FeatureCharacteristic");
+                File[] files = featuresFolder.listFiles();
+
+
+                for (File f : files) {
+                    //System.out.println(directory.getName() + " file " + f.getName());
+                    BufferedReader br = new BufferedReader(new FileReader(f));
+                    String line = "";
+                    Boolean firstLine = true;
+                    while ((line = br.readLine()) != null) {
+                        if (firstLine) {
+                            firstLine = false;
+                        } else {
+                            String[] cols = line.split(",");
+                            //Commit Nr,LOC,SD IF,SD NIF,SD File,TD IF,ND IFs,NOTLB,NONTLB
+                            if (featPerCommit.get(Integer.valueOf(cols[0])) == null) {
+                                featPerCommit.put(Integer.valueOf(cols[0]), 1);
+                            } else {
+                                featPerCommit.put(Integer.valueOf(cols[0]), featPerCommit.get(Integer.valueOf(cols[0])) + 1);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        printMaps(featPerCommit);
+    }
+
+
+    @Test
+    public void featuresPerRelease() throws IOException {
+        File[] releasesDirectories = new File(releasePath).listFiles();
+        //Label/FeatureName	_total	_external	_internal	_transient
+        Map<String, Integer> nrFeaturePerRelease = new HashMap<>();
+
+        for (File directory : releasesDirectories) {
+            if (directory == null) {
+                System.out.println("Either dir does not exist or is not a directory");
+            } else if (directory.getName().contains(".csv")) {
+                BufferedReader br = new BufferedReader(new FileReader(directory));
+                String line = "";
+                Boolean firstLine = true;
+                int count = 0;
+                while ((line = br.readLine()) != null) {
+                    if (firstLine) {
+                        firstLine = false;
+                    } else {
+                        String[] cols = line.split(",");
+                        if (cols[1].equals(cols[2])) {
+                            count++;
+                        }
+                    }
+                }
+                nrFeaturePerRelease.put(directory.getName(), count);
+            }
+        }
+        for (Map.Entry<String, Integer> featPerRelease : nrFeaturePerRelease.entrySet()) {
+            System.out.println(featPerRelease.getKey().substring(0, featPerRelease.getKey().indexOf(".csv")) + "," + featPerRelease.getValue());
+        }
+    }
+
+
+    @Test
+    public void kruskalwallisdata() throws IOException {
+        File[] releasesDirectories = new File(releasePath).listFiles(File::isDirectory);
+        ArrayList<String> firstRelease = new ArrayList<>();
+        String l = "";
+        File directory = releasesDirectories[0];
+        if (directory == null) {
+            System.out.println("Either dir does not exist or is not a directory");
+        } else {
+            File featuresFolder = new File(directory, "FeatureCharacteristic");
+            File[] files = featuresFolder.listFiles();
+
+            for (File f : files) {
+                //System.out.println(directory.getName() + " file " + f.getName());
+                BufferedReader br = new BufferedReader(new FileReader(f));
+                String line = "";
+                Boolean firstLine = true;
+                while ((line = br.readLine()) != null) {
+                    if (firstLine) {
+                        firstLine = false;
+                    } else {
+                        l = line;
+                        firstRelease.add(f.getName().substring(0, f.getName().indexOf(".csv")) + "," + l);
+                    }
+                }
+            }
+        }
+
+        for (String features : firstRelease) {
+            System.out.println(features);
+        }
+
+    }
+
+
+    @Test
+    public void mannWhitneydata() throws IOException {
+        File[] releasesDirectories = new File(releasePath).listFiles(File::isDirectory);
+        Map<String, String> firstRelease = new HashMap<>();
+        Map<String, String> lastRelease = new HashMap<>();
+        String l = "";
+        for (File directory : releasesDirectories) {
+            if (directory == null) {
+                System.out.println("Either dir does not exist or is not a directory");
+            } else {
+                File featuresFolder = new File(directory, "FeatureCharacteristic");
+                File[] files = featuresFolder.listFiles();
+
+                for (File f : files) {
+                    if (firstRelease.get(f.getName().substring(0, f.getName().indexOf(".csv"))) == null) {
+                        //System.out.println(directory.getName() + " file " + f.getName());
+                        BufferedReader br = new BufferedReader(new FileReader(f));
+                        String line = "";
+                        Boolean firstLine = true;
+                        while ((line = br.readLine()) != null) {
+                            if (firstLine) {
+                                firstLine = false;
+                            } else {
+                                l = line;
+                            }
+                        }
+                        firstRelease.put(f.getName().substring(0, f.getName().indexOf(".csv")), l);
+                    } else {
+                        BufferedReader br = new BufferedReader(new FileReader(f));
+                        String line = "";
+                        Boolean firstLine = true;
+                        while ((line = br.readLine()) != null) {
+                            if (firstLine) {
+                                firstLine = false;
+                            } else {
+                                l = line;
+                            }
+                        }
+                        lastRelease.put(f.getName().substring(0, f.getName().indexOf(".csv")), l);
+                    }
+                }
+            }
+        }
+        String lines = "";
+        for (Map.Entry<String, String> map : firstRelease.entrySet()) {
+            if (lastRelease.containsKey(map.getKey())) {
+                lines += map.getKey() + "," + map.getValue() + "," + lastRelease.get(map.getKey()) + "\n";
+            }
+        }
+        System.out.println(lines);
+    }
 
 
     @Test
@@ -365,9 +526,9 @@ public class MiningStatistics {
                             l = line;
                         }
                     }
-                    firstRelease.put(f.getName().substring(0,f.getName().indexOf(".csv")),l);
+                    firstRelease.put(f.getName().substring(0, f.getName().indexOf(".csv")), l);
                 }
-            }else if (directory.getName().contains("1.2.2")) {
+            } else if (directory.getName().contains("1.2.2")) {
                 File featuresFolder = new File(directory, "FeatureCharacteristic");
                 File[] files = featuresFolder.listFiles();
 
@@ -383,14 +544,14 @@ public class MiningStatistics {
                             l = line;
                         }
                     }
-                    lastRelease.put(f.getName().substring(0,f.getName().indexOf(".csv")),l);
+                    lastRelease.put(f.getName().substring(0, f.getName().indexOf(".csv")), l);
                 }
             }
         }
-        String first="";
-        String last ="";
+        String first = "";
+        String last = "";
         for (Map.Entry<String, String> map : firstRelease.entrySet()) {
-            if(lastRelease.containsKey(map.getKey())) {
+            if (lastRelease.containsKey(map.getKey())) {
                 first += map.getKey() + "," + map.getValue() + "\n";
                 last += map.getKey() + "," + lastRelease.get(map.getKey()) + "\n";
             }

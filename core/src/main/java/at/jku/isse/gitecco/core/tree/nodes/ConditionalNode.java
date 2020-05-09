@@ -123,7 +123,7 @@ public abstract class ConditionalNode extends ConditionNode {
      * @return
      */
     public ArrayList<Integer> getLineNumberInserts() {
-        return lineNumberInserts;
+        return this.lineNumberInserts;
     }
 
     /**
@@ -131,7 +131,7 @@ public abstract class ConditionalNode extends ConditionNode {
      * @return
      */
     public ArrayList<Integer> getLineNumberDeleted() {
-        return lineNumberDeletes;
+        return this.lineNumberDeletes;
     }
 
     /**

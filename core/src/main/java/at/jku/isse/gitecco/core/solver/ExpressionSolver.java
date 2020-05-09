@@ -98,10 +98,14 @@ public class ExpressionSolver {
             this.expr = this.expr.replace("QT_VERSION_CHECK(5, 0, 0)", "QT_VERSION_CHECK");
         if(this.expr.contains("'$' == 0x24 && '@' == 0x40 && '`' == 0x60 && '~' == 0x7e"))
             return null;
+        if (this.expr.contains("]")){
+           return null;
+        }
         //add the parsed problem to the solver model
+        System.out.println(this.expr);
         model.post(getBoolVarFromExpr(this.expr).extension());
 
-        //acutal solving
+        //actual solving
         Solution solution = model.getSolver().findSolution();
         if (solution != null) {
             for (IntVar var : vars) {
@@ -162,6 +166,7 @@ public class ExpressionSolver {
         if(expr.contains("]") && !expr.contains("[")) {
             expr = expr.replace("]", "");
         }
+        System.out.println(expr);
         //System.out.println(expr);
         traverse(new FeatureExpressionParser(expr).parse());
         Variable var = stack.pop();
