@@ -32,9 +32,9 @@ import static org.chocosolver.solver.constraints.nary.cnf.LogOp.*;
 public class TranslationTest {
 
     public final String repo_path = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-11-02-2020\\SQLite\\sqlite";
-    public final String resultsCSVs_path = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-11-02-2020\\compute_runtime_commit_again\\SQLite";
-    public final String resultMetrics_path = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-11-02-2020\\compute_runtime_commit_again\\SQLite\\variant_results";
-    public final String configuration_path = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-11-02-2020\\compute_runtime_commit_again\\SQLite\\configurations.csv";
+    public final String resultsCSVs_path = "C:\\Users\\gabil\\Desktop\\variant";
+    public final String resultMetrics_path = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\bug-fixed\\Dropbox\\LibSSH\\variant_results";
+    public final String configuration_path = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\bug-fixed\\Dropbox\\SQLite\\configurations.csv";
     public final String configurationRandomVariants_path = "C:\\Users\\gabil\\Desktop\\ECCO_Work\\spls\\spls\\tests-11-02-2020\\Marlin\\randomconfigurations.csv";
     //git checkout $(git log --branches -1 --pretty=format:"%H")
 
@@ -228,6 +228,102 @@ public class TranslationTest {
         csvWriter.close();
     }
 
+
+
+    //to compute the metrics of variants this is considering all the files match and to compute files metrics this is considering all the lines match
+    @Test
+    public void getMinMaxMeanMissingLinesEachVariant() throws IOException {
+        File folder = new File(resultsCSVs_path);
+        File[] lista = folder.listFiles();
+        Integer minLine = 100000, maxLine = 0, meanLine = 0, countVar=0;
+        ArrayList<Integer> missingLines = new ArrayList<>();
+        Float meanRunEccoCommit = Float.valueOf(0), meanRunEccoCheckout = Float.valueOf(0), meanRunPPCheckoutCleanVersion = Float.valueOf(0), meanRunPPCheckoutGenerateVariant = Float.valueOf(0), meanRunGitCommit = Float.valueOf(0), meanRunGitCheckout = Float.valueOf(0);
+        Float totalnumberFiles = Float.valueOf(0), matchesFiles = Float.valueOf(0), eccototalLines = Float.valueOf(0), originaltotalLines = Float.valueOf(0), missingFiles = Float.valueOf(0), remainingFiles = Float.valueOf(0), totalVariantsMatch = Float.valueOf(0), truepositiveLines = Float.valueOf(0), falsepositiveLines = Float.valueOf(0), falsenegativeLines = Float.valueOf(0),
+                truepositiveLinesEachFile = Float.valueOf(0), falsepositiveLinesEachFile = Float.valueOf(0), falsenegativeLinesEachFile = Float.valueOf(0), numberTotalFilesEachVariant = Float.valueOf(0), matchFilesEachVariant = Float.valueOf(0), eccototalLinesEachFile = Float.valueOf(0), originaltotalLinesEachFile = Float.valueOf(0);
+        Boolean variantMatch = true;
+        Float numberCSV = Float.valueOf(0);
+        for (File file : lista) {
+            int missingLinesVar=0;
+            if ((file.getName().indexOf(".csv") != -1) && !(file.getName().contains("features_report_each_project_commit")) && !(file.getName().contains("configurations"))) {
+                Reader reader = Files.newBufferedReader(Paths.get(file.getAbsolutePath()));
+                CSVReader csvReader = new CSVReaderBuilder(reader).build();
+                List<String[]> matchesVariants = csvReader.readAll();
+                countVar++;
+                    Float qtdLines = Float.valueOf(matchesVariants.size() - 4);
+                    //totalnumberFiles += qtdLines;
+                    for (int i = 1; i < matchesVariants.size(); i++) {
+
+                        String[] line = matchesVariants.get(i);
+                        truepositiveLines += Integer.valueOf(line[2]);
+                        falsepositiveLines += Integer.valueOf(line[3]);
+                        falsenegativeLines += Integer.valueOf(line[4]);
+                        missingLinesVar += Integer.valueOf(line[4]);
+                        truepositiveLinesEachFile = Float.valueOf(Integer.valueOf(line[2]));
+                        falsepositiveLinesEachFile = Float.valueOf(Integer.valueOf(line[3]));
+                        falsenegativeLinesEachFile = Float.valueOf(Integer.valueOf(line[4]));
+                        originaltotalLines += Integer.valueOf(line[5]);
+                        eccototalLines += Integer.valueOf(line[6]);
+                        originaltotalLinesEachFile = Float.valueOf(Integer.valueOf(line[5]));
+                        eccototalLinesEachFile = Float.valueOf(Integer.valueOf(line[6]));
+                        if (line[1].equals("true")) {
+                            if (Float.compare(originaltotalLinesEachFile, eccototalLinesEachFile) == 0 && Float.compare(truepositiveLinesEachFile, originaltotalLinesEachFile) == 0) {
+                                matchFilesEachVariant++;
+                                matchesFiles++;
+                            } else {
+                                missingFiles++;
+                                variantMatch = false;
+                            }
+                            numberTotalFilesEachVariant += 1;
+                        } else if (line[1].equals("not")) {
+                            variantMatch = false;
+                            missingFiles++;
+                            numberTotalFilesEachVariant += 1;
+                        } else if (line[1].equals("justOnRetrieved")) {
+                            variantMatch = false;
+                            remainingFiles++;
+                        } else {
+                            variantMatch = false;
+                            missingFiles++;
+                        }
+                    }
+
+                numberCSV++;
+                if (variantMatch && Float.compare(matchFilesEachVariant, numberTotalFilesEachVariant) == 0)
+                    totalVariantsMatch++;
+            }
+            numberTotalFilesEachVariant = Float.valueOf(0);
+            matchFilesEachVariant = Float.valueOf(0);
+            variantMatch = true;
+            missingLines.add(missingLinesVar);
+        }
+        Float mean = Float.valueOf(0);
+        for (Integer linemissingvar:missingLines) {
+            if(linemissingvar < minLine)
+                minLine = linemissingvar;
+            if(linemissingvar > maxLine)
+                maxLine = linemissingvar;
+            mean+=linemissingvar;
+        }
+        mean=mean/countVar;
+        System.out.println("--------MIN-------MAX------MEAN-------VARS\n"+minLine+" "+maxLine+" "+mean);
+
+        Float totalVariantsNotMatch = (numberCSV - totalVariantsMatch);
+        Float precisionVariants = totalVariantsMatch / (totalVariantsMatch + totalVariantsNotMatch);
+        Float recallVariants = totalVariantsMatch / (numberCSV);
+        Float f1scoreVariants = 2 * ((precisionVariants * recallVariants) / (precisionVariants + recallVariants));
+        if (f1scoreVariants.toString().equals("NaN")) {
+            f1scoreVariants = Float.valueOf(0);
+        }
+        Float precisionLines = Float.valueOf(truepositiveLines / (truepositiveLines + falsepositiveLines));
+        Float recallLines = Float.valueOf(truepositiveLines / (truepositiveLines + falsenegativeLines));
+        Float f1scorelines = 2 * ((precisionLines * recallLines) / (precisionLines + recallLines));
+        Float precisionFiles = Float.valueOf(matchesFiles / (matchesFiles + remainingFiles));
+        Float recallFiles = Float.valueOf(matchesFiles / (matchesFiles + missingFiles));
+        Float f1scoreFiles = 2 * ((precisionFiles * recallFiles) / (precisionFiles + recallFiles));
+
+        System.out.println(eccototalLines);
+        System.out.println("Total lines inserted: " + falsepositiveLines + "\nTotal lines deleted: " + falsenegativeLines);
+    }
 
     //to compute the metrics of variants this is considering all the files match and to compute files metrics this is considering all the lines match
     @Test

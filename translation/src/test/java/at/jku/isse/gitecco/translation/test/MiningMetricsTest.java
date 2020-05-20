@@ -73,7 +73,7 @@ public class MiningMetricsTest {
             Boolean analyze = false;
             for (Map.Entry<Long, String> releases : orderedMap.entrySet()) {
                 System.out.println("TAG: " + releases.getValue());
-                if (releases.getValue().contains("v3.2.91") || analyze) {
+                if (releases.getValue().contains("v1.30") || analyze) {
                     analyze = true;
                     gitHelper.getEveryNthCommit2(commitList, releases.getValue(), null, i, Math.toIntExact(releases.getKey()), EVERY_NTH_COMMIT);
                     i = Math.toIntExact(releases.getKey()) + 1;
