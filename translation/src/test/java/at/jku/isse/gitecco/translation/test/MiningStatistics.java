@@ -14,12 +14,92 @@ import java.util.Map;
 
 public class MiningStatistics {
 
-    private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\Ready\\Bison\\Mining";
+    //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\Ready\\Bison\\Mining";
     //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\Ready\\SQLite";
     //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\Ready\\LibSSH\\Mining";
+    //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\LOC_fix\\Irssi\\Mining";
+    private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\LOC_fix\\LibSSH\\Mining";
     //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\Ready\\Irssi\\Mining\\Mining";
     //private final String releasePath = "D:\\Mining\\Test_statistics";
 
+
+    @Test
+    public void FeaturesChanged() throws IOException {
+        File[] releasesDirectories = new File(releasePath).listFiles(File::isDirectory);
+        Map<String, Integer> featureschangedpercommit = new HashMap<>();
+        Map<String, Integer> featureschangedperrelease = new HashMap<>();
+        Map<String, Integer> feats = new HashMap<>();
+        ArrayList<String> existingfeatures = new ArrayList<>();
+        ArrayList<String> features = new ArrayList<>();
+
+        for (File directory : releasesDirectories) {
+            int countfeatchangedperrelease = 0;
+            if (directory == null) {
+                System.out.println("Either dir does not exist or is not a directory");
+            } else {
+                File[] files = directory.listFiles(new FilenameFilter() {
+
+                    @Override
+                    public boolean accept(File dir, String name) {
+                        if (name.toLowerCase().equals("configurations.csv")) {
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    }
+                });
+
+                for (File f : files) {
+                    //System.out.println(directory.getName() + " file" + f.getName());
+                    BufferedReader br = new BufferedReader(new FileReader(f));
+                    String line = "";
+                    Boolean first = true;
+                    String lastcommit = "";
+                    while ((line = br.readLine()) != null) {
+                        // use comma as separator
+                        String[] cols = line.split(",");
+                        if (first) {
+                            lastcommit = cols[0];
+                            first = false;
+                        } else if (!lastcommit.equals(cols[0])) {
+                            //feats.put(lastcommit, features.size());
+                            lastcommit = cols[0];
+                        }
+                        for (int i = 2; i < cols.length; i++) {
+                            String col = cols[i].substring(0, cols[i].indexOf("."));
+                            String[] version = cols[i].split("\\.");
+                            if (!existingfeatures.contains(col))
+                                existingfeatures.add(col);
+                            else if (!features.contains(col) && version.length > 1 && !version[1].equals("1")) {
+                                features.add(col);
+                                countfeatchangedperrelease++;
+                            }
+                        }
+                    }
+                    feats.put(lastcommit, features.size());
+                    featureschangedperrelease.put(directory.getName(), countfeatchangedperrelease);
+                    feats = new HashMap<>();
+                    features = new ArrayList<>();
+                    existingfeatures = new ArrayList<>();
+                }
+
+            }
+        }
+        /*for (Map.Entry<String, Map<String, Integer>> featschangedeachcommit : featureschangedpercommit.entrySet()) {
+            String release = featschangedeachcommit.getKey();
+            for (Map.Entry<String, Integer> feat : featschangedeachcommit.getValue().entrySet()) {
+                if (featureschangedperrelease.get(release) != null)
+                    featureschangedperrelease.computeIfPresent(release, (k, v) -> featureschangedperrelease.get(release) + feat.getValue());
+                else
+                    featureschangedperrelease.computeIfAbsent(release, v -> feat.getValue());
+                // System.out.println(release+","+feat.getKey()+","+feat.getValue());
+            }
+        }
+*/
+        for (Map.Entry<String, Integer> countperrelease : featureschangedperrelease.entrySet()) {
+            System.out.println(countperrelease.getKey() + "," + countperrelease.getValue());
+        }
+    }
 
     @Test
     public void featuresPerCommit() throws IOException {

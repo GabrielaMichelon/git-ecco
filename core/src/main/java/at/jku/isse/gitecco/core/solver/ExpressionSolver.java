@@ -100,6 +100,8 @@ public class ExpressionSolver {
             return null;
         if (this.expr.contains("]")){
            return null;
+        }if(expr.contains("CHECK_VERSION")){
+            return null;
         }
         //add the parsed problem to the solver model
         System.out.println(this.expr);

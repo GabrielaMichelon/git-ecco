@@ -36,8 +36,8 @@ public class MiningMetricsTest {
     private final static int EVERY_NTH_COMMIT = 1;
     private final static ArrayList<Feature> featureList = new ArrayList<>();
     private final static ArrayList<String> featureNamesList = new ArrayList<String>();
-    private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\CaseStudies\\Bison\\bison";
-    private final static String FEATURES_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\Mining_Methodology";
+    private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\LOC_fix\\SQLite\\sqlite";
+    private final static String FEATURES_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\LOC_fix\\SQLite\\Mining";
     String fileReportFeature = "features_report_each_project_commit.csv";
     String fileStoreConfig = "configurations.csv";
     List<String> changedFiles = new ArrayList<>();
@@ -73,7 +73,7 @@ public class MiningMetricsTest {
             Boolean analyze = false;
             for (Map.Entry<Long, String> releases : orderedMap.entrySet()) {
                 System.out.println("TAG: " + releases.getValue());
-                if (releases.getValue().contains("v1.30") || analyze) {
+                if (releases.getValue().contains("version-3.22.0") || analyze) {
                     analyze = true;
                     gitHelper.getEveryNthCommit2(commitList, releases.getValue(), null, i, Math.toIntExact(releases.getKey()), EVERY_NTH_COMMIT);
                     i = Math.toIntExact(releases.getKey()) + 1;
@@ -111,7 +111,7 @@ public class MiningMetricsTest {
                     writerTXT.close();
                     commitList = new GitCommitList(gitHelper);
                 } else {
-                    i = Math.toIntExact(releases.getKey()) + 1;
+                   i = Math.toIntExact(releases.getKey()) + 1;
                 }
             }
         }

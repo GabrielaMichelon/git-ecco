@@ -38,6 +38,7 @@ public class ID {
          *
          */
         Map<Feature, FeatureType> featureMap = new HashMap<>();
+        mapOfFeatures =  new HashMap<>();
         GetAllFeaturesDefinesIncludesVisitor allincVisitor = new GetAllFeaturesDefinesIncludesVisitor();
         FeatureType type;
         boolean sameName;
