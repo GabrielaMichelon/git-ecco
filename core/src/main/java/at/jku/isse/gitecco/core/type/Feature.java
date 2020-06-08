@@ -69,7 +69,10 @@ public class Feature implements Comparable<Feature> {
 	 */
 	public static Set<Feature> parseCondition(String condition) {
 		Set<Feature> ret = new HashSet<>();
-
+		if(condition.contains("]"))
+			condition.replace("]","");
+		if(condition.contains("["))
+			condition.replace("[","");
 		FeatureExpressionParser fep = new FeatureExpressionParser(condition);
 		FeatureExpression root = fep.parse();
 

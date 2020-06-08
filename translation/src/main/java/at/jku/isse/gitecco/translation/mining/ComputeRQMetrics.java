@@ -624,7 +624,7 @@ public class ComputeRQMetrics {
                 }
 
             }
-            if (counttrio_minimal > 0 || cNode.getCondition().contains("(])")) {
+            if (counttrio_minimal > 0 || cNode.getCondition().contains("]")) {
                 System.out.println("Não é possível avaliar esta condição!");
             } else {
                 Map<Feature, Integer> config;

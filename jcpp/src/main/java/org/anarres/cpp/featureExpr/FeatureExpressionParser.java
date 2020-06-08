@@ -55,9 +55,10 @@ public class FeatureExpressionParser {
     private void check(int type) {
         if (la.getType() == type) {
             scan();
-        } else {
+        } else if(la.getText().contains("b4_location_if")|| la.getText().contains("<eof>")|| la.getText().contains("b4_api_PREFIX")) {
+            System.out.println("!!!!!!");
+        }else
             error("Expected " + type + " but was: " + la);
-        }
     }
 
     private void error(String msg) {
@@ -243,12 +244,16 @@ public class FeatureExpressionParser {
             MacroCall call = MacroCall(lastExpr);
             lastExpr = call;
         } else {
-            while (la.getType() == '[' || la.getType() == '.' || la.getType() == Token.ARROW || la.getType() == '(' || la.getType() == Token.INC || la.getType() == Token.DEC) {
+            while (la.getType() == '[' || la.getType() == ']' || la.getType() == '.' || la.getType() == Token.ARROW || la.getType() == '(' || la.getType() == Token.INC || la.getType() == Token.DEC) {
                 if (la.getType() == '[') {
                     scan();
                     FeatureExpression index = Expr();
-                    check(']');
                     lastExpr = new ArrayAccess(lastExpr, index);
+                } else if (la.getType() == ']') {
+                    SingleTokenExpr op = new SingleTokenExpr(la);
+                    scan();
+                    check(Token.IDENTIFIER);
+                    lastExpr = new Pointer(lastExpr, op, new Name(t));
                 } else if (la.getType() == '.') {
                     SingleTokenExpr op = new SingleTokenExpr(la);
                     scan();
@@ -304,10 +309,10 @@ public class FeatureExpressionParser {
             return new CharacterLiteral(t);
         } else if (la.getType() == ']') {
             scan();
-            return new CharacterLiteral(t);
+            return new Name(t);
         } else if (la.getType() == '[') {
             scan();
-            return new CharacterLiteral(t);
+            return new Name(t);
         }
         error("Expected Primary but was: " + la);
         return null;

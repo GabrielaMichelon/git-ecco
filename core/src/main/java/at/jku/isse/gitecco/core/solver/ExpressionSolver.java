@@ -90,24 +90,18 @@ public class ExpressionSolver {
     public Map<Feature, Integer> solve() {
         Map<Feature, Integer> assignments = new HashMap<>();
 
-        if(this.expr.contains("'A' == '\\301'"))
-            this.expr =  this.expr.replace("'A' == '\\301'","A == 301");
+        if (this.expr.contains("'A' == '\\301'"))
+            this.expr = this.expr.replace("'A' == '\\301'", "A == 301");
         if (this.expr.contains("__has_feature(address_sanitizer)"))
-            return null;
+            this.expr = this.expr.replace("__has_feature(address_sanitizer)", "__has_feature)");
         if (this.expr.contains("QT_VERSION_CHECK(5, 0, 0)"))
             this.expr = this.expr.replace("QT_VERSION_CHECK(5, 0, 0)", "QT_VERSION_CHECK");
-        if(this.expr.contains("'$' == 0x24 && '@' == 0x40 && '`' == 0x60 && '~' == 0x7e"))
+        if (this.expr.contains("'$' == 0x24 && '@' == 0x40 && '`' == 0x60 && '~' == 0x7e"))
             return null;
-        if (this.expr.contains("]")){
-           return null;
-        }if(expr.contains("CHECK_VERSION")){
-            return null;
-        }
         //add the parsed problem to the solver model
-        System.out.println(this.expr);
         model.post(getBoolVarFromExpr(this.expr).extension());
 
-        //actual solving
+        //acutal solving
         Solution solution = model.getSolver().findSolution();
         if (solution != null) {
             for (IntVar var : vars) {
@@ -161,14 +155,13 @@ public class ExpressionSolver {
      */
     public BoolVar getBoolVarFromExpr(String expr) {
         isIntVar = false;
-        if(expr.contains(" - 0"))
-            expr = expr.replace(" - 0","");
-        if((expr.contains("(])")))
-            expr = expr.replace("(]) &&", "");
-        if(expr.contains("]") && !expr.contains("[")) {
-            expr = expr.replace("]", "");
+        if (expr.contains(" - 0"))
+            expr = expr.replace(" - 0", "");
+        if ((expr.contains("(])")))
+            expr = expr.replace("(]) &&", "b4_location_if &&");
+        if (expr.contains("]") && !expr.contains("[")) {
+            expr = expr.replace("]", "b4_location_if");
         }
-        System.out.println(expr);
         //System.out.println(expr);
         traverse(new FeatureExpressionParser(expr).parse());
         Variable var = stack.pop();
@@ -261,10 +254,10 @@ public class ExpressionSolver {
                         stack.push(bleft.or(bright).boolVar());
                         break;
                     case Token.LAND:    //logical and "&&
-                            bright = stack.pop().asBoolVar();
-                            bleft = stack.pop().asBoolVar();
-                            stack.push(bleft.and(bright).boolVar());
-                            break;
+                        bright = stack.pop().asBoolVar();
+                        bleft = stack.pop().asBoolVar();
+                        stack.push(bleft.and(bright).boolVar());
+                        break;
                     case Token.NE:      //not equal "!="
                         if (isIntVar) {
                             right = stack.pop().asIntVar();
@@ -325,6 +318,9 @@ public class ExpressionSolver {
                         bright = stack.pop().asBoolVar();
                         bleft = stack.pop().asBoolVar();
                         stack.push(bleft.or(bright).boolVar());
+                        break;
+                    case 135:     // "]"
+                        bright = stack.pop().asBoolVar();
                         break;
                     default:
                         System.err.println("unexpected token with token id: " + e.getToken().getType() + " and symbol: " + e.getToken().getText());
