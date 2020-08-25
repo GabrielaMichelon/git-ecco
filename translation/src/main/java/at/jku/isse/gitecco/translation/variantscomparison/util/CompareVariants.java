@@ -65,7 +65,7 @@ public class CompareVariants {
             if (fileTypes.contains(extension)) {
                 //compare text of files
                 for (File fEcco : filesEcco) {
-                    if (f.toPath().toString().substring(f.toPath().toString().indexOf("ecco\\") + 5).equals(fEcco.toPath().toString().substring(fEcco.toPath().toString().indexOf("checkout\\") + 9))) {
+                    if (f.toPath().toString().substring(f.toPath().toString().indexOf("Input_variants\\") + 15).equals(fEcco.toPath().toString().substring(fEcco.toPath().toString().indexOf("checkout\\") + 9))) {
                         try {
                             original = Files.readAllLines(f.toPath());
                         } catch (MalformedInputException e) {
@@ -176,7 +176,7 @@ public class CompareVariants {
                         truepositiveLines = eccototalLines - (falsepositiveLines);
 
                         List<List<String>> resultRows = Arrays.asList(
-                                Arrays.asList(f.toPath().toString().substring(f.toPath().toString().indexOf("ecco\\") + 5).replace(",", "and"), matchFiles.toString(), truepositiveLines.toString(), falsepositiveLines.toString(), falsenegativeLines.toString(), originaltotalLines.toString(), eccototalLines.toString())
+                                Arrays.asList(f.toPath().toString().substring(f.toPath().toString().indexOf("Input_variants\\") + 15).replace(",", "and"), matchFiles.toString(), truepositiveLines.toString(), falsepositiveLines.toString(), falsenegativeLines.toString(), originaltotalLines.toString(), eccototalLines.toString())
                         );
                         for (List<String> rowData : resultRows) {
                             csvWriter.append(String.join(",", rowData));
@@ -188,7 +188,7 @@ public class CompareVariants {
                 }
                 if (!fileExistsInEcco) {
                     List<List<String>> resultRows = Arrays.asList(
-                            Arrays.asList(f.toPath().toString().substring(f.toPath().toString().indexOf("ecco\\") + 5).replace(",", "and"), "not", "0", "0", originaltotalLines.toString(), originaltotalLines.toString(), eccototalLines.toString())
+                            Arrays.asList(f.toPath().toString().substring(f.toPath().toString().indexOf("Input_variants\\") + 15).replace(",", "and"), "not", "0", "0", originaltotalLines.toString(), originaltotalLines.toString(), eccototalLines.toString())
                     );
                     for (List<String> rowData : resultRows) {
                         csvWriter.append(String.join(",", rowData));
@@ -198,7 +198,7 @@ public class CompareVariants {
             } else {
                 //compare other type files
                 for (File fEcco : filesEcco) {
-                    if (f.toPath().toString().substring(f.toPath().toString().indexOf("ecco\\") + 5).equals(fEcco.toPath().toString().substring(fEcco.toPath().toString().indexOf("checkout\\") + 9))) {
+                    if (f.toPath().toString().substring(f.toPath().toString().indexOf("Input_variants\\") + 15).equals(fEcco.toPath().toString().substring(fEcco.toPath().toString().indexOf("checkout\\") + 9))) {
                         if (!f.isDirectory()) {
                             int byte_f1;
                             int byte_f2;
@@ -252,7 +252,7 @@ public class CompareVariants {
                         originaltotalLines = 1;
 
                         List<List<String>> resultRows = Arrays.asList(
-                                Arrays.asList(f.toPath().toString().substring(f.toPath().toString().indexOf("ecco\\") + 5).replace(",", "and"), matchFiles.toString(), truepositiveLines.toString(), falsepositiveLines.toString(), falsenegativeLines.toString(), originaltotalLines.toString(), eccototalLines.toString())
+                                Arrays.asList(f.toPath().toString().substring(f.toPath().toString().indexOf("Input_variants\\") + 15).replace(",", "and"), matchFiles.toString(), truepositiveLines.toString(), falsepositiveLines.toString(), falsenegativeLines.toString(), originaltotalLines.toString(), eccototalLines.toString())
                         );
                         for (List<String> rowData : resultRows) {
                             csvWriter.append(String.join(",", rowData));
@@ -266,7 +266,7 @@ public class CompareVariants {
                     falsepositiveLines = 0;
                     truepositiveLines = 0;
                     List<List<String>> resultRows = Arrays.asList(
-                            Arrays.asList(f.toPath().toString().substring(f.toPath().toString().indexOf("ecco\\") + 5).replace(",", "and"), "not", truepositiveLines.toString(), falsepositiveLines.toString(), falsenegativeLines.toString(), originaltotalLines.toString(), eccototalLines.toString())
+                            Arrays.asList(f.toPath().toString().substring(f.toPath().toString().indexOf("Input_variants\\") + 15).replace(",", "and"), "not", truepositiveLines.toString(), falsepositiveLines.toString(), falsenegativeLines.toString(), originaltotalLines.toString(), eccototalLines.toString())
                     );
                     for (List<String> rowData : resultRows) {
                         csvWriter.append(String.join(",", rowData));
@@ -292,7 +292,7 @@ public class CompareVariants {
                 List<String> original = Files.readAllLines(fEcco.toPath());
                 Boolean existJustEcco = true;
                 for (File f : filesVariant) {
-                    if (fEcco.toPath().toString().substring(fEcco.toPath().toString().indexOf("checkout\\") + 9).equals(f.toPath().toString().substring(f.toPath().toString().indexOf("ecco\\") + 5))) {
+                    if (fEcco.toPath().toString().substring(fEcco.toPath().toString().indexOf("checkout\\") + 9).equals(f.toPath().toString().substring(f.toPath().toString().indexOf("Input_variants\\") + 15))) {
                         existJustEcco = false;
                     }
                 }
@@ -318,7 +318,7 @@ public class CompareVariants {
                 //compare other type files
                 Boolean existJustEcco = true;
                 for (File f : filesVariant) {
-                    if (fEcco.toPath().toString().substring(fEcco.toPath().toString().indexOf("checkout\\") + 9).equals(f.toPath().toString().substring(f.toPath().toString().indexOf("ecco\\") + 5))) {
+                    if (fEcco.toPath().toString().substring(fEcco.toPath().toString().indexOf("checkout\\") + 9).equals(f.toPath().toString().substring(f.toPath().toString().indexOf("Input_variants\\") + 15))) {
                         existJustEcco = false;
                     }
                 }
@@ -442,7 +442,7 @@ public class CompareVariants {
 
     public void eccoCommit(File eccoFolder, Path OUTPUT_DIR, ArrayList<String> configsToCommit) throws IOException {
         EccoService service = new EccoService();
-        if (OUTPUT_DIR.resolve("repo").toFile().exists()) GitCommitList.recursiveDelete(OUTPUT_DIR.resolve("repo"));
+        //if (OUTPUT_DIR.resolve("repo").toFile().exists()) GitCommitList.recursiveDelete(OUTPUT_DIR.resolve("repo"));
         service.setRepositoryDir(OUTPUT_DIR.resolve("repo"));
         //initializing repo
         service.init();
@@ -511,74 +511,6 @@ public class CompareVariants {
 
         //close ecco repository
         service.close();
-
-
-    }
-
-
-    public void gitCommit(File srcFolder, Path OUTPUT_DIR, Map<String, String> configsToCommit) throws IOException {
-
-        for (Map.Entry<String, String> config : configsToCommit.entrySet()) {
-            Path variant_dir = Paths.get(String.valueOf(srcFolder));
-            Path folderGit = Paths.get(String.valueOf(OUTPUT_DIR));
-            //computing the git commit runtime of the variant
-            Long runtimeGitCommit;
-            GitHelper gh = new GitHelper();
-            File dstGitProject = new File(String.valueOf(folderGit));
-            try {
-                gh.gitCommitAndCheckout(srcFolder.getAbsolutePath(), dstGitProject.getAbsolutePath(), config.getValue(), config.getKey());
-            } catch (GitAPIException e) {
-                e.printStackTrace();
-            }
-            runtimeGitCommit = gh.getRuntimeGitCommit();
-            String outputCSV = srcFolder.getParentFile().getAbsolutePath();
-            String fileStr = outputCSV + File.separator + "runtime.csv";
-            BufferedReader csvReader = null;
-            try {
-                csvReader = new BufferedReader(new FileReader(fileStr));
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            }
-            String row = null;
-            ArrayList<String> listHeader = new ArrayList<>();
-            ArrayList<String> listRuntimeData = new ArrayList<>();
-            List<List<String>> rows = new ArrayList<>();
-
-            Boolean header = true;
-            while ((row = csvReader.readLine()) != null) {
-                String[] data = row.split(",");
-                ArrayList<String> dataAux = new ArrayList<>();
-                if (header) {
-                    for (int i = 0; i < data.length; i++) {
-                        listHeader.add(data[i]);
-                    }
-                    header = false;
-                } else {
-                    for (int i = 0; i < data.length; i++) {
-                        if ((data[1].equals(config.getKey().replace(",", "AND"))) && (i == 6)) {
-                            data[i] = (String.valueOf(runtimeGitCommit));
-                        }
-                        dataAux.add(data[i]);
-                    }
-                    rows.add(dataAux);
-                }
-
-            }
-            csvReader.close();
-            File fwriter = new File(fileStr);
-            FileWriter csvWriter = new FileWriter(fwriter);
-
-            csvWriter.write(String.join(",", listHeader));
-            csvWriter.write("\n");
-            for (List<String> line : rows) {
-                csvWriter.write(String.join(",", line));
-                csvWriter.write("\n");
-            }
-            csvWriter.flush();
-            csvWriter.close();
-
-            //end computing the git commit and checkout
-        }
     }
 
 }
