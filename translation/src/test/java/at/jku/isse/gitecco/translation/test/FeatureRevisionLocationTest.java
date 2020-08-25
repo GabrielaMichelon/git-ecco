@@ -7,6 +7,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import at.jku.isse.gitecco.translation.variantscomparison.util.CompareVariants;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 

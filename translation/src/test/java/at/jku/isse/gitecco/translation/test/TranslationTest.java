@@ -567,7 +567,7 @@ public class TranslationTest {
         }
 
         csvReader.close();
-        cV.gitCommit(srcFolder, OUTPUT_DIR, configsToCommit);
+        //cV.gitCommit(srcFolder, OUTPUT_DIR, configsToCommit);
     }
 
 
