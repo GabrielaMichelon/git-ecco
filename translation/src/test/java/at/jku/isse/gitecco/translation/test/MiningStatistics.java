@@ -19,9 +19,164 @@ public class MiningStatistics {
     //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\Ready\\LibSSH\\Mining";
     //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\LOC_fix\\Irssi\\Mining";
     private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\LOC_fix\\LibSSH\\Mining";
+    //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\LOC_fix\\SQLite-ready";
+    //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\LOC_fix\\Bison\\Mining";
     //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\Ready\\Irssi\\Mining\\Mining";
     //private final String releasePath = "D:\\Mining\\Test_statistics";
 
+	@Test
+	public void FeaturesChangingtogether() throws IOException {
+         File[] releasesDirectories = new File(releasePath).listFiles(File::isDirectory);
+         Map<String, Integer> featureschangedperrelease = new HashMap<>();
+         Map<String, Integer> existingfeatures = new HashMap<>();
+         ArrayList<Integer> commits = new ArrayList<>();
+         Map<Integer, ArrayList<String>> featpercommit = new HashMap<>();
+
+         for (File directory : releasesDirectories) {
+             int countfeatchangedperrelease = 0;
+             if (directory == null) {
+                 System.out.println("Either dir does not exist or is not a directory");
+             } else {
+                 File[] files = directory.listFiles(new FilenameFilter() {
+
+                     @Override
+                     public boolean accept(File dir, String name) {
+                         if (name.toLowerCase().equals("configurations.csv")) {
+                             return true;
+                         } else {
+                             return false;
+                         }
+                     }
+                 });
+
+                 for (File f : files) {
+                     //System.out.println(directory.getName() + " file" + f.getName());
+                     BufferedReader br = new BufferedReader(new FileReader(f));
+                     String line = "";
+                     Boolean first = true;
+                     String lastcommit = "";
+                     while ((line = br.readLine()) != null) {
+                         // use comma as separator
+                         String[] cols = line.split(",");
+                         if (first) {
+                             lastcommit = cols[0];
+                             first = false;
+                         } else if (!lastcommit.equals(cols[0])) {
+                             //feats.put(lastcommit, features.size());
+                             lastcommit = cols[0];
+                         }
+                         if (line.contains("WITH_SFTP") && !commits.contains(Integer.valueOf(cols[0]))) {
+                             String version = line.substring(line.indexOf("WITH_SFTP.") + 10, line.indexOf("WITH_SFTP.") + 12);
+                             if (version.contains(","))
+                                 version = version.replace(",", "");
+                             if (Integer.valueOf(version) > 1) {
+                                 commits.add(Integer.valueOf(cols[0]));
+                                 featpercommit.put(Integer.valueOf(cols[0]), new ArrayList<>());
+                             }
+                         }
+                     }
+                     br = new BufferedReader(new FileReader(f));
+                     while ((line = br.readLine()) != null) {
+                         // use comma as separator
+                         String[] cols = line.split(",");
+                         if (commits.contains(Integer.valueOf(cols[0]))) {
+                             for (int i = 2; i < cols.length; i++) {
+                                 String col = cols[i].substring(0, cols[i].indexOf("."));
+                                 String[] version = cols[i].split("\\.");
+                                 if (version.length > 1 && !version[1].equals("1") && !featpercommit.get(Integer.valueOf(cols[0])).contains(col)) {
+                                     ArrayList<String> array = featpercommit.get(Integer.valueOf(cols[0]));
+                                     array.add(col);
+                                     featpercommit.computeIfPresent(Integer.valueOf(cols[0]), (k, v) -> array);
+                                     if (existingfeatures.get(col) != null) {
+                                         existingfeatures.computeIfPresent(col, (k, v) -> existingfeatures.get(col) + 1);
+                                     } else {
+                                         existingfeatures.computeIfAbsent(col, v -> 1);
+                                     }
+                                 }
+                             }
+                         }
+                     }
+                 }
+
+             }
+         }
+         for (Map.Entry<String, Integer> count : existingfeatures.entrySet()) {
+             System.out.println(count.getKey() + "," + count.getValue());
+         }
+
+    }
+
+
+    @Test
+    public void FeaturesChangingtogether2() throws IOException {
+         File[] releasesDirectories = new File(releasePath).listFiles(File::isDirectory);
+         Map<String, Integer> featureschangedperrelease = new HashMap<>();
+         Map<String, Integer> existingfeatures = new HashMap<>();
+         ArrayList<Integer> commits = new ArrayList<>();
+         Map<Integer, ArrayList<String>> featpercommit = new HashMap<>();
+
+         for (File directory : releasesDirectories) {
+             int countfeatchangedperrelease = 0;
+             if (directory == null) {
+                 System.out.println("Either dir does not exist or is not a directory");
+             } else {
+                 File[] files = directory.listFiles(new FilenameFilter() {
+
+                     @Override
+                     public boolean accept(File dir, String name) {
+                         if (name.toLowerCase().equals("configurations.csv")) {
+                             return true;
+                         } else {
+                             return false;
+                         }
+                     }
+                 });
+
+                 for (File f : files) {
+                     //System.out.println(directory.getName() + " file" + f.getName());
+                     BufferedReader br = new BufferedReader(new FileReader(f));
+                     String line = "";
+                     Boolean first = true;
+                     String lastcommit = "";
+                     while ((line = br.readLine()) != null) {
+                         // use comma as separator
+                         String[] cols = line.split(",");
+                         if (first) {
+                             lastcommit = cols[0];
+                             first = false;
+                         } else if (!lastcommit.equals(cols[0])) {
+                             //feats.put(lastcommit, features.size());
+                             lastcommit = cols[0];
+                         }
+                         commits.add(Integer.valueOf(cols[0]));
+                         featpercommit.put(Integer.valueOf(cols[0]), new ArrayList<>());
+                     }
+                     br = new BufferedReader(new FileReader(f));
+                     while ((line = br.readLine()) != null) {
+                         // use comma as separator
+                         String[] cols = line.split(",");
+                         for (int i = 2; i < cols.length; i++) {
+                             String col = cols[i].substring(0, cols[i].indexOf("."));
+                             String[] version = cols[i].split("\\.");
+                             if (!featpercommit.get(Integer.valueOf(cols[0])).contains(col)) {
+                                 ArrayList<String> array = featpercommit.get(Integer.valueOf(cols[0]));
+                                 array.add(col);
+                                 featpercommit.computeIfPresent(Integer.valueOf(cols[0]), (k, v) -> array);
+                             }
+                         }
+
+                     }
+                 }
+
+             }
+         }
+         for (Map.Entry<Integer, ArrayList<String>> count : featpercommit.entrySet()) {
+             //System.out.println(count.getKey() + "," + count.getValue());
+             System.out.println(count.getKey() + "," + count.getValue().size());
+         }
+
+    }
+ 
 
     @Test
     public void FeaturesChanged() throws IOException {
@@ -268,6 +423,7 @@ public class MiningStatistics {
         int nrCommitsFeaturesChanged = 0;
         int nrCommitsBaseChanged = 0;
         int nrCommitsFeaturesANDBaseChanged = 0;
+		Map<String, Integer> nrfeatureschangingrelease = new HashMap<>();
 
         for (File directory : releasesDirectories) {
             if (directory == null) {
@@ -306,10 +462,20 @@ public class MiningStatistics {
                             nrTotalCommits++;
                             if (baseandfc && !basec && !fc) {
                                 nrCommitsFeaturesANDBaseChanged++;
+								if (nrfeatureschangingrelease.get(f.getParentFile().getName()) == null) {
+                                    nrfeatureschangingrelease.put(f.getParentFile().getName(), 1);
+                                } else {
+                                    nrfeatureschangingrelease.put(f.getParentFile().getName(), nrfeatureschangingrelease.get(f.getParentFile().getName()) + 1);
+                                }
                             } else if (basec && !fc && !baseandfc) {
                                 nrCommitsBaseChanged++;
                             } else if (fc && !basec && !baseandfc) {
                                 nrCommitsFeaturesChanged++;
+								if (nrfeatureschangingrelease.get(f.getParentFile().getName()) == null) {
+                                    nrfeatureschangingrelease.put(f.getParentFile().getName(), 1);
+                                } else {
+                                    nrfeatureschangingrelease.put(f.getParentFile().getName(), nrfeatureschangingrelease.get(f.getParentFile().getName()) + 1);
+                                }
                             } else
                                 nrCommitsBaseChanged++;
                             basec = false;
@@ -347,10 +513,20 @@ public class MiningStatistics {
                     }
                     if (baseandfc && !basec && !fc) {
                         nrCommitsFeaturesANDBaseChanged++;
+						if (nrfeatureschangingrelease.get(f.getParentFile().getName()) == null) {
+                            nrfeatureschangingrelease.put(f.getParentFile().getName(), 1);
+                        } else {
+                            nrfeatureschangingrelease.put(f.getParentFile().getName(), nrfeatureschangingrelease.get(f.getParentFile().getName()) + 1);
+                        }
                     } else if (basec && !fc && !baseandfc) {
                         nrCommitsBaseChanged++;
                     } else if (fc && !basec && !baseandfc) {
                         nrCommitsFeaturesChanged++;
+						if (nrfeatureschangingrelease.get(f.getParentFile().getName()) == null) {
+                            nrfeatureschangingrelease.put(f.getParentFile().getName(), 1);
+                        } else {
+                            nrfeatureschangingrelease.put(f.getParentFile().getName(), nrfeatureschangingrelease.get(f.getParentFile().getName()) + 1);
+                        }
                     } else {
                         nrCommitsBaseChanged++;
                     }
