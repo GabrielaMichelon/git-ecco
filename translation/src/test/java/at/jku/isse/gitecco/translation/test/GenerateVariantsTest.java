@@ -14,7 +14,6 @@ import at.jku.isse.gitecco.featureid.identification.ID;
 import at.jku.isse.gitecco.featureid.type.TraceableFeature;
 import at.jku.isse.gitecco.translation.constraintcomputation.util.ConstraintComputer;
 import at.jku.isse.gitecco.translation.mining.ChangeCharacteristic;
-import at.jku.isse.gitecco.translation.mining.ComputeRQMetrics;
 import at.jku.isse.gitecco.translation.visitor.GetNodesForChangeVisitor;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
@@ -29,15 +28,15 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
-
-public class MiningMetricsTest {
+public class GenerateVariantsTest {
 
     private final static boolean EVERYCOMMIT = false;
     private final static int EVERY_NTH_COMMIT = 1;
     private final static ArrayList<Feature> featureList = new ArrayList<>();
     private final static ArrayList<String> featureNamesList = new ArrayList<String>();
-    private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\systems\\Sqlite\\sqlite";
-    private final static String FEATURES_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\LOC_fix\\SQLite\\version-3.7.2-em-diante";
+    private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\JournalExtensionEMSE\\CaseStudies\\SQLite";
+    private final static String FEATURES_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\JournalExtensionEMSE\\CaseStudies\\FeaturesSQLite";
+    private final static String featuretxt = "\\features-cvs-to-fossil-cutover.txt";
     String fileReportFeature = "features_report_each_project_commit.csv";
     String fileStoreConfig = "configurations.csv";
     List<String> changedFiles = new ArrayList<>();
@@ -73,42 +72,38 @@ public class MiningMetricsTest {
             Boolean analyze = false;
             for (Map.Entry<Long, String> releases : orderedMap.entrySet()) {
                 System.out.println("TAG: " + releases.getValue());
-                if (releases.getValue().contains("version-3.7.14") || analyze) {
-                    analyze = true;
+                if (releases.getValue().contains("cvs-to-fossil-cutover") || analyze) {
+                    //analyze = true;
                     gitHelper.getEveryNthCommit2(commitList, releases.getValue(), null, i, Math.toIntExact(releases.getKey()), EVERY_NTH_COMMIT);
                     i = Math.toIntExact(releases.getKey()) + 1;
-                    File file = new File(FEATURES_PATH, releases.getValue().substring(releases.getValue().lastIndexOf("/") + 1));
-                    if (!file.exists())
-                        file.mkdir();
-                    String folderRelease = file.getAbsolutePath();
-                    final File changeFolder = new File(file, "ChangeCharacteristic");
-                    final File folder = new File(file, "FeatureCharacteristic");
-                    final File idFeatsfolder = new File(file, "IdentifiedFeatures");
+                    String folderRelease = FEATURES_PATH;
+                    //final File folder = new File(file, "FeatureCharacteristic");
+                    //final File idFeatsfolder = new File(file, "IdentifiedFeatures");
                     // if the directory does not exist, create it
-                    if (!changeFolder.exists())
-                        changeFolder.mkdir();
-                    if (!folder.exists())
-                        folder.mkdir();
-                    if (!idFeatsfolder.exists())
-                        idFeatsfolder.mkdir();
+                    //if (!folder.exists())
+                    //    folder.mkdir();
+                    //if (!idFeatsfolder.exists())
+                    //    idFeatsfolder.mkdir();
                     //feature identification
-                    identifyFeatures(commitList, releases.getValue(), idFeatsfolder);
+                    //identifyFeatures(commitList, releases.getValue(), idFeatsfolder);
+                    addFeatures();
                     initVars(folderRelease);
                     for (GitCommit commits : commitList) {
-                        ComputeRQMetrics.characteristicsFeature(folder, commits.getNumber(), commits.getTree(), featureNamesList);
+                        //ComputeRQMetrics.characteristicsFeature(folder, commits.getNumber(), commits.getTree(), featureNamesList);
                         configurations.clear();
-                        characteristicsChange2(gitHelper, changeFolder, commits, featureNamesList);
+                        generateVariants(gitHelper, commits, featureNamesList);
+                        //characteristicsChange2(gitHelper, changeFolder, commits, featureNamesList);
                         //dispose tree if it is not needed -> for memory saving reasons.
                         commits.disposeTree();
                     }
                     //RQ.2 How many times one feature changed along a number of Git commits?
-                    File filetxt = new File(folder.getParent(), "TimesEachFeatureChanged.txt");
-                    PrintWriter writerTXT = new PrintWriter(filetxt.getAbsolutePath(), "UTF-8");
-                    for (Map.Entry<Feature, Integer> featureRevision : featureVersions.entrySet()) {
-                        if (featureRevision.getValue() > 1)
-                            writerTXT.println(featureRevision.getKey() + " Changed " + (featureRevision.getValue() - 1) + " times.");
-                    }
-                    writerTXT.close();
+                    //File filetxt = new File(folder.getParent(), "TimesEachFeatureChanged.txt");
+                    //PrintWriter writerTXT = new PrintWriter(filetxt.getAbsolutePath(), "UTF-8");
+                    //for (Map.Entry<Feature, Integer> featureRevision : featureVersions.entrySet()) {
+                    //    if (featureRevision.getValue() > 1)
+                    //        writerTXT.println(featureRevision.getKey() + " Changed " + (featureRevision.getValue() - 1) + " times.");
+                    // }
+                    // writerTXT.close();
                     commitList = new GitCommitList(gitHelper);
                 } else {
                     i = Math.toIntExact(releases.getKey()) + 1;
@@ -148,9 +143,24 @@ public class MiningMetricsTest {
         // end csv to report new features and features changed
     }
 
-    //RQ1
-    public void characteristicsChange2(GitHelper gitHelper, File changeFolder, GitCommit gc, ArrayList<String> featureNamesList) throws Exception {
+    public void addFeatures() throws IOException {
+        BufferedReader br = new BufferedReader(new FileReader(FEATURES_PATH + featuretxt));
+        String line = "";
+        while ((line = br.readLine()) != null) {
+            // use comma as separator
+            String[] cols = line.split(",");
+            featureNamesList.add(cols[0].substring(1).replace("\"", ""));
+            for (int i = 2; i < cols.length - 1; i++) {
+                featureNamesList.add(cols[i].replace("\"", ""));
+            }
+            String lastfeature = cols[cols.length - 1].replace("\"", "");
+            featureNamesList.add(lastfeature.replace("}", ""));
+            if (!featureNamesList.contains("BASE"))
+                featureNamesList.add("BASE");
+        }
+    }
 
+    public void generateVariants(GitHelper gitHelper, GitCommit gc, ArrayList<String> featureNamesList) throws Exception {
         final File gitFolder = new File(gitHelper.getPath());
         final File eccoFolder = new File(gitFolder.getParent(), "ecco");
 
@@ -160,7 +170,6 @@ public class MiningMetricsTest {
         GetNodesForChangeVisitor visitor = new GetNodesForChangeVisitor();
         ArrayList<ConditionalNode> changedNodes = new ArrayList<>();
         ArrayList<ConditionalNode> deletedNodes = new ArrayList<>();
-        Map<Feature, ChangeCharacteristic> featureMap = new HashMap<>();
 
         if (gc.getNumber() == Long.valueOf(0)) {
             gcPrevious = new GitCommit(gc.getCommitName(), gc.getNumber(), gc.getDiffCommitName(), gc.getBranch(), gc.getRevCommit());
@@ -298,73 +307,39 @@ public class MiningMetricsTest {
             if (config != null && !config.isEmpty()) {
                 //compute the marked as changed features.
                 changed = constraintComputer.computeChangedFeatures(changedNode, config);
-                int tanglingDegree = 0;
-                for (Map.Entry<Feature, Integer> feat : config.entrySet()) {
-                    if (featureNamesList.contains(feat.getKey().getName()))
-                        tanglingDegree++;
-                }
                 if (!changed.contains(base))
                     config.remove(base);
                 //map with the name of the feature and version and a boolean to set true when it is already incremented in the analysed commit
                 String eccoConfig = "";
-                String file = "";
-                if (changedNode.getContainingFile() != null)
-                    file = changedNode.getContainingFile().getFilePath();
-                for (Map.Entry<Feature, Integer> configFeature : config.entrySet()) {
-                    int version = 0;
-                    if (featureNamesList.contains(configFeature.getKey().getName()) && configFeature.getValue() != 0) {
-                        if (featureVersions.containsKey(configFeature.getKey())) {
-                            version = featureVersions.get(configFeature.getKey());
-                        }
-                        if (!alreadyComitted.contains(configFeature.getKey())) {
-                            alreadyComitted.add(configFeature.getKey());
-                            //for marlin: first commit is empty, thus we need the < 2. otherwise <1 should be enough.
-                            if (changed.contains(configFeature.getKey())) { //|| gcl.size() < 2) {
-                                version++;
-                                if (version == 1)
+                //if (changedNode.getContainingFile() != null)
+                    for (Map.Entry<Feature, Integer> configFeature : config.entrySet()) {
+                        int version = 0;
+                        if (featureNamesList.contains(configFeature.getKey().getName()) && configFeature.getValue() != 0) {
+                            if (featureVersions.containsKey(configFeature.getKey())) {
+                                version = featureVersions.get(configFeature.getKey());
+                            }
+                            if (!alreadyComitted.contains(configFeature.getKey())) {
+                                alreadyComitted.add(configFeature.getKey());
+                                //for marlin: first commit is empty, thus we need the < 2. otherwise <1 should be enough.
+                                if (changed.contains(configFeature.getKey())) { //|| gcl.size() < 2) {
+                                    version++;
+                                    if (version == 1)
+                                        newFeatures++;
+                                    else
+                                        countFeaturesChanged++;
+                                }
+                                if (version == 0 && !(changed.contains(configFeature.getKey()))) {
                                     newFeatures++;
-                                else
-                                    countFeaturesChanged++;
+                                    version = 1;
+                                }
+                                featureVersions.put(configFeature.getKey(), version);
                             }
-                            if (version == 0 && !(changed.contains(configFeature.getKey()))) {
-                                newFeatures++;
-                                version = 1;
-                            }
-                            featureVersions.put(configFeature.getKey(), version);
+                            if (!configFeature.getKey().toString().equals("BASE"))
+                                eccoConfig += "," + configFeature.getKey().toString() + "." + version;
+                            else
+                                eccoConfig += "," + configFeature.getKey().toString() + ".$$";
                         }
-                        if (!configFeature.getKey().toString().equals("BASE"))
-                            eccoConfig += "," + configFeature.getKey().toString() + "." + version;
-                        else
-                            eccoConfig += "," + configFeature.getKey().toString() + ".$$";
-
-                        //RQ1.
-                        ChangeCharacteristic changeCharacteristic;
-                        if (featureMap.get(configFeature.getKey()) == null) {
-                            changeCharacteristic = new ChangeCharacteristic();
-                            featureMap.put(configFeature.getKey(), new ChangeCharacteristic());
-                        } else {
-                            changeCharacteristic = featureMap.get(configFeature.getKey());
-                        }
-                        int aux = 0;
-                        if (changedNode.getLineNumberInserts().size() > 0) {
-                            for (int i = 2; i < changedNode.getLineNumberInserts().size(); i += 3) {
-                                aux += changedNode.getLineNumberInserts().get(i);
-                            }
-                            changeCharacteristic.setLinesOfCodeAdded(changeCharacteristic.getLinesOfCodeAdded() + aux);
-                            changedNode.getLineNumberInserts().removeAll(changedNode.getLineNumberInserts());
-                        }
-
-                        changeCharacteristic.addTanglingDegree(tanglingDegree);
-                        if (!changeCharacteristic.getScatteringDegreeFiles().contains(file)) {
-                            changeCharacteristic.addScatteringDegreeFiles(file);
-                        }
-                        if (!(changedNode instanceof BaseNode))
-                            changeCharacteristic.setScatteringDegreeIfs(changeCharacteristic.getScatteringDegreeIfs() + 1);
-                        ChangeCharacteristic finalChangeCharacteristic = changeCharacteristic;
-                        featureMap.computeIfAbsent(configFeature.getKey(), v -> finalChangeCharacteristic);
-                        featureMap.computeIfPresent(configFeature.getKey(), (k, v) -> finalChangeCharacteristic);
                     }
-                }
                 if (!eccoConfig.contains("BASE")) {
                     eccoConfig += "," + "BASE.$$";
                 }
@@ -377,21 +352,16 @@ public class MiningMetricsTest {
                     count++;
                     //configuration that will be used to generate the variant of this changed node
                     configsToGenerateVariant.put(config, eccoConfig);
-
                     configurations.add(eccoConfig);
                     //folder where the variant is stored
                     File variantsrc = new File(eccoFolder, eccoConfig);
-                    String outputCSV = variantsrc.getParentFile().getParentFile().getAbsolutePath();
-                    final Path variant_dir = Paths.get(String.valueOf(variantsrc));
 
                 }
             }
         }
 
         if (deletedNodes.size() != 0) {
-            String file = "";
             for (ConditionalNode deletedNode : deletedNodes) {
-                file = deletedNode.getContainingFile().getFilePath();
                 //compute the config for the var gen
                 config = constraintComputer.computeConfig(deletedNode, gcPrevious.getTree());
                 if (config != null && !config.isEmpty()) {
@@ -428,29 +398,6 @@ public class MiningMetricsTest {
                                 eccoConfig += "," + configFeature.getKey().toString() + "." + version;
                             else
                                 eccoConfig += "," + configFeature.getKey().toString() + ".$$";
-
-
-                            //RQ1. deleted lines
-                            ChangeCharacteristic changeCharacteristic = featureMap.get(configFeature.getKey());
-                            if (changeCharacteristic == null)
-                                changeCharacteristic = new ChangeCharacteristic();
-                            int aux = 0;
-                            if (deletedNode.getLineNumberDeleted().size() > 0) {
-                                for (int i = 2; i < deletedNode.getLineNumberDeleted().size(); i += 3) {
-                                    aux += deletedNode.getLineNumberDeleted().get(i);
-                                }
-                                changeCharacteristic.setLinesOfCodeRemoved(changeCharacteristic.getLinesOfCodeRemoved() + aux);
-                                deletedNode.getLineNumberDeleted().removeAll(deletedNode.getLineNumberDeleted());
-                            }
-                            changeCharacteristic.addTanglingDegree(tanglingDegree);
-                            if (!changeCharacteristic.getScatteringDegreeFiles().contains(file)) {
-                                changeCharacteristic.addScatteringDegreeFiles(file);
-                            }
-                            if (!(deletedNode instanceof BaseNode))
-                                changeCharacteristic.setScatteringDegreeIfs(changeCharacteristic.getScatteringDegreeIfs() + 1);
-                            ChangeCharacteristic finalChangeCharacteristic = changeCharacteristic;
-                            featureMap.computeIfAbsent(configFeature.getKey(), v -> finalChangeCharacteristic);
-                            featureMap.computeIfPresent(configFeature.getKey(), (k, v) -> finalChangeCharacteristic);
                         }
                     }
                     if (!eccoConfig.contains("BASE")) {
@@ -465,10 +412,7 @@ public class MiningMetricsTest {
                         count++;
                         //configuration that will be used to generate the variant of this changed node
                         configsToGenerateVariant.put(config, eccoConfig);
-
                         configurations.add(eccoConfig);
-
-
                     }
                 }
             }
@@ -485,14 +429,15 @@ public class MiningMetricsTest {
             String eccoConfig = variant.getValue().replace("$$", baseVersion);
             //config that will be used to commit the variant generated with this changed node in ecco
             configsToCommit.add(eccoConfig);
+            System.out.println("------ Variant to generate with config: " + eccoConfig);
+            pph.generateVariants(variant.getKey(), gitFolder, eccoFolder, gitHelper.getDirFiles(), eccoConfig);
+            System.out.println("------ Generated config: " + eccoConfig);
         }
 
 
         //appending to the config csv
         try {
-
-            FileAppender csvWriter = new FileAppender(new File(changeFolder.getParent(), fileStoreConfig));
-
+            FileAppender csvWriter = new FileAppender(new File(FEATURES_PATH, fileStoreConfig));
             for (String configs : configsToCommit) {
                 List<List<String>> headerRows = Arrays.asList(
                         Arrays.asList(Long.toString(gc.getNumber()), gc.getCommitName(), configs)
@@ -509,7 +454,7 @@ public class MiningMetricsTest {
 
         //append results to the feature report csv
         try {
-            FileAppender csvAppender = new FileAppender(new File(changeFolder.getParent(), fileReportFeature));
+            FileAppender csvAppender = new FileAppender(new File(FEATURES_PATH, fileReportFeature));
             List<List<String>> contentRows = Arrays.asList(
                     Arrays.asList(Long.toString(gc.getNumber()), newFeatures.toString(), countFeaturesChanged.toString())
             );
@@ -522,57 +467,14 @@ public class MiningMetricsTest {
         }
         //end append results to the feature report csv
 
-
-        countFeaturesChanged = 0;
-        newFeatures = 0;
         for (Map.Entry<Feature, Integer> featureRevision : featureVersions.entrySet()) {
             System.out.println(featureRevision.getKey() + "." + featureRevision.getValue());
         }
 
-
-        for (Map.Entry<Feature, ChangeCharacteristic> changes : featureMap.entrySet()) {
-            ChangeCharacteristic changeCharacteristic = changes.getValue();
-            Collections.sort(changeCharacteristic.getTanglingDegree());
-            File featureCSV = new File(changeFolder, changes.getKey().getName() + ".csv");
-            if (!featureCSV.exists()) {
-                try {
-                    FileWriter csvWriter = new FileWriter(featureCSV);
-                    List<List<String>> headerRows = Arrays.asList(
-                            Arrays.asList("Commit Nr", "LOC A", "LOC R", "SD IF", "SD File", "TD IF")
-                    );
-                    for (List<String> rowData : headerRows) {
-                        csvWriter.append(String.join(",", rowData));
-                        csvWriter.append("\n");
-                    }
-                    csvWriter.flush();
-                    csvWriter.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            try {
-                FileAppender csvAppender = new FileAppender(featureCSV);
-                int tangling = 0;
-                if (changeCharacteristic.getTanglingDegree().size() > 0)
-                    tangling = changeCharacteristic.getTanglingDegree().get(changeCharacteristic.getTanglingDegree().size() - 1);
-                List<List<String>> contentRows = Arrays.asList(
-                        Arrays.asList(Long.toString(gc.getNumber()), String.valueOf(changeCharacteristic.getLinesOfCodeAdded()), String.valueOf(changeCharacteristic.getLinesOfCodeRemoved()), String.valueOf(changeCharacteristic.getScatteringDegreeIfs()), String.valueOf(changeCharacteristic.getScatteringDegreeFiles().size()),
-                                String.valueOf(tangling)));
-                for (List<String> rowData : contentRows) {
-                    csvAppender.append(String.join(",", rowData));
-                }
-                csvAppender.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
         changedNodes.clear();
         deletedNodes.clear();
-        featureMap.clear();
 
     }
-
 
     public void identifyFeatures(GitCommitList commitList, String release, File idFeatFolder) throws IOException {
         final List<TraceableFeature> evaluation = Collections.synchronizedList(new ArrayList<>());
@@ -748,5 +650,4 @@ public class MiningMetricsTest {
             }
         }
     }
-
 }
