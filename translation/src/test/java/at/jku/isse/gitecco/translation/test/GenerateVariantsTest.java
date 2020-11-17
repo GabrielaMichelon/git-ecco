@@ -23,7 +23,6 @@ import org.junit.Test;
 
 import java.io.*;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -34,11 +33,11 @@ public class GenerateVariantsTest {
     private final static int EVERY_NTH_COMMIT = 1;
     private final static ArrayList<Feature> featureList = new ArrayList<>();
     private final static ArrayList<String> featureNamesList = new ArrayList<String>();
-    private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\JournalExtensionEMSE\\CaseStudies\\SQLite";
-    private final static String FEATURES_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\JournalExtensionEMSE\\CaseStudies\\FeaturesSQLite";
-    private final static String featuretxt = "\\features-cvs-to-fossil-cutover.txt";
+    private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\JournalExtensionEMSE\\CaseStudies\\MPsolve\\mpsolve";
+    private final static String FEATURES_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\JournalExtensionEMSE\\CaseStudies\\FeaturesMPsolve";
     String fileReportFeature = "features_report_each_project_commit.csv";
     String fileStoreConfig = "configurations.csv";
+    String featuretxt = "";
     List<String> changedFiles = new ArrayList<>();
     List<String> changedFilesNext = new ArrayList<>();
     GitCommit gcPrevious = null;
@@ -72,38 +71,39 @@ public class GenerateVariantsTest {
             Boolean analyze = false;
             for (Map.Entry<Long, String> releases : orderedMap.entrySet()) {
                 System.out.println("TAG: " + releases.getValue());
-                if (releases.getValue().contains("cvs-to-fossil-cutover") || analyze) {
+                if (releases.getValue().equals("refs/tags/3.1.5") || analyze) {
                     //analyze = true;
                     gitHelper.getEveryNthCommit2(commitList, releases.getValue(), null, i, Math.toIntExact(releases.getKey()), EVERY_NTH_COMMIT);
                     i = Math.toIntExact(releases.getKey()) + 1;
                     String folderRelease = FEATURES_PATH;
-                    //final File folder = new File(file, "FeatureCharacteristic");
-                    //final File idFeatsfolder = new File(file, "IdentifiedFeatures");
+                    //final File folder = new File(FEATURES_PATH, "FeatureCharacteristic");
                     // if the directory does not exist, create it
-                    //if (!folder.exists())
-                    //    folder.mkdir();
-                    //if (!idFeatsfolder.exists())
-                    //    idFeatsfolder.mkdir();
+                    File foldereachRelease = new File(folderRelease+ File.separator +releases.getValue().substring(10));
+                    if (!foldereachRelease.exists())
+                        foldereachRelease.mkdir();
+                    final File idFeatsfolder = new File(foldereachRelease, "IdentifiedFeatures");
+                    if (!idFeatsfolder.exists())
+                        idFeatsfolder.mkdir();
                     //feature identification
-                    //identifyFeatures(commitList, releases.getValue(), idFeatsfolder);
+                    identifyFeatures(commitList, releases.getValue(), idFeatsfolder);
                     addFeatures();
-                    initVars(folderRelease);
+                    initVars(foldereachRelease.getAbsolutePath());
                     for (GitCommit commits : commitList) {
                         //ComputeRQMetrics.characteristicsFeature(folder, commits.getNumber(), commits.getTree(), featureNamesList);
                         configurations.clear();
-                        generateVariants(gitHelper, commits, featureNamesList);
+                        generateVariants(gitHelper, commits, featureNamesList,foldereachRelease.getAbsolutePath());
                         //characteristicsChange2(gitHelper, changeFolder, commits, featureNamesList);
                         //dispose tree if it is not needed -> for memory saving reasons.
                         commits.disposeTree();
                     }
                     //RQ.2 How many times one feature changed along a number of Git commits?
-                    //File filetxt = new File(folder.getParent(), "TimesEachFeatureChanged.txt");
-                    //PrintWriter writerTXT = new PrintWriter(filetxt.getAbsolutePath(), "UTF-8");
-                    //for (Map.Entry<Feature, Integer> featureRevision : featureVersions.entrySet()) {
-                    //    if (featureRevision.getValue() > 1)
-                    //        writerTXT.println(featureRevision.getKey() + " Changed " + (featureRevision.getValue() - 1) + " times.");
-                    // }
-                    // writerTXT.close();
+                    File filetxt = new File(foldereachRelease, "TimesEachFeatureChanged.txt");
+                    PrintWriter writerTXT = new PrintWriter(filetxt.getAbsolutePath(), "UTF-8");
+                    for (Map.Entry<Feature, Integer> featureRevision : featureVersions.entrySet()) {
+                        if (featureRevision.getValue() > 1)
+                            writerTXT.println(featureRevision.getKey() + " Changed " + (featureRevision.getValue() - 1) + " times.");
+                     }
+                     writerTXT.close();
                     commitList = new GitCommitList(gitHelper);
                 } else {
                     i = Math.toIntExact(releases.getKey()) + 1;
@@ -160,7 +160,7 @@ public class GenerateVariantsTest {
         }
     }
 
-    public void generateVariants(GitHelper gitHelper, GitCommit gc, ArrayList<String> featureNamesList) throws Exception {
+    public void generateVariants(GitHelper gitHelper, GitCommit gc, ArrayList<String> featureNamesList, String folder) throws Exception {
         final File gitFolder = new File(gitHelper.getPath());
         final File eccoFolder = new File(gitFolder.getParent(), "ecco");
 
@@ -437,7 +437,7 @@ public class GenerateVariantsTest {
 
         //appending to the config csv
         try {
-            FileAppender csvWriter = new FileAppender(new File(FEATURES_PATH, fileStoreConfig));
+            FileAppender csvWriter = new FileAppender(new File(folder, fileStoreConfig));
             for (String configs : configsToCommit) {
                 List<List<String>> headerRows = Arrays.asList(
                         Arrays.asList(Long.toString(gc.getNumber()), gc.getCommitName(), configs)
@@ -454,7 +454,7 @@ public class GenerateVariantsTest {
 
         //append results to the feature report csv
         try {
-            FileAppender csvAppender = new FileAppender(new File(FEATURES_PATH, fileReportFeature));
+            FileAppender csvAppender = new FileAppender(new File(folder, fileReportFeature));
             List<List<String>> contentRows = Arrays.asList(
                     Arrays.asList(Long.toString(gc.getNumber()), newFeatures.toString(), countFeaturesChanged.toString())
             );
@@ -502,6 +502,7 @@ public class GenerateVariantsTest {
         System.out.println("writing to CSV");
         FileWriter outputfile = null;
         File csvFile = new File(FEATURES_PATH, "features-" + fileName + ".csv");
+        featuretxt="\\features-" + fileName + ".txt";
         //second parameter is boolean for appending --> never append
         outputfile = new FileWriter(csvFile, false);
         feats = "{";
