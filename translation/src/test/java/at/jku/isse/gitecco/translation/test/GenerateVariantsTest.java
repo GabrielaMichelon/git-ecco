@@ -33,11 +33,16 @@ public class GenerateVariantsTest {
     private final static int EVERY_NTH_COMMIT = 1;
     private final static ArrayList<Feature> featureList = new ArrayList<>();
     private final static ArrayList<String> featureNamesList = new ArrayList<String>();
-    private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\JournalExtensionEMSE\\CaseStudies\\MPsolve\\mpsolve";
-    private final static String FEATURES_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\JournalExtensionEMSE\\CaseStudies\\FeaturesMPsolve";
+    //set as true to generate random variants or false to just generate original variants
+    final boolean generateRandomVariants = true;
+    //set as true to generate PP variants or false to just generate configurations to generate random variants
+    final boolean generateOriginalVariants = false;
+    private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\JournalExtensionEMSE\\CaseStudies\\LibSSH";
+    private final static String FEATURES_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\JournalExtensionEMSE\\CaseStudies\\Test500commits\\LibSSH";
     String fileReportFeature = "features_report_each_project_commit.csv";
     String fileStoreConfig = "configurations.csv";
-    String featuretxt = "";
+    String fileStoreRandomConfig = "randomconfigurations.csv";
+    String featuretxt = "\\features-first500commits.txt";
     List<String> changedFiles = new ArrayList<>();
     List<String> changedFilesNext = new ArrayList<>();
     GitCommit gcPrevious = null;
@@ -48,7 +53,7 @@ public class GenerateVariantsTest {
 
     @Test
     public void identification() throws Exception {
-        long measure = System.currentTimeMillis();
+        //long measure = System.currentTimeMillis();
         String repoPath;
         repoPath = REPO_PATH;
 
@@ -68,47 +73,50 @@ public class GenerateVariantsTest {
                             LinkedHashMap::new)); //
 
             int i = 0;
-            Boolean analyze = false;
-            for (Map.Entry<Long, String> releases : orderedMap.entrySet()) {
-                System.out.println("TAG: " + releases.getValue());
-                if (releases.getValue().equals("refs/tags/3.1.5") || analyze) {
-                    //analyze = true;
-                    gitHelper.getEveryNthCommit2(commitList, releases.getValue(), null, i, Math.toIntExact(releases.getKey()), EVERY_NTH_COMMIT);
-                    i = Math.toIntExact(releases.getKey()) + 1;
-                    String folderRelease = FEATURES_PATH;
-                    //final File folder = new File(FEATURES_PATH, "FeatureCharacteristic");
-                    // if the directory does not exist, create it
-                    File foldereachRelease = new File(folderRelease+ File.separator +releases.getValue().substring(10));
-                    if (!foldereachRelease.exists())
-                        foldereachRelease.mkdir();
-                    final File idFeatsfolder = new File(foldereachRelease, "IdentifiedFeatures");
-                    if (!idFeatsfolder.exists())
-                        idFeatsfolder.mkdir();
-                    //feature identification
-                    identifyFeatures(commitList, releases.getValue(), idFeatsfolder);
-                    addFeatures();
-                    initVars(foldereachRelease.getAbsolutePath());
-                    for (GitCommit commits : commitList) {
-                        //ComputeRQMetrics.characteristicsFeature(folder, commits.getNumber(), commits.getTree(), featureNamesList);
-                        configurations.clear();
-                        generateVariants(gitHelper, commits, featureNamesList,foldereachRelease.getAbsolutePath());
-                        //characteristicsChange2(gitHelper, changeFolder, commits, featureNamesList);
-                        //dispose tree if it is not needed -> for memory saving reasons.
-                        commits.disposeTree();
-                    }
-                    //RQ.2 How many times one feature changed along a number of Git commits?
-                    File filetxt = new File(foldereachRelease, "TimesEachFeatureChanged.txt");
-                    PrintWriter writerTXT = new PrintWriter(filetxt.getAbsolutePath(), "UTF-8");
-                    for (Map.Entry<Feature, Integer> featureRevision : featureVersions.entrySet()) {
-                        if (featureRevision.getValue() > 1)
-                            writerTXT.println(featureRevision.getKey() + " Changed " + (featureRevision.getValue() - 1) + " times.");
-                     }
-                     writerTXT.close();
-                    commitList = new GitCommitList(gitHelper);
-                } else {
-                    i = Math.toIntExact(releases.getKey()) + 1;
-                }
+            //Boolean analyze = false;
+            //for (Map.Entry<Long, String> releases : orderedMap.entrySet()) {
+            //    System.out.println("TAG: " + releases.getValue());
+            //if (releases.getValue().equals("refs/tags/3.1.5") || analyze) {
+            //analyze = true;
+            //gitHelper.getEveryNthCommit2(commitList, releases.getValue(), null, i, Math.toIntExact(releases.getKey()), EVERY_NTH_COMMIT);
+            gitHelper.getEveryNthCommit3(commitList, null, 0, 400, EVERY_NTH_COMMIT);
+            //i = Math.toIntExact(releases.getKey()) + 1;
+            String folderRelease = FEATURES_PATH;
+            //final File folder = new File(FEATURES_PATH, "FeatureCharacteristic");
+            // if the directory does not exist, create it
+            //File foldereachRelease = new File(folderRelease + File.separator + releases.getValue().substring(10));
+            String releases = "first500commits";
+            File foldereachRelease = new File(folderRelease + File.separator + releases);
+            if (!foldereachRelease.exists())
+                foldereachRelease.mkdir();
+            final File idFeatsfolder = new File(foldereachRelease, "IdentifiedFeatures");
+            if (!idFeatsfolder.exists())
+                idFeatsfolder.mkdir();
+            //feature identification
+            //identifyFeatures(commitList, releases, idFeatsfolder);
+            addFeatures();
+            initVars(foldereachRelease.getAbsolutePath());
+            for (GitCommit commits : commitList) {
+                //ComputeRQMetrics.characteristicsFeature(folder, commits.getNumber(), commits.getTree(), featureNamesList);
+                configurations.clear();
+                generateVariants(gitHelper, commits, featureNamesList, foldereachRelease.getAbsolutePath());
+                //characteristicsChange2(gitHelper, changeFolder, commits, featureNamesList);
+                //dispose tree if it is not needed -> for memory saving reasons.
+                commits.disposeTree();
             }
+            //RQ.2 How many times one feature changed along a number of Git commits?
+            File filetxt = new File(foldereachRelease, "TimesEachFeatureChanged.txt");
+            PrintWriter writerTXT = new PrintWriter(filetxt.getAbsolutePath(), "UTF-8");
+            for (Map.Entry<Feature, Integer> featureRevision : featureVersions.entrySet()) {
+                if (featureRevision.getValue() > 1)
+                    writerTXT.println(featureRevision.getKey() + " Changed " + (featureRevision.getValue() - 1) + " times.");
+            }
+            writerTXT.close();
+            //commitList = new GitCommitList(gitHelper);
+            //} else {
+            //    i = Math.toIntExact(releases.getKey()) + 1;
+            //}
+            //}
         }
 
         System.out.println("finished analyzing repo");
@@ -163,6 +171,7 @@ public class GenerateVariantsTest {
     public void generateVariants(GitHelper gitHelper, GitCommit gc, ArrayList<String> featureNamesList, String folder) throws Exception {
         final File gitFolder = new File(gitHelper.getPath());
         final File eccoFolder = new File(gitFolder.getParent(), "ecco");
+        final File randomVariantFolder = new File(gitFolder.getParent(), "randomVariants");
 
         Integer countFeaturesChanged = 0; //COUNT PER GIT COMMIT
         Integer newFeatures = 0; //COUNT PER GIT COMMIT
@@ -181,9 +190,26 @@ public class GenerateVariantsTest {
                 System.out.println("---- commit name " + gc.getCommitName());
                 previous = false;
             } else {
-                gcPrevious = new GitCommit(gc.getRevCommit().getParent(0).getName(), gc.getNumber() - 1, gc.getRevCommit().getParent(0).getParent(0).getName(), gc.getBranch(), gc.getRevCommit().getParent(0));
+                String parent, parent1;
+
+                try {
+                    parent1 = gc.getRevCommit().getParent(0).getName();
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    parent1 = "NULLCOMMIT";
+                }
+                try {
+                    parent = gc.getRevCommit().getParent(0).getParent(0).getName();
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    parent = "NULLCOMMIT";
+                }
+                try{
+                    gcPrevious = new GitCommit(parent1, gc.getNumber() - 1,parent, gc.getBranch(), gc.getRevCommit().getParent(0));
+                }catch (ArrayIndexOutOfBoundsException e) {
+                    gcPrevious = new GitCommit(parent1, gc.getNumber() - 1,parent, gc.getBranch(), gc.getRevCommit());
+                }
                 GitCommitList gcl = new GitCommitList(gitHelper);
                 gcl.addTreeParent(gcPrevious, gc.getCommitName());
+
             }
         }
 
@@ -277,6 +303,9 @@ public class GenerateVariantsTest {
         Map<Feature, Integer> config;
         Set<Feature> changed;
         Set<Feature> alreadyComitted = new HashSet<>();
+        Map<Integer, Map<Feature, Integer>> mapConfigToGenerateRandomVariants = new HashMap<>();
+        Map<Integer, String> mapRevisionToGenerateRandomVariants = new HashMap<>();
+        Map<Integer, String> mapRevisionToGenerateRandomVariantsFinal = new HashMap<>();
         Integer count = 0;
 
         //if there is no changed node then there must be a change in the binary files --> commit base.
@@ -312,34 +341,34 @@ public class GenerateVariantsTest {
                 //map with the name of the feature and version and a boolean to set true when it is already incremented in the analysed commit
                 String eccoConfig = "";
                 //if (changedNode.getContainingFile() != null)
-                    for (Map.Entry<Feature, Integer> configFeature : config.entrySet()) {
-                        int version = 0;
-                        if (featureNamesList.contains(configFeature.getKey().getName()) && configFeature.getValue() != 0) {
-                            if (featureVersions.containsKey(configFeature.getKey())) {
-                                version = featureVersions.get(configFeature.getKey());
-                            }
-                            if (!alreadyComitted.contains(configFeature.getKey())) {
-                                alreadyComitted.add(configFeature.getKey());
-                                //for marlin: first commit is empty, thus we need the < 2. otherwise <1 should be enough.
-                                if (changed.contains(configFeature.getKey())) { //|| gcl.size() < 2) {
-                                    version++;
-                                    if (version == 1)
-                                        newFeatures++;
-                                    else
-                                        countFeaturesChanged++;
-                                }
-                                if (version == 0 && !(changed.contains(configFeature.getKey()))) {
-                                    newFeatures++;
-                                    version = 1;
-                                }
-                                featureVersions.put(configFeature.getKey(), version);
-                            }
-                            if (!configFeature.getKey().toString().equals("BASE"))
-                                eccoConfig += "," + configFeature.getKey().toString() + "." + version;
-                            else
-                                eccoConfig += "," + configFeature.getKey().toString() + ".$$";
+                for (Map.Entry<Feature, Integer> configFeature : config.entrySet()) {
+                    int version = 0;
+                    if (featureNamesList.contains(configFeature.getKey().getName()) && configFeature.getValue() != 0) {
+                        if (featureVersions.containsKey(configFeature.getKey())) {
+                            version = featureVersions.get(configFeature.getKey());
                         }
+                        if (!alreadyComitted.contains(configFeature.getKey())) {
+                            alreadyComitted.add(configFeature.getKey());
+                            //for marlin: first commit is empty, thus we need the < 2. otherwise <1 should be enough.
+                            if (changed.contains(configFeature.getKey())) { //|| gcl.size() < 2) {
+                                version++;
+                                if (version == 1)
+                                    newFeatures++;
+                                else
+                                    countFeaturesChanged++;
+                            }
+                            if (version == 0 && !(changed.contains(configFeature.getKey()))) {
+                                newFeatures++;
+                                version = 1;
+                            }
+                            featureVersions.put(configFeature.getKey(), version);
+                        }
+                        if (!configFeature.getKey().toString().equals("BASE"))
+                            eccoConfig += "," + configFeature.getKey().toString() + "." + version;
+                        else
+                            eccoConfig += "," + configFeature.getKey().toString() + ".$$";
                     }
+                }
                 if (!eccoConfig.contains("BASE")) {
                     eccoConfig += "," + "BASE.$$";
                 }
@@ -349,6 +378,8 @@ public class GenerateVariantsTest {
                     System.out.println("Config already used to generate a variant: " + eccoConfig);
                     //don't need to generate variant and commit it again at the same commit of the project git repository
                 } else {
+                    mapConfigToGenerateRandomVariants.put(count, config);
+                    mapRevisionToGenerateRandomVariants.put(count, eccoConfig);
                     count++;
                     //configuration that will be used to generate the variant of this changed node
                     configsToGenerateVariant.put(config, eccoConfig);
@@ -409,6 +440,8 @@ public class GenerateVariantsTest {
                         System.out.println("Config already used to generate a variant: " + eccoConfig);
                         //don't need to generate variant and commit it again at the same commit of the project git repository
                     } else {
+                        mapConfigToGenerateRandomVariants.put(count, config);
+                        mapRevisionToGenerateRandomVariants.put(count, eccoConfig);
                         count++;
                         //configuration that will be used to generate the variant of this changed node
                         configsToGenerateVariant.put(config, eccoConfig);
@@ -427,13 +460,95 @@ public class GenerateVariantsTest {
         //generate the variant for this config
         for (Map.Entry<Map<Feature, Integer>, String> variant : configsToGenerateVariant.entrySet()) {
             String eccoConfig = variant.getValue().replace("$$", baseVersion);
+            if (generateOriginalVariants) {
+                System.out.println("------ Variant to generate with config: " + eccoConfig);
+                pph.generateVariants(variant.getKey(), gitFolder, eccoFolder, gitHelper.getDirFiles(), eccoConfig);
+                System.out.println("Variant generated with config: " + eccoConfig);
+            }else if(generateRandomVariants){
+                for (Map.Entry<Integer,String> map:  mapRevisionToGenerateRandomVariants.entrySet()) {
+                    int auxkey = map.getKey();
+                    String newBase = map.getValue();
+                    if(map.getValue().contains("BASE.$$")){
+                        newBase = map.getValue().replace("BASE.$$", "BASE."+baseVersion);
+                    }
+                    mapRevisionToGenerateRandomVariantsFinal.put(auxkey,newBase);
+                }
+
+            }
             //config that will be used to commit the variant generated with this changed node in ecco
             configsToCommit.add(eccoConfig);
-            System.out.println("------ Variant to generate with config: " + eccoConfig);
-            pph.generateVariants(variant.getKey(), gitFolder, eccoFolder, gitHelper.getDirFiles(), eccoConfig);
-            System.out.println("------ Generated config: " + eccoConfig);
         }
 
+        //generate random variants
+        if (generateRandomVariants) {
+            if (countFeaturesChanged + newFeatures > 0) {
+                Random random = new Random();
+                int numberConfigs = 1;
+                if (countFeaturesChanged + newFeatures > 1) {
+                    if ((countFeaturesChanged + newFeatures) > 6)
+                        numberConfigs = random.nextInt((countFeaturesChanged + newFeatures) - 1) + 6;
+                    else
+                        numberConfigs = random.nextInt((countFeaturesChanged + newFeatures) - 1) + (countFeaturesChanged + newFeatures);
+                }
+                Map<Feature, Integer> mapNewConfig = new HashMap<>();
+                String featurerevision = "";
+                ArrayList<Integer> positionsMap = new ArrayList<>();
+                int positionMapToSelectConfig = random.nextInt(count);
+                positionsMap.add(positionMapToSelectConfig);
+                System.out.println(mapConfigToGenerateRandomVariants.entrySet());
+                for (int i = 0; i < numberConfigs; i++) {
+                    for (Map.Entry<Feature, Integer> map : mapConfigToGenerateRandomVariants.get(positionMapToSelectConfig).entrySet()) {
+                        mapNewConfig.put(map.getKey(), map.getValue());
+                    }
+                    featurerevision += "," + mapRevisionToGenerateRandomVariantsFinal.get(positionMapToSelectConfig);
+                    positionMapToSelectConfig = random.nextInt(count);
+                    if (positionsMap.contains(positionMapToSelectConfig)) {
+                        while (!positionsMap.contains(positionMapToSelectConfig)) {
+                            positionMapToSelectConfig = random.nextInt(count);
+                        }
+                    } else {
+                        positionsMap.add(positionMapToSelectConfig);
+                    }
+
+                }
+                featurerevision = featurerevision.replaceFirst(",", "");
+                if(featurerevision.contains("$$")){
+                    featurerevision = featurerevision.replace("$$",baseVersion);
+                }
+                if (featurerevision.contains(",")) {
+                    String[] featurerevisions = featurerevision.split(",");
+                    ArrayList<String> allfeatures = new ArrayList<>();
+                    String featuresToVariant = "";
+                    for (String featRevision : featurerevisions) {
+                        if (!allfeatures.contains(featRevision)) {
+                            allfeatures.add(featRevision);
+                            featuresToVariant += "," + featRevision;
+                        }
+                    }
+                    featuresToVariant = featuresToVariant.replaceFirst(",", "");
+                    featurerevision = featuresToVariant;
+                    pph.generateVariants(mapNewConfig, gitFolder, randomVariantFolder, gitHelper.getDirFiles(), featuresToVariant);
+                } else {
+                    pph.generateVariants(mapNewConfig, gitFolder, randomVariantFolder, gitHelper.getDirFiles(), featurerevision);
+                }
+                //append random configuration to the csv file
+                try {
+                    String fileStr = gitFolder.getParent() + File.separator + fileStoreRandomConfig;
+                    FileAppender csvWriter = new FileAppender(new File(fileStr));
+                    List<List<String>> headerRows = Arrays.asList(
+                            Arrays.asList(Long.toString(gc.getNumber()), gc.getCommitName(), featurerevision)
+                    );
+                    for (List<String> rowData : headerRows) {
+                        csvWriter.append(String.join(",", rowData));
+                    }
+                    csvWriter.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                //end append random configuration
+            }
+        }
+        //end generate random variants
 
         //appending to the config csv
         try {
@@ -502,7 +617,7 @@ public class GenerateVariantsTest {
         System.out.println("writing to CSV");
         FileWriter outputfile = null;
         File csvFile = new File(FEATURES_PATH, "features-" + fileName + ".csv");
-        featuretxt="\\features-" + fileName + ".txt";
+        featuretxt = "\\features-" + fileName + ".txt";
         //second parameter is boolean for appending --> never append
         outputfile = new FileWriter(csvFile, false);
         feats = "{";

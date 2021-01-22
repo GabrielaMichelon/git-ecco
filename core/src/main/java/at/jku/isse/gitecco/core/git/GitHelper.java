@@ -7,6 +7,7 @@ import difflib.DiffUtils;
 import difflib.Patch;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ResetCommand;
+import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.errors.MissingObjectException;
@@ -196,7 +197,7 @@ public class GitHelper {
         List<Change> changes = new ArrayList<Change>();
 
         if (deletedFile) {
-            if(newCommit.getNumber()!=Long.valueOf(0))
+            if (newCommit.getNumber() != Long.valueOf(0))
                 git.checkout().setName(newCommit.getDiffCommitName()).call();
             if (filePath.contains("arent"))
                 filePath = filePath.replace("arent" + File.separator, "");
@@ -251,7 +252,11 @@ public class GitHelper {
                             }
                             br.close();
                         }
-                        git.checkout().setName(newCommit.getDiffCommitName()).call();
+                        try {
+                            git.checkout().setName(newCommit.getDiffCommitName()).call();
+                        }catch (CheckoutConflictException ex){
+                            System.out.println("Exception checkout ----- "+ ex);
+                        }
                         File fileold = new File(pathUrl + File.separator + oldPath);
                         try {
                             old = Files.readAllLines(fileold.toPath());
@@ -548,8 +553,58 @@ public class GitHelper {
         return commits;
     }
 
+    /**
+     * Method to retrieve every nth commit from a repository and put it to a GitCommitList.
+     * starts with a certain commit number and ends with a certain commit number
+     *
+     * @param commits the GitCommitList to which the commits are saved to.
+     * @return The GitCommitList which was passed to the method.
+     * @throws GitAPIException
+     * @throws IOException
+     */
+    public GitCommitList getEveryNthCommit3(GitCommitList commits, String firstDiff, int startcommit, int endcommit, int n) throws Exception {
+        final Repository repository = git.getRepository();
+        final Collection<Ref> allRefs = repository.getRefDatabase().getRefs();
 
+        RevWalk revWalk = new RevWalk(repository);
+        revWalk.setRetainBody(false);
+        revWalk.sort(RevSort.REVERSE, true);
+        revWalk.setRevFilter(RevFilter.NO_MERGES);
+        revWalk.setRetainBody(false);
 
+        for (Ref ref : allRefs) revWalk.markStart(revWalk.parseCommit(ref.getObjectId()));
+        long number = 0;
+        String parent = firstDiff;
+        boolean enter = false;
+
+        if (startcommit != 0)
+            startcommit -= 1;
+        for (RevCommit rc : revWalk) {
+            if (number > endcommit) break;
+
+            if (number >= startcommit) {
+                String branch = getBranchOfCommit(rc.getName());
+
+                if (parent == null || enter) {
+                    try {
+                        parent = rc.getParent(0).getName();
+                        enter = true;
+                    } catch (ArrayIndexOutOfBoundsException e) {
+                        parent = "NULLCOMMIT";
+                        enter = true;
+                    }
+                } else {
+                    enter = true;
+                }
+
+                commits.add(new GitCommit(rc.getName(), number, parent, branch, rc));
+            }
+
+            number += number < startcommit ? 1 : n;
+        }
+
+        return commits;
+    }
 
 
     /**
@@ -570,8 +625,8 @@ public class GitHelper {
         revWalk.setRevFilter(RevFilter.NO_MERGES);
         revWalk.setRetainBody(false);
 
-        for (Ref ref : tags){
-            if(ref.getName().equals(release)) {
+        for (Ref ref : tags) {
+            if (ref.getName().equals(release)) {
                 revWalk.markStart(revWalk.parseCommit(ref.getObjectId()));
                 break;
             }
@@ -579,8 +634,8 @@ public class GitHelper {
         long number = 0;
         String parent = firstDiff;
         boolean enter = false;
-        if(startcommit!=0)
-            startcommit-=1;
+        if (startcommit != 0)
+            startcommit -= 1;
         for (RevCommit rc : revWalk) {
             if (number > endcommit) break;
 

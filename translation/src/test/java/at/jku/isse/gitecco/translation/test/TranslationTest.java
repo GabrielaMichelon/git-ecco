@@ -563,7 +563,7 @@ public class TranslationTest {
     @Test
     public void generateCleanVersion() {
         PreprocessorHelper pph = new PreprocessorHelper();
-        File gitFolder = new File("C:\\Users\\gabil\\Desktop\\PHD\\Mining\\CaseStudies\\Irssi\\irssi");
+        File gitFolder = new File("C:\\Users\\gabil\\Desktop\\PHD\\JournalExtensionEMSE\\CaseStudies\\Curl\\curl");
         File cleanFolder = new File(gitFolder.getParent(), "clean");
         String dirs = null;
         ArrayList<String> listDirs = new ArrayList<>();
@@ -575,7 +575,7 @@ public class TranslationTest {
     @Test
     public void countLinesOfCode() throws IOException {
         List<String> fileTypes = new LinkedList<String>();
-        File gitFolder = new File("C:\\Users\\gabil\\Desktop\\PHD\\Mining\\CaseStudies\\Irssi\\clean");
+        File gitFolder = new File("C:\\Users\\gabil\\Desktop\\PHD\\JournalExtensionEMSE\\CaseStudies\\Curl\\clean");
         fileTypes.add("c");
         fileTypes.add("cpp");
         fileTypes.add("h");
