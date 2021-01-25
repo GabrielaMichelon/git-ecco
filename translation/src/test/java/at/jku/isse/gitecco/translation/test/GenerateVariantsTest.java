@@ -37,8 +37,8 @@ public class GenerateVariantsTest {
     final boolean generateRandomVariants = true;
     //set as true to generate PP variants or false to just generate configurations to generate random variants
     final boolean generateOriginalVariants = false;
-    private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\JournalExtensionEMSE\\CaseStudies\\LibSSH";
-    private final static String FEATURES_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\JournalExtensionEMSE\\CaseStudies\\Test500commits\\LibSSH";
+    private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\JournalExtensionEMSE\\CaseStudies\\Marlin\\Marlin";
+    private final static String FEATURES_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\JournalExtensionEMSE\\CaseStudies\\Test500commits\\Marlin";
     String fileReportFeature = "features_report_each_project_commit.csv";
     String fileStoreConfig = "configurations.csv";
     String fileStoreRandomConfig = "randomconfigurations.csv";
@@ -79,7 +79,7 @@ public class GenerateVariantsTest {
             //if (releases.getValue().equals("refs/tags/3.1.5") || analyze) {
             //analyze = true;
             //gitHelper.getEveryNthCommit2(commitList, releases.getValue(), null, i, Math.toIntExact(releases.getKey()), EVERY_NTH_COMMIT);
-            gitHelper.getEveryNthCommit3(commitList, null, 0, 400, EVERY_NTH_COMMIT);
+            gitHelper.getEveryNthCommit3(commitList, null, 50, 52, EVERY_NTH_COMMIT);
             //i = Math.toIntExact(releases.getKey()) + 1;
             String folderRelease = FEATURES_PATH;
             //final File folder = new File(FEATURES_PATH, "FeatureCharacteristic");
@@ -190,26 +190,18 @@ public class GenerateVariantsTest {
                 System.out.println("---- commit name " + gc.getCommitName());
                 previous = false;
             } else {
-                String parent, parent1;
-
-                try {
-                    parent1 = gc.getRevCommit().getParent(0).getName();
-                } catch (ArrayIndexOutOfBoundsException e) {
-                    parent1 = "NULLCOMMIT";
+                if (gc.getNumber() == 0) {
+                    gcPrevious = new GitCommit(gc.getCommitName(), gc.getNumber(), gc.getDiffCommitName(), gc.getBranch(), gc.getRevCommit());
+                    gcPrevious.setTree(gc.getTree());
+                } else if (previous || previous != null) {
+                    if (gc.getNumber() - 1 < 1) {
+                        previous = false;
+                    } else {
+                        gcPrevious = new GitCommit(gc.getRevCommit().getParent(0).getName(), gc.getNumber() - 1, gc.getRevCommit().getParent(0).getParent(0).getName(), gc.getBranch(), gc.getRevCommit().getParent(0));
+                        GitCommitList gcl = new GitCommitList(gitHelper);
+                        gcl.addTreeParent(gcPrevious, gc.getCommitName());
+                    }
                 }
-                try {
-                    parent = gc.getRevCommit().getParent(0).getParent(0).getName();
-                } catch (ArrayIndexOutOfBoundsException e) {
-                    parent = "NULLCOMMIT";
-                }
-                try{
-                    gcPrevious = new GitCommit(parent1, gc.getNumber() - 1,parent, gc.getBranch(), gc.getRevCommit().getParent(0));
-                }catch (ArrayIndexOutOfBoundsException e) {
-                    gcPrevious = new GitCommit(parent1, gc.getNumber() - 1,parent, gc.getBranch(), gc.getRevCommit());
-                }
-                GitCommitList gcl = new GitCommitList(gitHelper);
-                gcl.addTreeParent(gcPrevious, gc.getCommitName());
-
             }
         }
 
@@ -486,7 +478,7 @@ public class GenerateVariantsTest {
                 int numberConfigs = 1;
                 if (countFeaturesChanged + newFeatures > 1) {
                     if ((countFeaturesChanged + newFeatures) > 6)
-                        numberConfigs = random.nextInt((countFeaturesChanged + newFeatures) - 1) + 6;
+                        numberConfigs = random.nextInt(6);
                     else
                         numberConfigs = random.nextInt((countFeaturesChanged + newFeatures) - 1) + (countFeaturesChanged + newFeatures);
                 }

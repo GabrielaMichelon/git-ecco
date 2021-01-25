@@ -9,6 +9,8 @@ import at.jku.isse.gitecco.core.tree.nodes.SourceFileNode;
 import org.eclipse.cdt.core.dom.ast.IASTPreprocessorStatement;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -82,7 +84,6 @@ public class GitCommitList extends ArrayList<GitCommit> {
     public boolean add(GitCommit gitCommit) {
         final RootNode tree = new RootNode(gitHelper.getPath());
         gitHelper.checkOutCommit(gitCommit.getCommitName());
-
         final PreprocessorHelper pph = new PreprocessorHelper();
         final File gitFolder = new File(gitHelper.getPath());
         final File cleanFolder = new File(gitFolder.getParent(), "clean");

@@ -32,8 +32,6 @@ import java.nio.file.Paths;
 import java.util.*;
 
 import static java.nio.file.Files.copy;
-import static org.eclipse.jgit.revwalk.filter.RevFilter.ALL;
-import static org.eclipse.jgit.revwalk.filter.RevFilter.NO_MERGES;
 
 /**
  * HelperClass for working with JGit.
@@ -198,6 +196,7 @@ public class GitHelper {
 
         if (deletedFile) {
             if (newCommit.getNumber() != Long.valueOf(0))
+                git.stashCreate().setRef("HEAD").call();
                 git.checkout().setName(newCommit.getDiffCommitName()).call();
             if (filePath.contains("arent"))
                 filePath = filePath.replace("arent" + File.separator, "");
@@ -206,11 +205,17 @@ public class GitHelper {
             lines.add(0);
             lines.add(Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size() - 1);
             changes.add(new Change(0, Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size(), lines, "DELETE"));
+            git.stashCreate().setRef("HEAD").call();
             git.checkout().setName(newCommit.getCommitName()).call();
         } else {
             //prepare for file path filter.
             //String filterPath = filePath.substring(pathUrl.length()+1).replace("\\", "/");
-            git.checkout().setName(newCommit.getCommitName()).call();
+            try {
+                git.stashCreate().setRef("HEAD").call();
+                git.checkout().setName(newCommit.getCommitName()).call();
+            } catch (CheckoutConflictException ex) {
+                System.out.println("aaaaaaaException checkout ----- " + ex);
+            }
             //System.out.println("Checked out: "+newCommit.getCommitName());
             List<DiffEntry> diff;
             diff = git.diff().
@@ -253,9 +258,10 @@ public class GitHelper {
                             br.close();
                         }
                         try {
+                            git.stashCreate().setRef("HEAD").call();
                             git.checkout().setName(newCommit.getDiffCommitName()).call();
-                        }catch (CheckoutConflictException ex){
-                            System.out.println("Exception checkout ----- "+ ex);
+                        } catch (CheckoutConflictException ex) {
+                            System.out.println("Exception checkout ----- " + ex);
                         }
                         File fileold = new File(pathUrl + File.separator + oldPath);
                         try {
@@ -269,6 +275,7 @@ public class GitHelper {
                             }
                             br.close();
                         }
+                        git.stashCreate().setRef("HEAD").call();
                         git.checkout().setName(newCommit.getCommitName()).call();
                         // Compute diff. Get the Patch object. Patch is the container for computed deltas.
                         Patch<String> patch = null;
@@ -390,7 +397,13 @@ public class GitHelper {
         try {
             git.clean().setForce(true).call();
             git.reset().setMode(ResetCommand.ResetType.HARD).call();
-            git.checkout().setName(name).call();
+            try {
+                git.stashCreate().setRef("HEAD").call();
+                git.checkout().setName(name).call();
+            }catch (CheckoutConflictException e){
+                System.out.println(" EXCECPTION CHECKOUT. "+e);
+            }
+
         } catch (GitAPIException e) {
             e.printStackTrace();
         }
@@ -408,7 +421,7 @@ public class GitHelper {
     }
 
 
-    private Git cloneRepo(String url, String dirPath) {
+    public Git cloneRepo(String url, String dirPath) {
         File dir = new File(dirPath);
         //System.out.println("Cloning from " + url + " to " + dir);
 
