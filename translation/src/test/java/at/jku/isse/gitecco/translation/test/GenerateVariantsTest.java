@@ -37,8 +37,10 @@ public class GenerateVariantsTest {
     final boolean generateRandomVariants = true;
     //set as true to generate PP variants or false to just generate configurations to generate random variants
     final boolean generateOriginalVariants = false;
-    private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\JournalExtensionEMSE\\CaseStudies\\Marlin\\Marlin";
-    private final static String FEATURES_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\JournalExtensionEMSE\\CaseStudies\\Test500commits\\Marlin";
+    Integer commitInit = 2;
+    Integer commitEnd = 3;
+    private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\JournalExtensionEMSE\\CaseStudies\\Bison";
+    private final static String FEATURES_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\JournalExtensionEMSE\\CaseStudies\\Bisontest";
     String fileReportFeature = "features_report_each_project_commit.csv";
     String fileStoreConfig = "configurations.csv";
     String fileStoreRandomConfig = "randomconfigurations.csv";
@@ -79,7 +81,7 @@ public class GenerateVariantsTest {
             //if (releases.getValue().equals("refs/tags/3.1.5") || analyze) {
             //analyze = true;
             //gitHelper.getEveryNthCommit2(commitList, releases.getValue(), null, i, Math.toIntExact(releases.getKey()), EVERY_NTH_COMMIT);
-            gitHelper.getEveryNthCommit3(commitList, null, 50, 52, EVERY_NTH_COMMIT);
+            gitHelper.getEveryNthCommit3(commitList, null, commitInit, commitEnd, EVERY_NTH_COMMIT);
             //i = Math.toIntExact(releases.getKey()) + 1;
             String folderRelease = FEATURES_PATH;
             //final File folder = new File(FEATURES_PATH, "FeatureCharacteristic");
@@ -454,16 +456,21 @@ public class GenerateVariantsTest {
             String eccoConfig = variant.getValue().replace("$$", baseVersion);
             if (generateOriginalVariants) {
                 System.out.println("------ Variant to generate with config: " + eccoConfig);
-                pph.generateVariants(variant.getKey(), gitFolder, eccoFolder, gitHelper.getDirFiles(), eccoConfig);
+                Map<Feature, Integer> test = new HashMap<>();
+                for (Map.Entry<Feature, Integer> mapconfig : variant.getKey().entrySet()) {
+                    if (mapconfig.getValue() == 1)
+                        test.put(mapconfig.getKey(), 1);
+                }
+                pph.generateVariants(test, gitFolder, eccoFolder, gitHelper.getDirFiles(), eccoConfig);
                 System.out.println("Variant generated with config: " + eccoConfig);
-            }else if(generateRandomVariants){
-                for (Map.Entry<Integer,String> map:  mapRevisionToGenerateRandomVariants.entrySet()) {
+            } else if (generateRandomVariants) {
+                for (Map.Entry<Integer, String> map : mapRevisionToGenerateRandomVariants.entrySet()) {
                     int auxkey = map.getKey();
                     String newBase = map.getValue();
-                    if(map.getValue().contains("BASE.$$")){
-                        newBase = map.getValue().replace("BASE.$$", "BASE."+baseVersion);
+                    if (map.getValue().contains("BASE.$$")) {
+                        newBase = map.getValue().replace("BASE.$$", "BASE." + baseVersion);
                     }
-                    mapRevisionToGenerateRandomVariantsFinal.put(auxkey,newBase);
+                    mapRevisionToGenerateRandomVariantsFinal.put(auxkey, newBase);
                 }
 
             }
@@ -490,7 +497,8 @@ public class GenerateVariantsTest {
                 System.out.println(mapConfigToGenerateRandomVariants.entrySet());
                 for (int i = 0; i < numberConfigs; i++) {
                     for (Map.Entry<Feature, Integer> map : mapConfigToGenerateRandomVariants.get(positionMapToSelectConfig).entrySet()) {
-                        mapNewConfig.put(map.getKey(), map.getValue());
+                        if (map.getValue() == 1)
+                            mapNewConfig.put(map.getKey(), map.getValue());
                     }
                     featurerevision += "," + mapRevisionToGenerateRandomVariantsFinal.get(positionMapToSelectConfig);
                     positionMapToSelectConfig = random.nextInt(count);
@@ -504,8 +512,8 @@ public class GenerateVariantsTest {
 
                 }
                 featurerevision = featurerevision.replaceFirst(",", "");
-                if(featurerevision.contains("$$")){
-                    featurerevision = featurerevision.replace("$$",baseVersion);
+                if (featurerevision.contains("$$")) {
+                    featurerevision = featurerevision.replace("$$", baseVersion);
                 }
                 if (featurerevision.contains(",")) {
                     String[] featurerevisions = featurerevision.split(",");
