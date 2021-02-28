@@ -1,0 +1,26 @@
+
+dependencies {
+    compile project(':core')
+    implementation files('core/libs/ecco/ecco-service-0.1.8-2019-10-01.jar')
+    compile project(':featureid')
+    compile project(':translation')
+
+    compile 'org.slf4j:slf4j-nop:1.7.25'
+    compile 'com.opencsv:opencsv:4.6'
+    implementation 'io.github.java-diff-utils:java-diff-utils:2.2.0'
+}
+
+ext {
+    javaMainClass = "at.jku.isse.gitecco.challenge.ChallengeCase"
+    computeMetricsClass = "at.jku.isse.gitecco.challenge.ComputeMetrics"
+}
+
+task run (type: JavaExec, dependsOn: classes){
+    if(project.hasProperty('myargs')){
+        args(myargs.split(','))
+    }
+    description = "Secure algorythm testing"
+    //main = javaMainClass
+    main = computeMetricsClass
+    classpath = sourceSets.main.runtimeClasspath
+}

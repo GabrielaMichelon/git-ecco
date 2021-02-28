@@ -3,3 +3,5 @@ include 'core'
 include 'featureid'
 include 'translation'
 include 'jcpp'
+include 'challenge'
+

@@ -1,4 +1,4 @@
-package at.jku.isse.gitecco.translation.test;
+package at.jku.isse.gitecco.challenge;
 
 import at.jku.isse.gitecco.core.git.Change;
 import at.jku.isse.gitecco.core.git.GitCommit;
@@ -13,49 +13,75 @@ import at.jku.isse.gitecco.core.type.Feature;
 import at.jku.isse.gitecco.featureid.identification.ID;
 import at.jku.isse.gitecco.featureid.type.TraceableFeature;
 import at.jku.isse.gitecco.translation.constraintcomputation.util.ConstraintComputer;
-import at.jku.isse.gitecco.translation.mining.ChangeCharacteristic;
 import at.jku.isse.gitecco.translation.visitor.GetNodesForChangeVisitor;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.opencsv.CSVWriter;
 import org.glassfish.grizzly.http.server.accesslog.FileAppender;
-import org.junit.Test;
 
+import javax.swing.*;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class GenerateVariantsTest {
+public class ChallengeCase {
 
-    private final static boolean EVERYCOMMIT = false;
-    private final static int EVERY_NTH_COMMIT = 1;
-    private final static ArrayList<Feature> featureList = new ArrayList<>();
-    private final static ArrayList<String> featureNamesList = new ArrayList<String>();
+    static boolean EVERYCOMMIT = false;
+    static int EVERY_NTH_COMMIT = 1;
+    static ArrayList<Feature> featureList = new ArrayList<>();
+    static ArrayList<String> featureNamesList = new ArrayList<String>();
     //set as true to generate random variants or false to just generate original variants
-    final boolean generateRandomVariants = false;
+    static boolean generateRandomVariants = false;
     //set as true to generate PP variants or false to just generate configurations to generate random variants
-    final boolean generateOriginalVariants = true;
-    Integer commitInit = 0;
-    Integer commitEnd = 5063;
-    private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\ChallengePaper\\LibSSH\\libssh";
-    private final static String FEATURES_PATH = "";//C:\\Users\\gabil\\Desktop\\PHD\\ChallengePaper\\LibSSH";
-    String fileReportFeature = "features_report_each_project_commit.csv";
-    String fileStoreConfig = "configurations.csv";
-    String fileStoreRandomConfig = "randomconfigurations.csv";
-    String featuretxt = "\\features-allcommits.txt";
+    static boolean generateOriginalVariants = true;
+    static Integer commitInit = 0;
+    static Integer commitEnd = 1;
+    static String REPO_PATH = "";//"C:\\Users\\gabil\\Desktop\\PHD\\ChallengePaper\\TestScript\\LibSSH\\libssh";
+    static String FEATURES_PATH = "";//"C:\\Users\\gabil\\Desktop\\PHD\\ChallengePaper\\TestScript\\LibSSH";
+    static String fileReportFeature = "features_report_each_project_commit.csv";
+    static String fileStoreConfig = "configurations.csv";
+    static String fileStoreRandomConfig = "randomconfigurations.csv";
+    static String featuretxt = File.separator+"features-allcommits.txt";
     //String featuretxt = "\\features-first500commits.txt";
-    List<String> changedFiles = new ArrayList<>();
-    List<String> changedFilesNext = new ArrayList<>();
-    GitCommit gcPrevious = null;
-    Boolean previous = true;
-    List<String> configurations = new ArrayList<>();
-    Map<Feature, Integer> featureVersions = new HashMap<>();
-    String feats;
+    static List<String> changedFiles = new ArrayList<>();
+    static List<String> changedFilesNext = new ArrayList<>();
+    static GitCommit gcPrevious = null;
+    static Boolean previous = true;
+    static List<String> configurations = new ArrayList<>();
+    static Map<Feature, Integer> featureVersions = new HashMap<>();
+    static String feats;
 
-    @Test
-    public void identification() throws Exception {
+
+    public static void main(String[] args) throws Exception {
+        if (args.length > 0) {
+            REPO_PATH = args[0];
+            FEATURES_PATH = args[1];
+            if(REPO_PATH.contains("//")) {
+                REPO_PATH.replaceAll("//",File.separator);
+            }
+            if(REPO_PATH.contains("\\\\")) {
+                REPO_PATH.replaceAll("\\\\",File.separator);
+            }
+            if(FEATURES_PATH.contains("//")) {
+                FEATURES_PATH.replaceAll("//",File.separator);
+            }
+            if(FEATURES_PATH.contains("\\\\")) {
+                FEATURES_PATH.replaceAll("\\\\",File.separator);
+            }
+            commitInit = Integer.valueOf(args[2]);
+            commitEnd = Integer.valueOf(args[3]);
+            if(args[4].equals("true")){
+                generateRandomVariants = true;
+                generateOriginalVariants = false;
+            }
+            identification();
+        }
+    }
+
+    public static void identification() throws Exception {
+
         //long measure = System.currentTimeMillis();
         String repoPath;
         repoPath = REPO_PATH;
@@ -90,16 +116,19 @@ public class GenerateVariantsTest {
             //File foldereachRelease = new File(folderRelease + File.separator + releases.getValue().substring(10));
             //String releases = "first500commits";
             String releases = "allcommits";
-            File foldereachRelease = new File(folderRelease + File.separator + releases);
+            File foldereachRelease = new File(folderRelease);
             if (!foldereachRelease.exists())
                 foldereachRelease.mkdir();
             final File idFeatsfolder = new File(foldereachRelease, "IdentifiedFeatures");
             if (!idFeatsfolder.exists())
                 idFeatsfolder.mkdir();
             //feature identification
-            //identifyFeatures(commitList, releases, idFeatsfolder);
+            identifyFeatures(commitList, releases, idFeatsfolder);
             addFeatures();
             initVars(foldereachRelease.getAbsolutePath());
+            File fileconfig =  new File(folderRelease,fileStoreConfig);
+            if(fileconfig.exists())
+                fileconfig.delete();
             for (GitCommit commits : commitList) {
                 //ComputeRQMetrics.characteristicsFeature(folder, commits.getNumber(), commits.getTree(), featureNamesList);
                 configurations.clear();
@@ -124,10 +153,11 @@ public class GenerateVariantsTest {
         }
 
         System.out.println("finished analyzing repo");
+
     }
 
 
-    public void initVars(String folderRelease) {
+    public static void initVars(String folderRelease) {
         changedFiles.clear();
         changedFilesNext.clear();
         gcPrevious = null;
@@ -155,7 +185,7 @@ public class GenerateVariantsTest {
         // end csv to report new features and features changed
     }
 
-    public void addFeatures() throws IOException {
+    public static void addFeatures() throws IOException {
         BufferedReader br = new BufferedReader(new FileReader(FEATURES_PATH + featuretxt));
         String line = "";
         while ((line = br.readLine()) != null) {
@@ -172,9 +202,9 @@ public class GenerateVariantsTest {
         }
     }
 
-    public void generateVariants(GitHelper gitHelper, GitCommit gc, ArrayList<String> featureNamesList, String folder) throws Exception {
+    public static void generateVariants(GitHelper gitHelper, GitCommit gc, ArrayList<String> featureNamesList, String folder) throws Exception {
         final File gitFolder = new File(gitHelper.getPath());
-        final File eccoFolder = new File(gitFolder.getParent(), "ecco");
+        final File eccoFolder = new File(gitFolder.getParent(), "input");
         final File randomVariantFolder = new File(gitFolder.getParent(), "randomVariants");
 
         Integer countFeaturesChanged = 0; //COUNT PER GIT COMMIT
@@ -596,7 +626,7 @@ public class GenerateVariantsTest {
 
     }
 
-    public void identifyFeatures(GitCommitList commitList, String release, File idFeatFolder) throws IOException {
+    public static void identifyFeatures(GitCommitList commitList, String release, File idFeatFolder) throws IOException {
         final List<TraceableFeature> evaluation = Collections.synchronizedList(new ArrayList<>());
         String csvFile = release.substring(release.lastIndexOf("/") + 1);
         int count = 0;
@@ -617,7 +647,7 @@ public class GenerateVariantsTest {
 
     }
 
-    private void writeToCsv(List<TraceableFeature> features, String fileName, File idFeatsFolder) throws IOException {
+    private static void writeToCsv(List<TraceableFeature> features, String fileName, File idFeatsFolder) throws IOException {
 
         System.out.println("writing to CSV");
         FileWriter outputfile = null;
@@ -673,7 +703,7 @@ public class GenerateVariantsTest {
     }
 
 
-    public void getFeatureDeletedTimes(File featureFolder) throws IOException {
+    public static void getFeatureDeletedTimes(File featureFolder) throws IOException {
         File[] lista = featureFolder.listFiles();
         int deletedTimes = 0;
         Map<Integer, Integer> deletePerGitCommit = new HashMap<>();
@@ -771,4 +801,7 @@ public class GenerateVariantsTest {
             }
         }
     }
+
 }
+
+
