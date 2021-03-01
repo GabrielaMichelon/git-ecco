@@ -13,6 +13,7 @@ dependencies {
 ext {
     javaMainClass = "at.jku.isse.gitecco.challenge.ChallengeCase"
     computeMetricsClass = "at.jku.isse.gitecco.challenge.ComputeMetrics"
+    variantsWithFeatures = "at.jku.isse.gitecco.challenge.VariantsWithFeatures"
 }
 
 task run (type: JavaExec, dependsOn: classes){
@@ -21,6 +22,7 @@ task run (type: JavaExec, dependsOn: classes){
     }
     description = "Secure algorythm testing"
     //main = javaMainClass
-    main = computeMetricsClass
+    //main = computeMetricsClass
+    main = variantsWithFeatures
     classpath = sourceSets.main.runtimeClasspath
 }

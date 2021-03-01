@@ -652,7 +652,7 @@ public class ChallengeCase {
         System.out.println("writing to CSV");
         FileWriter outputfile = null;
         File csvFile = new File(FEATURES_PATH, "features-" + fileName + ".csv");
-        featuretxt = "\\features-" + fileName + ".txt";
+        featuretxt = File.separator+"features-" + fileName + ".txt";
         //second parameter is boolean for appending --> never append
         outputfile = new FileWriter(csvFile, false);
         feats = "{";
