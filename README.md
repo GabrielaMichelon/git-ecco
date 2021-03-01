@@ -50,19 +50,19 @@ You can add jdk and gradle as environmental variables to make easier the script 
 * In `module challenge` uncomment in [build gradle](https://github.com/GabrielaMichelon/git-ecco/blob/challenge/challenge/build.gradle) file the line: *main = javaMainClass*
 
 * Parameters
- - **First paramenter**: the Git project folder
- - **Second paramenter**: the results folder
- - **Third parameter**: number of Git commit to start mining variants
- - **Fourth parameter**: number of Git commit to finish mining variants
- - **Fifth parameter**: **'false'** for mining input configurations, **'true'** for mining new configurations
+  - **First paramenter**: the Git project folder
+  - **Second paramenter**: the results folder
+  - **Third parameter**: number of Git commit to start mining variants
+  - **Fourth parameter**: number of Git commit to finish mining variants
+  - **Fifth parameter**: **'false'** for mining input configurations, **'true'** for mining new configurations
 
 
 * Type the following command in a command line for **mining input configurations**
- - gradle run -Pmyargs='\<folder git repository>','\<results folder>','0','100','false'
+  - gradle run -Pmyargs='\<folder git repository>','\<results folder>','0','100','false'
 
 
 * Type the following command in a command line for **mining new configurations**
- - gradle run -Pmyargs='\<folder git repository>','\<results folder>','0','100','true'
+  - gradle run -Pmyargs='\<folder git repository>','\<results folder>','0','100','true'
 
 ## Ground-truth compute metrics
 
@@ -72,4 +72,4 @@ You can add jdk and gradle as environmental variables to make easier the script 
 
 
 * Type the following command in a command line for **Irssi system**
- - gradle run -Pmyargs='\<input path>','\<output path>'
+  - gradle run -Pmyargs='\<input path>','\<output path>'
