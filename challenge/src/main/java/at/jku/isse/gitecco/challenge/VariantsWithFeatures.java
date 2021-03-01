@@ -54,8 +54,8 @@ public class VariantsWithFeatures {
     static Boolean createScenarios = false;
     static Boolean createNewConfigurations = false;
     static Integer count = 1;
-    static Integer maxInputConfig = 5;
-    static Integer maxNewConfig = 5;
+    static Integer maxInputConfig = 300;
+    static Integer maxNewConfig = 50;
 
     public static void main(String[] args) throws Exception {
         if (args.length > 0) {
@@ -73,8 +73,8 @@ public class VariantsWithFeatures {
             if (FEATURES_PATH.contains("\\\\")) {
                 FEATURES_PATH.replaceAll("\\\\", File.separator);
             }
-            commitInit = Integer.valueOf(args[2]);
-            commitEnd = Integer.valueOf(args[2]);
+            commitInit = Integer.valueOf(args[2])+1;
+            commitEnd = Integer.valueOf(args[2])+1;
             if (args[3].equals("1")) {
                 createScenarios = true;
             } else if (args[3].equals("2")) {
