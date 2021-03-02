@@ -41,8 +41,8 @@ public class ChallengeCase {
     static String REPO_PATH = "";//"C:\\Users\\gabil\\Desktop\\PHD\\ChallengePaper\\TestScript\\LibSSH\\libssh";
     static String FEATURES_PATH = "";//"C:\\Users\\gabil\\Desktop\\PHD\\ChallengePaper\\TestScript\\LibSSH";
     static String fileReportFeature = "features_report_each_project_commit.csv";
-    static String fileStoreConfig = "configurations.csv";
-    static String fileStoreRandomConfig = "randomconfigurations.csv";
+    static String fileStoreConfig = "inputConfigurations.csv";
+    static String fileStoreRandomConfig = "newConfigurations.csv";
     static String featuretxt = File.separator+"features-allcommits.txt";
     //String featuretxt = "\\features-first500commits.txt";
     static List<String> changedFiles = new ArrayList<>();
@@ -204,8 +204,8 @@ public class ChallengeCase {
 
     public static void generateVariants(GitHelper gitHelper, GitCommit gc, ArrayList<String> featureNamesList, String folder) throws Exception {
         final File gitFolder = new File(gitHelper.getPath());
-        final File eccoFolder = new File(gitFolder.getParent(), "input");
-        final File randomVariantFolder = new File(gitFolder.getParent(), "randomVariants");
+        final File eccoFolder = new File(gitFolder.getParent(), "inputConfigurations");
+        final File randomVariantFolder = new File(gitFolder.getParent(), "newConfigurations");
 
         Integer countFeaturesChanged = 0; //COUNT PER GIT COMMIT
         Integer newFeatures = 0; //COUNT PER GIT COMMIT

@@ -54,7 +54,7 @@ You can add jdk and gradle as environmental variables to make easier the script 
   - **Second paramenter**: the results folder
   - **Third parameter**: number of Git commit to start mining variants
   - **Fourth parameter**: number of Git commit to finish mining variants
-  - **Fifth parameter**: **'false'** for mining input configurations, **'true'** for mining new configurations
+  - **Fifth parameter**: **'false'** for mining and preprocessing input configurations, **'true'** for mining and preprocessing new configurations
 
 
 * Type the following command in a command line for **mining input configurations**
