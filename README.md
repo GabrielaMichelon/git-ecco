@@ -47,7 +47,7 @@ You can add jdk and gradle as environmental variables to make easier the script 
 ## Ground-truth feature revision location
 
 
-* In `module challenge` uncomment in [build gradle](https://github.com/GabrielaMichelon/git-ecco/blob/challenge/challenge/build.gradle) file the line: *main = javaMainClass*
+* In `module challenge` uncomment in [build gradle](https://github.com/GabrielaMichelon/git-ecco/blob/challenge/challenge/build.gradle) file the line: *main = variantsWithFeatureRevisionsClass*
 
 * Parameters
   - **First paramenter**: the Git project folder
