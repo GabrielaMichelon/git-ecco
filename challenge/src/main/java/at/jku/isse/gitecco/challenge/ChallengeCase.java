@@ -78,7 +78,9 @@ public class ChallengeCase {
                 generateOriginalVariants = false;
             }
             FEATURES_TXT = args[5];
+            System.out.println("\u001B[32m"+ "Mining process started. It can take minutes or hours...");
             identification();
+            System.out.println("\u001B[32m"+ "Process finished!!");
         }
     }
 
@@ -122,10 +124,10 @@ public class ChallengeCase {
             if (!foldereachRelease.exists())
                 foldereachRelease.mkdir();
             final File idFeatsfolder = new File(foldereachRelease, "IdentifiedFeatures");
-            if (!idFeatsfolder.exists())
-                idFeatsfolder.mkdir();
             //feature identification
             if(FEATURES_TXT.equals("false")) {
+                if (!idFeatsfolder.exists())
+                    idFeatsfolder.mkdir();
                 identifyFeatures(commitList, releases, idFeatsfolder);
             }
             addFeatures();
@@ -189,20 +191,28 @@ public class ChallengeCase {
         // end csv to report new features and features changed
     }
 
-    public static void addFeatures() throws IOException {
-        BufferedReader br = new BufferedReader(new FileReader(FEATURES_TXT));
-        String line = "";
-        while ((line = br.readLine()) != null) {
-            // use comma as separator
-            String[] cols = line.split(",");
-            featureNamesList.add(cols[0].substring(1).replace("\"", ""));
-            for (int i = 2; i < cols.length - 1; i++) {
-                featureNamesList.add(cols[i].replace("\"", ""));
+    public static void addFeatures() {
+        try {
+            if (FEATURES_TXT.equals("false")) {
+                FEATURES_TXT = FEATURES_PATH + featuretxt;
             }
-            String lastfeature = cols[cols.length - 1].replace("\"", "");
-            featureNamesList.add(lastfeature.replace("}", ""));
-            if (!featureNamesList.contains("BASE"))
-                featureNamesList.add("BASE");
+            BufferedReader br = new BufferedReader(new FileReader(FEATURES_TXT));
+            String line = "";
+            while ((line = br.readLine()) != null) {
+                // use comma as separator
+                String[] cols = line.split(",");
+                featureNamesList.add(cols[0].substring(1).replace("\"", ""));
+                for (int i = 2; i < cols.length - 1; i++) {
+                    featureNamesList.add(cols[i].replace("\"", ""));
+                }
+                String lastfeature = cols[cols.length - 1].replace("\"", "");
+                featureNamesList.add(lastfeature.replace("}", ""));
+                if (!featureNamesList.contains("BASE"))
+                    featureNamesList.add("BASE");
+            }
+        }catch (IOException ex){
+            System.out.println((char)27 + "[31m" + "Error reading the features text file!\nVerify if you wrote in the correct format -> {\"WITH_SERVER\",\"HAVE_LIBZ\",...}");
+            System.exit(0);
         }
     }
 

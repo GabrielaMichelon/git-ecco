@@ -41,10 +41,11 @@ public class VariantsWithFeatures {
     static Integer commitEnd = 100;
     static String REPO_PATH = "";//"C:\\Users\\gabil\\Desktop\\PHD\\ChallengePaper\\TestScript\\LibSSH\\libssh";
     static String FEATURES_PATH = "";//"C:\\Users\\gabil\\Desktop\\PHD\\ChallengePaper\\TestScript\\LibSSH";
+    static String FEATURES_TXT = "";
     static String fileReportFeature = "features_report_each_project_commit.csv";
-    static String fileStoreConfig = "configurations.csv";
-    static String fileStoreRandomConfig = "newconfigurations.csv";
-    static String featuretxt = File.separator + "features-allcommits.txt";
+    static String fileStoreConfig = "Inputconfigurations.csv";
+    static String fileStoreRandomConfig = "Newconfigurations.csv";
+    static String featuretxt = File.separator + "features.txt";
     static GitCommit gcPrevious = null;
     static Boolean previous = true;
     static ArrayList<String> configurations = new ArrayList<>();
@@ -73,8 +74,8 @@ public class VariantsWithFeatures {
             if (FEATURES_PATH.contains("\\\\")) {
                 FEATURES_PATH.replaceAll("\\\\", File.separator);
             }
-            commitInit = Integer.valueOf(args[2])+1;
-            commitEnd = Integer.valueOf(args[2])+1;
+            commitInit = Integer.valueOf(args[2]) + 1;
+            commitEnd = Integer.valueOf(args[2]) + 1;
             if (args[3].equals("1")) {
                 createScenarios = true;
             } else if (args[3].equals("2")) {
@@ -91,13 +92,16 @@ public class VariantsWithFeatures {
                 generateOriginalVariants = true;
                 generateRandomVariants = true;
             }
-            if(args.length > 5){
-                maxInputConfig= Integer.valueOf(args[5]);
+            FEATURES_TXT = args[5];
+            if (args.length > 6) {
+                maxInputConfig = Integer.valueOf(args[6]);
             }
-            if(args.length > 6){
-                maxNewConfig= Integer.valueOf(args[6]);
+            if (args.length > 7) {
+                maxNewConfig = Integer.valueOf(args[7]);
             }
+            System.out.println("\u001B[32m"+ "Mining process started. It can take minutes or hours...");
             identification();
+            System.out.println("\u001B[32m"+ "Process finished!!");
         }
     }
 
@@ -137,10 +141,12 @@ public class VariantsWithFeatures {
             if (!foldereachRelease.exists())
                 foldereachRelease.mkdir();
             final File idFeatsfolder = new File(foldereachRelease, "IdentifiedFeatures");
-            if (!idFeatsfolder.exists())
-                idFeatsfolder.mkdir();
             //feature identification
-            identifyFeatures(commitList, releases, idFeatsfolder);
+            if (FEATURES_TXT.equals("false")) {
+                if (!idFeatsfolder.exists())
+                    idFeatsfolder.mkdir();
+                identifyFeatures(commitList, releases, idFeatsfolder);
+            }
             addFeatures();
             initVars(foldereachRelease.getAbsolutePath());
             File fileconfig = new File(folderRelease, fileStoreConfig);
@@ -162,23 +168,31 @@ public class VariantsWithFeatures {
         configurations.clear();
     }
 
-    public static void addFeatures() throws IOException {
-        BufferedReader br = new BufferedReader(new FileReader(FEATURES_PATH + featuretxt));
-        String line = "";
-        while ((line = br.readLine()) != null) {
-            // use comma as separator
-            String[] cols = line.split(",");
-            if (!featureNamesList.contains(cols[0].substring(1).replace("\"", "")))
-                featureNamesList.add(cols[0].substring(1).replace("\"", ""));
-            for (int i = 2; i < cols.length - 1; i++) {
-                if (!featureNamesList.contains(cols[i].replace("\"", "")))
-                    featureNamesList.add(cols[i].replace("\"", ""));
+    public static void addFeatures() {
+        try {
+            if (FEATURES_TXT.equals("false")) {
+                FEATURES_TXT = FEATURES_PATH + featuretxt;
             }
-            String lastfeature = cols[cols.length - 1].replace("\"", "");
-            if (!featureNamesList.contains(lastfeature.replace("}", "")))
-                featureNamesList.add(lastfeature.replace("}", ""));
-            if (!featureNamesList.contains("BASE"))
-                featureNamesList.add("BASE");
+            BufferedReader br = new BufferedReader(new FileReader(FEATURES_TXT));
+            String line = "";
+            while ((line = br.readLine()) != null) {
+                // use comma as separator
+                String[] cols = line.split(",");
+                if (!featureNamesList.contains(cols[0].substring(1).replace("\"", "")))
+                    featureNamesList.add(cols[0].substring(1).replace("\"", ""));
+                for (int i = 2; i < cols.length - 1; i++) {
+                    if (!featureNamesList.contains(cols[i].replace("\"", "")))
+                        featureNamesList.add(cols[i].replace("\"", ""));
+                }
+                String lastfeature = cols[cols.length - 1].replace("\"", "");
+                if (!featureNamesList.contains(lastfeature.replace("}", "")))
+                    featureNamesList.add(lastfeature.replace("}", ""));
+                if (!featureNamesList.contains("BASE"))
+                    featureNamesList.add("BASE");
+            }
+        } catch (IOException ex) {
+            System.out.println((char)27 + "[31m" + "Error reading the features text file!\nVerify if you wrote in the correct format -> {\"WITH_SERVER\",\"HAVE_LIBZ\",...}");
+            System.exit(0);
         }
     }
 
@@ -242,7 +256,7 @@ public class VariantsWithFeatures {
                 createNewConfigurations();
                 arrayfeat.clear();
             }
-        } else {
+        } else if(generateRandomVariants){
             FileInputStream stream = new FileInputStream(FEATURES_PATH + File.separator + "NewConfigurations.txt");
             InputStreamReader reader = new InputStreamReader(stream);
             BufferedReader br = new BufferedReader(reader);
