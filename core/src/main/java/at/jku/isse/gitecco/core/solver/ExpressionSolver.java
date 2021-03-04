@@ -205,8 +205,10 @@ public class ExpressionSolver {
                 System.err.println("AssignExpr should not appear in a normal condition!");
             } else if (expr instanceof NumberLiteral) {
                 try {
+                    if(((NumberLiteral) expr).getToken().getText().equals("10701UL"))
+                        stack.push(model.intVar(Short.MIN_VALUE, Short.MAX_VALUE));
                     //contains little workaround for marlin Long number notation 160000L
-                    if (((NumberLiteral) expr).getToken().getText().equals("2147483647"))
+                    else if (((NumberLiteral) expr).getToken().getText().equals("2147483647"))
                         stack.push(model.intVar(Short.MIN_VALUE, Short.MAX_VALUE));
                     else
                         stack.push(model.intVar(Double.valueOf((((NumberLiteral) expr).getToken().getText().replaceAll("L", ""))).intValue()));

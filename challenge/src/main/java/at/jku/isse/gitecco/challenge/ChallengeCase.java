@@ -40,10 +40,11 @@ public class ChallengeCase {
     static Integer commitEnd = 1;
     static String REPO_PATH = "";//"C:\\Users\\gabil\\Desktop\\PHD\\ChallengePaper\\TestScript\\LibSSH\\libssh";
     static String FEATURES_PATH = "";//"C:\\Users\\gabil\\Desktop\\PHD\\ChallengePaper\\TestScript\\LibSSH";
+    static String FEATURES_TXT = "";
     static String fileReportFeature = "features_report_each_project_commit.csv";
     static String fileStoreConfig = "inputConfigurations.csv";
     static String fileStoreRandomConfig = "newConfigurations.csv";
-    static String featuretxt = File.separator+"features-allcommits.txt";
+    static String featuretxt = File.separator + "features.txt";
     //String featuretxt = "\\features-first500commits.txt";
     static List<String> changedFiles = new ArrayList<>();
     static List<String> changedFilesNext = new ArrayList<>();
@@ -58,24 +59,25 @@ public class ChallengeCase {
         if (args.length > 0) {
             REPO_PATH = args[0];
             FEATURES_PATH = args[1];
-            if(REPO_PATH.contains("//")) {
-                REPO_PATH.replaceAll("//",File.separator);
+            if (REPO_PATH.contains("//")) {
+                REPO_PATH.replaceAll("//", File.separator);
             }
-            if(REPO_PATH.contains("\\\\")) {
-                REPO_PATH.replaceAll("\\\\",File.separator);
+            if (REPO_PATH.contains("\\\\")) {
+                REPO_PATH.replaceAll("\\\\", File.separator);
             }
-            if(FEATURES_PATH.contains("//")) {
-                FEATURES_PATH.replaceAll("//",File.separator);
+            if (FEATURES_PATH.contains("//")) {
+                FEATURES_PATH.replaceAll("//", File.separator);
             }
-            if(FEATURES_PATH.contains("\\\\")) {
-                FEATURES_PATH.replaceAll("\\\\",File.separator);
+            if (FEATURES_PATH.contains("\\\\")) {
+                FEATURES_PATH.replaceAll("\\\\", File.separator);
             }
             commitInit = Integer.valueOf(args[2]);
             commitEnd = Integer.valueOf(args[3]);
-            if(args[4].equals("true")){
+            if (args[4].equals("true")) {
                 generateRandomVariants = true;
                 generateOriginalVariants = false;
             }
+            FEATURES_TXT = args[5];
             identification();
         }
     }
@@ -123,11 +125,13 @@ public class ChallengeCase {
             if (!idFeatsfolder.exists())
                 idFeatsfolder.mkdir();
             //feature identification
-            identifyFeatures(commitList, releases, idFeatsfolder);
+            if(FEATURES_TXT.equals("false")) {
+                identifyFeatures(commitList, releases, idFeatsfolder);
+            }
             addFeatures();
             initVars(foldereachRelease.getAbsolutePath());
-            File fileconfig =  new File(folderRelease,fileStoreConfig);
-            if(fileconfig.exists())
+            File fileconfig = new File(folderRelease, fileStoreConfig);
+            if (fileconfig.exists())
                 fileconfig.delete();
             for (GitCommit commits : commitList) {
                 //ComputeRQMetrics.characteristicsFeature(folder, commits.getNumber(), commits.getTree(), featureNamesList);
@@ -186,7 +190,7 @@ public class ChallengeCase {
     }
 
     public static void addFeatures() throws IOException {
-        BufferedReader br = new BufferedReader(new FileReader(FEATURES_PATH + featuretxt));
+        BufferedReader br = new BufferedReader(new FileReader(FEATURES_TXT));
         String line = "";
         while ((line = br.readLine()) != null) {
             // use comma as separator
@@ -652,7 +656,7 @@ public class ChallengeCase {
         System.out.println("writing to CSV");
         FileWriter outputfile = null;
         File csvFile = new File(FEATURES_PATH, "features-" + fileName + ".csv");
-        featuretxt = File.separator+"features-" + fileName + ".txt";
+        featuretxt = File.separator + "features-" + fileName + ".txt";
         //second parameter is boolean for appending --> never append
         outputfile = new FileWriter(csvFile, false);
         feats = "{";
