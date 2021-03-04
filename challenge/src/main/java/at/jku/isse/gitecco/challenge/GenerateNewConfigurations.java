@@ -20,17 +20,8 @@ import java.util.List;
 import java.util.Map;
 
 public class GenerateNewConfigurations {
-    static boolean EVERYCOMMIT = false;
-    static int EVERY_NTH_COMMIT = 1;
-    static ArrayList<String> featureNamesList = new ArrayList<String>();
-    static Integer commitInit = 0;
-    static Integer commitEnd = 1;
-    static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\ChallengePaper\\TestScript\\test2\\libssh";
-    static String FEATURES_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\ChallengePaper\\TestScript\\test2\\newConfigurations.csv";
-    static GitCommit gcPrevious = null;
-    static Boolean previous = true;
-    static List<String> configurations = new ArrayList<>();
-    static Map<Feature, Integer> featureVersions = new HashMap<>();
+    static String REPO_PATH = "";//""C:\\Users\\gabil\\Desktop\\PHD\\ChallengePaper\\TestScript\\test2\\libssh";
+    static String FEATURES_PATH = "";//"C:\\Users\\gabil\\Desktop\\PHD\\ChallengePaper\\TestScript\\test2\\InputConfigurations.csv";
 
 
     public static void main(String[] args) throws Exception {
@@ -49,19 +40,63 @@ public class GenerateNewConfigurations {
             if (FEATURES_PATH.contains("\\\\")) {
                 FEATURES_PATH.replaceAll("\\\\", File.separator);
             }
-            commitInit = Integer.valueOf(args[2]);
-            commitEnd = Integer.valueOf(args[3]);
 
             System.out.println("\u001B[32m" + "Mining process started. It can take minutes or hours...");
-            identification();
+            preprocessvariants();
             System.out.println("\u001B[32m" + "Process finished!!");
         }
+        //identification();
+        //countFeaturesCSV();
+    }
 
-        identification();
+    public static void countFeaturesTXT() throws Exception {
+        Reader reader = Files.newBufferedReader(Paths.get(FEATURES_PATH));
+        CSVReader csvReader = new CSVReaderBuilder(reader).build();
+        List<String[]> lines = csvReader.readAll();
+        ArrayList<String> features = new ArrayList<>();
+        int scenario = 1;
+        for (String[] line : lines) {
+            int count = 0;
+            for (String column : line) {
+                if(column.contains(": "))
+                    column=column.substring(column.indexOf(" ")+1);
+                if (count >= 0) {
+                    if (!features.contains(column))
+                        features.add(column);
+                }
+                count++;
+            }
+            if (scenario <= Integer.valueOf(10) || scenario == Integer.valueOf(100) || scenario == Integer.valueOf(200) || scenario == Integer.valueOf(300)) {
+                System.out.println("Scenario: " + scenario + " Number of features: " + features.size());
+            }
+            scenario++;
+        }
 
     }
 
-    public static void identification() throws Exception {
+    public static void countFeaturesCSV() throws Exception {
+        Reader reader = Files.newBufferedReader(Paths.get(FEATURES_PATH));
+        CSVReader csvReader = new CSVReaderBuilder(reader).build();
+        List<String[]> lines = csvReader.readAll();
+        ArrayList<String> features = new ArrayList<>();
+        int scenario = 1;
+        for (String[] line : lines) {
+            int count = 0;
+            for (String column : line) {
+                if (count >= 3) {
+                    if(!features.contains(column))
+                    features.add(column);
+                }
+                count++;
+            }
+            if(scenario<=Integer.valueOf(10) || scenario==Integer.valueOf(100) || scenario==Integer.valueOf(200) || scenario==Integer.valueOf(300)) {
+                System.out.println("Scenario: "+scenario+" Number of features: " + features.size());
+            }
+            scenario++;
+        }
+    }
+
+    public static void preprocessvariants() throws Exception {
         String repoPath;
         repoPath = REPO_PATH;
 
@@ -89,7 +124,8 @@ public class GenerateNewConfigurations {
             Map<Feature, Integer> test = new HashMap<>();
             String config = "";
             for (String mapconfig : features) {
-                Feature feat = new Feature(mapconfig);
+                String f = mapconfig.substring(0,mapconfig.indexOf("."));
+                Feature feat = new Feature(f);
                 test.put(feat, 1);
                 config+=","+mapconfig;
             }
