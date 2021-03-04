@@ -34,7 +34,7 @@ You can add jdk and gradle as environmental variables to make easier the script 
   - **Third parameter**: number of Git commit for mining variants with features
   - **Fourth parameter**: **'0'** for using the scenarios and new configurations available in the benchmark, **'1'** for generating scenarios with input configurations, **'2'** for generating new configurations or **'3'** for generating both input and new configurations
   - **Fifth parameter**: **'0'** for not preprocessing any variant, **'1'** for preprocessing input configurations, **'2'** for preprocessing new configurations or **'3'** for preprocessing both input and new configurations
-  - **Sixth parameter**: 'false' for identifying features (when you do not provide a txt with the features), '\<the txt directory>' to use your defined features (provide a txt with features with following structure: {"WITH_SERVER","HAVE_LIBZ",...} )
+  - **Sixth parameter**: **'false'** for identifying features (when you do not provide a txt with the features) or **'\<the txt directory>'** to use your defined features (provide a txt with features with following structure: {"WITH_SERVER","HAVE_LIBZ",...} )
   - **(optional)** seventh and eighth parameter: number of input configurations (benchmark uses 300) and number of new configurations (benchmark uses 50)
  
 
@@ -58,7 +58,7 @@ You can add jdk and gradle as environmental variables to make easier the script 
   - **Third parameter**: number of Git commit to start mining variants
   - **Fourth parameter**: number of Git commit to finish mining variants
   - **Fifth parameter**: **'false'** for mining and preprocessing input configurations, **'true'** for mining and preprocessing new configurations
-  - **Sixth parameter**: **'false'** for identifying features (when you do not provide a txt with the features), '\<the txt directory>' to use your defined features (provide a txt with features with following structure: {"WITH_SERVER","HAVE_LIBZ",...} )
+  - **Sixth parameter**: **'false'** for identifying features (when you do not provide a txt with the features) or **'\<the txt directory>'** to use your defined features (provide a txt with features with following structure: {"WITH_SERVER","HAVE_LIBZ",...} )
 
 
 
@@ -76,7 +76,7 @@ You can add jdk and gradle as environmental variables to make easier the script 
 
 * Parameters
   - **First paramenter**: the Git project folder
-  - **Second paramenter**: the directory containing the csv file where each line must contains in every line a configuration like in the example below:
+  - **Second paramenter**: the directory containing the csv file where each line must contains the format below (columns are split by commas):
 
 ![Configuration_file](doc/configuration_file.JPG "Configuration_file")
   
