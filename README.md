@@ -81,7 +81,7 @@ You can add jdk and gradle as environmental variables to make easier the script 
       Variant1,5331,b11932d24f01703d07eb0f7a0de6c226ebcde195,TIOCGWINSZ,BLOCKING_SOCKETS,...
   
 
-* Type the following command in a command line for **Irssi system**
+* Type the following command in a command line
   - gradle run -Pmyargs='\<folder git repository>','\<configuration csv folder>'
 
 
@@ -92,5 +92,5 @@ You can add jdk and gradle as environmental variables to make easier the script 
 * **Important information**: You will have a folder where the input configurations were preprocessed called "inputConfigurations" and you will have a second path where you stored the variants obtained after composing the configurations in a "output" folder. In the case of computing metrics for NEW configurations, you have to type in the command line the first folder directory as `newConfigurations` path and output of new configurations is your `<output_newConfigurations>` path.
 
 
-* Type the following command in a command line for **Irssi system**
+* Type the following command in a command line
   - gradle run -Pmyargs='\<input path>','\<output path>'
