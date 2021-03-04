@@ -5,8 +5,15 @@ import at.jku.isse.gitecco.core.git.GitCommitList;
 import at.jku.isse.gitecco.core.git.GitHelper;
 import at.jku.isse.gitecco.core.preprocessor.PreprocessorHelper;
 import at.jku.isse.gitecco.core.type.Feature;
+import com.opencsv.CSVReader;
+import com.opencsv.CSVReaderBuilder;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.Reader;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -18,8 +25,8 @@ public class GenerateNewConfigurations {
     static ArrayList<String> featureNamesList = new ArrayList<String>();
     static Integer commitInit = 0;
     static Integer commitEnd = 1;
-    static String REPO_PATH = "";//"C:\\Users\\gabil\\Desktop\\PHD\\ChallengePaper\\TestScript\\LibSSH\\libssh";
-    static String FEATURES_PATH = "";//"C:\\Users\\gabil\\Desktop\\PHD\\ChallengePaper\\TestScript\\LibSSH";
+    static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\ChallengePaper\\TestScript\\test2\\libssh";
+    static String FEATURES_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\ChallengePaper\\TestScript\\test2\\newConfigurations.csv";
     static GitCommit gcPrevious = null;
     static Boolean previous = true;
     static List<String> configurations = new ArrayList<>();
@@ -49,6 +56,9 @@ public class GenerateNewConfigurations {
             identification();
             System.out.println("\u001B[32m" + "Process finished!!");
         }
+
+        identification();
+
     }
 
     public static void identification() throws Exception {
@@ -56,52 +66,47 @@ public class GenerateNewConfigurations {
         repoPath = REPO_PATH;
 
         final GitHelper gitHelper = new GitHelper(repoPath, null);
-        GitCommitList commitList = new GitCommitList(gitHelper);
-
-        if (EVERYCOMMIT) {
-            //gitHelper.getAllCommits(commitList);
-        } else {
-            gitHelper.getEveryNthCommit3(commitList, null, commitInit, commitEnd, EVERY_NTH_COMMIT);
-            String folderRelease = FEATURES_PATH;
-            initVars();
-            for (GitCommit commits : commitList) {
-                configurations.clear();
-                generateVariants(gitHelper, commits, featureNamesList);
-                //dispose tree if it is not needed -> for memory saving reasons.
-                commits.disposeTree();
-            }
-
-        }
-
-        System.out.println("finished analyzing repo");
-
-    }
-
-
-    public static void initVars() {
-        gcPrevious = null;
-        previous = true;
-        configurations.clear();
-    }
-
-    public static void generateVariants(GitHelper gitHelper, GitCommit gc, ArrayList<String> featureNamesList) throws Exception {
         final File gitFolder = new File(gitHelper.getPath());
         final File randomVariantFolder = new File(gitFolder.getParent(), "newConfigurations");
         final PreprocessorHelper pph = new PreprocessorHelper();
-
-        //generate the variant for this config
-        for (Map.Entry<Map<Feature, Integer>, String> variant : configsToGenerateVariant.entrySet()) {
-            String eccoConfig = variant.getValue();
-            System.out.println("------ Variant to generate with config: " + eccoConfig);
-            Map<Feature, Integer> test = new HashMap<>();
-            for (Map.Entry<Feature, Integer> mapconfig : variant.getKey().entrySet()) {
-                    test.put(mapconfig.getKey(), 1);
+        Reader reader = Files.newBufferedReader(Paths.get(FEATURES_PATH));
+        CSVReader csvReader = new CSVReaderBuilder(reader).build();
+        List<String[]> lines = csvReader.readAll();
+        String commit = "";
+        ArrayList<String> features = new ArrayList<>();
+        int variantName = 1;
+        for (String[] line : lines) {
+            String eccoConfig = "variant"+variantName;
+            commit=line[1];
+            System.out.println("commit: "+commit);
+            int count = 0;
+            for (String column : line) {
+                if(count>=2) {
+                    features.add(column);
+                }
+                count++;
             }
-            gitHelper.checkOutCommit(gc);
+            Map<Feature, Integer> test = new HashMap<>();
+            String config = "";
+            for (String mapconfig : features) {
+                Feature feat = new Feature(mapconfig);
+                test.put(feat, 1);
+                config+=","+mapconfig;
+            }
+            config=config.replaceFirst(",","");
+            System.out.println("------ Variant to generate with config: " + eccoConfig);
+            gitHelper.checkOutCommit(commit);
             pph.generateVariants(test, gitFolder, randomVariantFolder, gitHelper.getDirFiles(), eccoConfig);
-            System.out.println("Variant generated with config: " + eccoConfig);
-
+            File configfile = new File(randomVariantFolder, eccoConfig + ".config");
+            BufferedWriter writer = new BufferedWriter(new FileWriter(configfile));
+            writer.write(config);
+            writer.close();
+            System.out.println("Variant generated with config: " + config);
+            features = new ArrayList<>();
+            variantName++;
         }
+
+        System.out.println("finished analyzing repo");
     }
 
 
