@@ -82,7 +82,7 @@ You can add jdk and gradle as environmental variables to make easier the script 
   
 
 * Type the following command in a command line
-  - gradle run -Pmyargs='\<folder git repository>','\<configuration csv folder>'
+  - gradle run -Pmyargs='\<folder git repository>','\<configuration csv directory>'
 
 
 ## Ground-truth compute metrics
