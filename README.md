@@ -76,9 +76,8 @@ You can add jdk and gradle as environmental variables to make easier the script 
 
 * Parameters
   - **First paramenter**: the Git project folder
-  - **Second paramenter**: the directory containing the csv file where each line must contains the format below (columns are split by commas):
-
-![Configuration_file](doc/configuration_file.JPG "Configuration_file")
+  - **Second paramenter**: the directory containing the csv file where each line must contains the format as shown below, which first and second columns can be anything, but third column must be the commit hash and the folowwing columns the name of the features (columns are split by commas):
+    - Variant1,5331,b11932d24f01703d07eb0f7a0de6c226ebcde195,TIOCGWINSZ,BLOCKING_SOCKETS,SSL_CTRL_SET_TLSEXT_HOSTNAME,...
   
 
 * Type the following command in a command line for **Irssi system**
