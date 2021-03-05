@@ -40,12 +40,15 @@ You can add jdk and gradle as environmental variables to make easier the script 
 
 * Folder where the ground-truth extraction of the target system project will be stored on your computer
 
-* Type the following command in a command line for **LibSSH system**
+* Type the following command in a command line for the **LibSSH system**
   - gradle run -Pmyargs ='\<folder git repository>','\<results folder>','5035','3','0','false'
   
   
-* Type the following command in a command line for **Irssi system**
+* Type the following command in a command line for the **Irssi system**
   - gradle run -Pmyargs ='\<folder git repository>','\<results folder>','5331','3','0','false'
+
+* Type the following command in a command line for the **Marlin system**
+  - gradle run -Pmyargs ='\<folder git repository>','\<results folder>','94','3','0','false'
 
 ## Ground-truth feature revision location
 
