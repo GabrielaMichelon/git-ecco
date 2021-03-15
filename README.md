@@ -13,7 +13,5 @@ IntelliJ supports Gradle out of the box. Just import the project as a Gradle pro
 
 ---
 ## Modules Description
-*featureid* module contains __App.java__, which you can execute to obtain the external features of a set of commits.
 
-
-*translation* module contains __App.java__, which you can execute after you have the features of the system for mining feature revisions.
+*translation* module contains a test ``MiningMetricsTest.java``, which you can execute for mining the feature life cycle of all commits of a system or of a specific release.
