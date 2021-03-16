@@ -17,11 +17,11 @@ You can add jdk and gradle as environmental variables to make easier the script 
 ## Execute project with IDE
 
 * IntelliJ supports Gradle out of the box. Just import the project as a Gradle project
-* translation* module contains a test ``MiningMetricsTest.java``, which you can execute for mining the feature life cycle of all commits of a system or of a specific release.
+* translation module contains a test ``MiningMetricsTest.java``, which you can execute for mining the feature life cycle of all commits of a system or of a specific release.
 
 ## Execut from the command line
 
-* Open the directory of the build file in `module translation` [build file](https://github.com/GabrielaMichelon/git-ecco/blob/mining/translation/build.gradle)
+* Open the directory of the [build file](https://github.com/GabrielaMichelon/git-ecco/blob/mining/translation) in `module translation`
 * Parameters
   - **First paramenter**: the folder containing the Git repository of the system you want to mine the features life cycle
   - **Second paramenter**: the folder where you want to store the resulted data from mining features life cycle
