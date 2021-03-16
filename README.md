@@ -29,4 +29,10 @@ You can add jdk and gradle as environmental variables to make easier the script 
   - **Fourth parameter** (`mandatory` if the third paramenter is **'1'**, `optional` if the third paramenter is **'0'**): **'\<release_name>'**
   
 * Type the following command
- - gradle run -Pmyargs='\<system Git folder>','\<folder to store results>','0'
+ - gradle run -Pmyargs='\<system Git folder>','\<folder to store results>','0' 
+ OR
+ - gradle run -Pmyargs='\<system Git folder>','\<folder to store results>','1','\<release_name>'
+
+## Execution time
+
+* It may varies between different machines and the number of releases and files used to the mining process. Varying from minutes up to days.
