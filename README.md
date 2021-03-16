@@ -5,7 +5,7 @@
 * Clone this repository: `git clone https://github.com/GabrielaMichelon/git-ecco.git`
 * Checkout to branch mining: `git checkout mining`
 * Clone the git reposiritory of the target sytems in a folder on your computer
- - For example: LibSSH git repository: https://gitlab.com/libssh/libssh-mirror.git
+  - For example: LibSSH git repository: https://gitlab.com/libssh/libssh-mirror.git
 
 ## Requires
 
