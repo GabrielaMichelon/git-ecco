@@ -52,8 +52,10 @@ public class MiningFeaturesLifeCycle {
             REPO_PATH = args[0];
             FEATURES_PATH = args[1];
             analyze = args[2];
-            if(analyze.equals("1") && !release.equals("")){
-                release = args[3];
+            if(analyze.equals("1")){
+                if(args[3]!=null)
+                    release = args[3];
+                analyze = "0";
             }
             if(REPO_PATH.contains("//")) {
                 REPO_PATH.replaceAll("//",File.separator);
