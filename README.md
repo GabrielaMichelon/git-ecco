@@ -35,4 +35,4 @@ You can add jdk and gradle as environmental variables to make easier the script 
 
 ## Execution time
 
-* It may varies between different machines and the number of releases and files used to the mining process. Varying from minutes up to days.
+* It may vary between different machines and the number of releases and files used for the mining process. Varying from minutes up to days.
