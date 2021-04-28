@@ -766,7 +766,7 @@ public class GitHelper {
      * @throws GitAPIException
      * @throws IOException
      */
-    public GitCommitList getTwoCommits(GitCommitList commits, String release, String firstcommit, String secondcommit) throws Exception {
+    public GitCommitList getTwoCommits(GitCommitList commits, String firstcommit, String secondcommit) throws Exception {
         final Repository repository = git.getRepository();
         List<Ref> tags = new ArrayList<Ref>(repository.getTags().values());
         RevWalk revWalk = new RevWalk(repository);

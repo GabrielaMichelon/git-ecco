@@ -32,9 +32,9 @@ public class ChangePropagation {
     private static int EVERY_NTH_COMMIT = 1;
     private static ArrayList<Feature> featureList = new ArrayList<>();
     private static ArrayList<String> featureNamesList = new ArrayList<String>();
-    private static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\New research\\ChangePropagation\\libssh";
+    private static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\New research\\ChangePropagation\\runningexample";
     private static String FEATURES_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\New research\\ChangePropagation";
-    private static String FEATURES_TXT = "C:\\Users\\gabil\\Desktop\\PHD\\New research\\ChangePropagation\\features-release-0-3-1.txt";
+    private static String FEATURES_TXT = "C:\\Users\\gabil\\Desktop\\PHD\\New research\\ChangePropagation\\runningexample.txt";//features-release-0-3-1.txt";
     static String fileReportFeature = "features_report_each_project_commit.csv";
     static String fileStoreConfig = "configurations.csv";
     static List<String> changedFiles = new ArrayList<>();
@@ -45,10 +45,10 @@ public class ChangePropagation {
     static Map<Feature, Integer> featureVersions = new HashMap<>();
     static String feats;
     static String analyze = "0";
-    static String release = "release-0-3-1";
-    private static String firstcommit = "918a912cd56dcac81feea2c52348cdc24b1468cf";
-    private static String secondcommit = "101bf21d414afab092caafcdb83cf035b0d8966b";
-    private static String featpropagatename = "WITH_SFTP";
+    static String release = "";//"release-0-3-1";
+    private static String firstcommit = "a29e19a4557aa53f123767a5ae0284c01c79390d";//"918a912cd56dcac81feea2c52348cdc24b1468cf";
+    private static String secondcommit = "edbd3d94f93db29d45ff0b7e3e4cbb5933564653";//"101bf21d414afab092caafcdb83cf035b0d8966b";
+    private static String featpropagatename = "featA";
     private static Feature featpropagate = new Feature(featpropagatename);
 
     public static void main(String[] args) throws Exception {
@@ -98,13 +98,97 @@ public class ChangePropagation {
                             (key, content) -> content, //
                             LinkedHashMap::new)); //
 
-            int i = 0;
-            for (Map.Entry<Long, String> releases : orderedMap.entrySet()) {
-                //System.out.println("TAG: " + releases.getValue());
-                if (!release.equals("")) {
-                    if (releases.getValue().contains(release) || analyze.equals("1")) {
-                        //analyze = "1";
-                        gitHelper.getTwoCommits(commitList, releases.getValue(), firstcommit, secondcommit);
+            if (mapTags.size() == 0) {
+                gitHelper.getTwoCommits(commitList, firstcommit, secondcommit);
+                File file = new File(FEATURES_PATH, "runningex");
+                if (!file.exists())
+                    file.mkdir();
+                String folderRelease = file.getAbsolutePath();
+                final File changeFolder = new File(file, "ChangeCharacteristic");
+                final File folder = new File(file, "FeatureCharacteristic");
+                final File idFeatsfolder = new File(file, "IdentifiedFeatures");
+                // if the directory does not exist, create it
+                if (!changeFolder.exists())
+                    changeFolder.mkdir();
+                if (!folder.exists())
+                    folder.mkdir();
+                if (!idFeatsfolder.exists())
+                    idFeatsfolder.mkdir();
+                //feature identification
+                if (FEATURES_TXT.contains(".txt"))
+                    addFeatures();
+                else
+                    identifyFeatures(commitList, "runningex", idFeatsfolder);
+                //
+                initVars(folderRelease);
+                //for (GitCommit commits : commitList) {
+                //ComputeRQMetrics.characteristicsFeature(folder, commits.getNumber(), commits.getTree(), featureNamesList);
+                configurations.clear();
+                characteristicsChange2(gitHelper, changeFolder, commitList, featureNamesList);
+                //dispose tree if it is not needed -> for memory saving reasons.
+                //commits.disposeTree();
+                //}
+                //RQ.2 How many times one feature changed along a number of Git commits?
+                File filetxt = new File(folder.getParent(), "TimesEachFeatureChanged.txt");
+                PrintWriter writerTXT = new PrintWriter(filetxt.getAbsolutePath(), "UTF-8");
+                for (Map.Entry<Feature, Integer> featureRevision : featureVersions.entrySet()) {
+                    if (featureRevision.getValue() > 1)
+                        writerTXT.println(featureRevision.getKey() + " Changed " + (featureRevision.getValue() - 1) + " times.");
+                }
+                writerTXT.close();
+                commitList = new GitCommitList(gitHelper);
+
+            } else {
+                int i = 0;
+                for (Map.Entry<Long, String> releases : orderedMap.entrySet()) {
+                    //System.out.println("TAG: " + releases.getValue());
+                    if (!release.equals("")) {
+                        if (releases.getValue().contains(release) || analyze.equals("1")) {
+                            //analyze = "1";
+                            gitHelper.getTwoCommits(commitList, firstcommit, secondcommit);
+                            i = Math.toIntExact(releases.getKey()) + 1;
+                            File file = new File(FEATURES_PATH, releases.getValue().substring(releases.getValue().lastIndexOf("/") + 1));
+                            if (!file.exists())
+                                file.mkdir();
+                            String folderRelease = file.getAbsolutePath();
+                            final File changeFolder = new File(file, "ChangeCharacteristic");
+                            final File folder = new File(file, "FeatureCharacteristic");
+                            final File idFeatsfolder = new File(file, "IdentifiedFeatures");
+                            // if the directory does not exist, create it
+                            if (!changeFolder.exists())
+                                changeFolder.mkdir();
+                            if (!folder.exists())
+                                folder.mkdir();
+                            if (!idFeatsfolder.exists())
+                                idFeatsfolder.mkdir();
+                            //feature identification
+                            if (FEATURES_TXT.contains(".txt"))
+                                addFeatures();
+                            else
+                                identifyFeatures(commitList, releases.getValue(), idFeatsfolder);
+                            //
+                            initVars(folderRelease);
+                            //for (GitCommit commits : commitList) {
+                            //ComputeRQMetrics.characteristicsFeature(folder, commits.getNumber(), commits.getTree(), featureNamesList);
+                            configurations.clear();
+                            characteristicsChange2(gitHelper, changeFolder, commitList, featureNamesList);
+                            //dispose tree if it is not needed -> for memory saving reasons.
+                            //commits.disposeTree();
+                            //}
+                            //RQ.2 How many times one feature changed along a number of Git commits?
+                            File filetxt = new File(folder.getParent(), "TimesEachFeatureChanged.txt");
+                            PrintWriter writerTXT = new PrintWriter(filetxt.getAbsolutePath(), "UTF-8");
+                            for (Map.Entry<Feature, Integer> featureRevision : featureVersions.entrySet()) {
+                                if (featureRevision.getValue() > 1)
+                                    writerTXT.println(featureRevision.getKey() + " Changed " + (featureRevision.getValue() - 1) + " times.");
+                            }
+                            writerTXT.close();
+                            commitList = new GitCommitList(gitHelper);
+                        } else {
+                            i = Math.toIntExact(releases.getKey()) + 1;
+                        }
+                    } else {
+                        gitHelper.getEveryNthCommit2(commitList, releases.getValue(), null, i, Math.toIntExact(releases.getKey()), EVERY_NTH_COMMIT);
                         i = Math.toIntExact(releases.getKey()) + 1;
                         File file = new File(FEATURES_PATH, releases.getValue().substring(releases.getValue().lastIndexOf("/") + 1));
                         if (!file.exists())
@@ -121,16 +205,12 @@ public class ChangePropagation {
                         if (!idFeatsfolder.exists())
                             idFeatsfolder.mkdir();
                         //feature identification
-                        if (FEATURES_TXT.contains(".txt"))
-                            addFeatures();
-                        else
-                            identifyFeatures(commitList, releases.getValue(), idFeatsfolder);
-                        //
+                        identifyFeatures(commitList, releases.getValue(), idFeatsfolder);
                         initVars(folderRelease);
                         //for (GitCommit commits : commitList) {
                         //ComputeRQMetrics.characteristicsFeature(folder, commits.getNumber(), commits.getTree(), featureNamesList);
-                        configurations.clear();
-                        characteristicsChange2(gitHelper, changeFolder, commitList, featureNamesList);
+                        //configurations.clear();
+                        //characteristicsChange2(gitHelper, changeFolder, commits, featureNamesList);
                         //dispose tree if it is not needed -> for memory saving reasons.
                         //commits.disposeTree();
                         //}
@@ -143,45 +223,7 @@ public class ChangePropagation {
                         }
                         writerTXT.close();
                         commitList = new GitCommitList(gitHelper);
-                    } else {
-                        i = Math.toIntExact(releases.getKey()) + 1;
                     }
-                } else {
-                    gitHelper.getEveryNthCommit2(commitList, releases.getValue(), null, i, Math.toIntExact(releases.getKey()), EVERY_NTH_COMMIT);
-                    i = Math.toIntExact(releases.getKey()) + 1;
-                    File file = new File(FEATURES_PATH, releases.getValue().substring(releases.getValue().lastIndexOf("/") + 1));
-                    if (!file.exists())
-                        file.mkdir();
-                    String folderRelease = file.getAbsolutePath();
-                    final File changeFolder = new File(file, "ChangeCharacteristic");
-                    final File folder = new File(file, "FeatureCharacteristic");
-                    final File idFeatsfolder = new File(file, "IdentifiedFeatures");
-                    // if the directory does not exist, create it
-                    if (!changeFolder.exists())
-                        changeFolder.mkdir();
-                    if (!folder.exists())
-                        folder.mkdir();
-                    if (!idFeatsfolder.exists())
-                        idFeatsfolder.mkdir();
-                    //feature identification
-                    identifyFeatures(commitList, releases.getValue(), idFeatsfolder);
-                    initVars(folderRelease);
-                    //for (GitCommit commits : commitList) {
-                        //ComputeRQMetrics.characteristicsFeature(folder, commits.getNumber(), commits.getTree(), featureNamesList);
-                        //configurations.clear();
-                        //characteristicsChange2(gitHelper, changeFolder, commits, featureNamesList);
-                        //dispose tree if it is not needed -> for memory saving reasons.
-                        //commits.disposeTree();
-                    //}
-                    //RQ.2 How many times one feature changed along a number of Git commits?
-                    File filetxt = new File(folder.getParent(), "TimesEachFeatureChanged.txt");
-                    PrintWriter writerTXT = new PrintWriter(filetxt.getAbsolutePath(), "UTF-8");
-                    for (Map.Entry<Feature, Integer> featureRevision : featureVersions.entrySet()) {
-                        if (featureRevision.getValue() > 1)
-                            writerTXT.println(featureRevision.getKey() + " Changed " + (featureRevision.getValue() - 1) + " times.");
-                    }
-                    writerTXT.close();
-                    commitList = new GitCommitList(gitHelper);
                 }
             }
         }
@@ -440,7 +482,7 @@ public class ChangePropagation {
 
         Map<Change, FileNode> changesDelete = new HashMap<>();
 
-        for(FileNode nod : gc1.getTree().getChildren()){
+        for (FileNode nod : gc1.getTree().getChildren()) {
             if (nod instanceof SourceFileNode) {
                 changedFiles.add(nod.getFilePath());
             }
@@ -474,10 +516,10 @@ public class ChangePropagation {
                 }
             }
             //if (gc.getNumber() == 0) {
-                //changedFiles.add(child.getFilePath());
-                previous = false;
+            //changedFiles.add(child.getFilePath());
+            previous = false;
             //} else {
-                changedFilesNext.add(child.getFilePath());
+            changedFilesNext.add(child.getFilePath());
             //}
         }
 
@@ -493,41 +535,41 @@ public class ChangePropagation {
         //    previous = false;
         //} else {
 
-            //to retrieve changed nodes of deleted files
-            //if (gcPrevious != null) {
-                for (String file : changedFiles) {
-                    if (!changedFilesNext.contains(file)) {
-                        FileNode child = gc1.getTree().getChild(file);
-                        if (child instanceof SourceFileNode) {
-                            Change[] changes = null;
-                            try {
-                                changes = gitHelper.getFileDiffs(gc2, child, true);
-                            } catch (Exception e) {
-                                System.err.println("error while executing the file diff: " + child.getFilePath());
-                                e.printStackTrace();
-                            }
+        //to retrieve changed nodes of deleted files
+        //if (gcPrevious != null) {
+        for (String file : changedFiles) {
+            if (!changedFilesNext.contains(file)) {
+                FileNode child = gc1.getTree().getChild(file);
+                if (child instanceof SourceFileNode) {
+                    Change[] changes = null;
+                    try {
+                        changes = gitHelper.getFileDiffs(gc2, child, true);
+                    } catch (Exception e) {
+                        System.err.println("error while executing the file diff: " + child.getFilePath());
+                        e.printStackTrace();
+                    }
 
-                            for (Change change : changes) {
-                                visitor.setChange(change);
-                                child.accept(visitor, null);
-                                deletedNodes.addAll(visitor.getchangedNodes());
-                            }
-                        }
+                    for (Change change : changes) {
+                        visitor.setChange(change);
+                        child.accept(visitor, null);
+                        deletedNodes.addAll(visitor.getchangedNodes());
                     }
                 }
-                for (Map.Entry<Change, FileNode> changeInsert : changesDelete.entrySet()) {
-                    Change change = changeInsert.getKey();
-                    FileNode childAux = changeInsert.getValue();
-                    FileNode child = gc1.getTree().getChild(childAux.getFilePath());
-                    visitor.setChange(change);
-                    child.accept(visitor, null);
-                    deletedNodes.addAll(visitor.getchangedNodes());
-                }
-            //}
-            //next is changedFiles for the next commit
-            changedFiles.removeAll(changedFiles);
-            changedFiles.addAll(changedFilesNext);
-            changedFilesNext.removeAll(changedFilesNext);
+            }
+        }
+        for (Map.Entry<Change, FileNode> changeInsert : changesDelete.entrySet()) {
+            Change change = changeInsert.getKey();
+            FileNode childAux = changeInsert.getValue();
+            FileNode child = gc1.getTree().getChild(childAux.getFilePath());
+            visitor.setChange(change);
+            child.accept(visitor, null);
+            deletedNodes.addAll(visitor.getchangedNodes());
+        }
+        //}
+        //next is changedFiles for the next commit
+        changedFiles.removeAll(changedFiles);
+        changedFiles.addAll(changedFilesNext);
+        changedFilesNext.removeAll(changedFilesNext);
         //}
 
 
@@ -568,6 +610,9 @@ public class ChangePropagation {
                 changed = constraintComputer.computeChangedFeatures(changedNode, config);
                 if (changed.contains(featpropagate)) {
                     System.out.println("CHANGED NODE CONTAINS FEATURE: " + featpropagate);
+                    System.out.println("FILE: " + changedNode.getContainingFile().getFilePath());
+                    System.out.println("Line numbers insert: " + changedNode.getLineNumberInserts() + " Line numbers removed: " + changedNode.getLineNumberDeleted());
+
                 }
                 int tanglingDegree = 0;
                 for (Map.Entry<Feature, Integer> feat : config.entrySet()) {
@@ -670,6 +715,8 @@ public class ChangePropagation {
                     changed = constraintComputer.computeChangedFeatures(deletedNode, config);
                     if (changed.contains(featpropagate)) {
                         System.out.println("DELETED NODE CONTAINS FEATURE: " + featpropagate);
+                        System.out.println("FILE: " + deletedNode.getContainingFile().getFilePath());
+                        System.out.println("lines inserted " + deletedNode.getLineNumberInserts() + " lines removed " + deletedNode.getLineNumberDeleted());
                     }
                     int tanglingDegree = 0;
                     for (Map.Entry<Feature, Integer> feat : config.entrySet()) {
