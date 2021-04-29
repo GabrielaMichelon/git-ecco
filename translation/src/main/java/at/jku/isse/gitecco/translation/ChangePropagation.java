@@ -47,7 +47,7 @@ public class ChangePropagation {
     static String analyze = "0";
     static String release = "";//"release-0-3-1";
     private static String firstcommit = "a29e19a4557aa53f123767a5ae0284c01c79390d";//"918a912cd56dcac81feea2c52348cdc24b1468cf";
-    private static String secondcommit = "edbd3d94f93db29d45ff0b7e3e4cbb5933564653";//"101bf21d414afab092caafcdb83cf035b0d8966b";
+    private static String secondcommit = "1d42a8d2bfa46c4f0874cdae2e9d8757e33b5da6";//"101bf21d414afab092caafcdb83cf035b0d8966b";
     private static String featpropagatename = "featA";
     private static Feature featpropagate = new Feature(featpropagatename);
 
@@ -268,7 +268,7 @@ public class ChangePropagation {
                 String[] cols = line.split(",");
                 if (!featureNamesList.contains(cols[0].substring(1).replace("\"", "")))
                     featureNamesList.add(cols[0].substring(1).replace("\"", ""));
-                for (int i = 2; i < cols.length - 1; i++) {
+                for (int i = 1; i < cols.length - 1; i++) {
                     if (!featureNamesList.contains(cols[i].replace("\"", "")))
                         featureNamesList.add(cols[i].replace("\"", ""));
                 }
@@ -567,9 +567,9 @@ public class ChangePropagation {
         }
         //}
         //next is changedFiles for the next commit
-        changedFiles.removeAll(changedFiles);
-        changedFiles.addAll(changedFilesNext);
-        changedFilesNext.removeAll(changedFilesNext);
+        //changedFiles.removeAll(changedFiles);
+        //changedFiles.addAll(changedFilesNext);
+        //changedFilesNext.removeAll(changedFilesNext);
         //}
 
 
@@ -610,8 +610,21 @@ public class ChangePropagation {
                 changed = constraintComputer.computeChangedFeatures(changedNode, config);
                 if (changed.contains(featpropagate)) {
                     System.out.println("CHANGED NODE CONTAINS FEATURE: " + featpropagate);
-                    System.out.println("FILE: " + changedNode.getContainingFile().getFilePath());
+                    if (!changedFiles.contains(changedNode.getContainingFile().getFilePath()))
+                        System.out.println("NEW FILE: " + changedNode.getContainingFile().getFilePath());
+                    else
+                        System.out.println("CHANGED FILE: " + changedNode.getContainingFile().getFilePath());
                     System.out.println("Line numbers insert: " + changedNode.getLineNumberInserts() + " Line numbers removed: " + changedNode.getLineNumberDeleted());
+                    System.out.println("Feature interactions: ");
+                    for (Feature fea : changed) {
+                        if (!fea.equals(featpropagate))
+                            System.out.println(fea.getName());
+                    }
+                    System.out.println("Feature might be affected: ");
+                    for (Map.Entry<Feature, Integer> fea : config.entrySet()) {
+                        if (!changed.contains(fea.getKey()))
+                            System.out.println(fea.getKey().getName());
+                    }
 
                 }
                 int tanglingDegree = 0;
@@ -715,8 +728,24 @@ public class ChangePropagation {
                     changed = constraintComputer.computeChangedFeatures(deletedNode, config);
                     if (changed.contains(featpropagate)) {
                         System.out.println("DELETED NODE CONTAINS FEATURE: " + featpropagate);
+                        if (!changedFiles.contains(deletedNode.getContainingFile().getFilePath()))
+                            System.out.println("NEW FILE: " + deletedNode.getContainingFile().getFilePath());
+                        else if (!changedFilesNext.contains(deletedNode.getContainingFile().getFilePath()))
+                            System.out.println("DELETED FILE: " + deletedNode.getContainingFile().getFilePath());
+                        else
+                            System.out.println("CHANGED FILE: " + deletedNode.getContainingFile().getFilePath());
                         System.out.println("FILE: " + deletedNode.getContainingFile().getFilePath());
                         System.out.println("lines inserted " + deletedNode.getLineNumberInserts() + " lines removed " + deletedNode.getLineNumberDeleted());
+                        System.out.println("Feature interactions: ");
+                        for (Feature fea : changed) {
+                            if (!fea.equals(featpropagate))
+                                System.out.println(fea.getName());
+                        }
+                        System.out.println("Feature might be affected: ");
+                        for (Map.Entry<Feature, Integer> fea : config.entrySet()) {
+                            if (!changed.contains(fea.getKey()))
+                                System.out.println(fea.getKey().getName());
+                        }
                     }
                     int tanglingDegree = 0;
                     for (Map.Entry<Feature, Integer> feat : config.entrySet()) {
