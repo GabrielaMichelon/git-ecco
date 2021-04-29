@@ -6,6 +6,8 @@ dependencies {
 	compile 'org.slf4j:slf4j-nop:1.7.25'
 	compile 'com.opencsv:opencsv:4.6'
 	implementation 'io.github.java-diff-utils:java-diff-utils:2.2.0'
+	// https://mvnrepository.com/artifact/commons-io/commons-io
+	implementation group: 'commons-io', name: 'commons-io', version: '2.8.0'
 }
 
 ext {

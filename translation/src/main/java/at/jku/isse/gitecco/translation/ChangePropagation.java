@@ -18,6 +18,7 @@ import at.jku.isse.gitecco.translation.visitor.GetNodesForChangeVisitor;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.opencsv.CSVWriter;
+import org.apache.commons.io.FileUtils;
 import org.glassfish.grizzly.http.server.accesslog.FileAppender;
 
 import java.io.*;
@@ -26,6 +27,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 public class ChangePropagation {
     private static boolean EVERYCOMMIT = false;
@@ -39,6 +42,7 @@ public class ChangePropagation {
     static String fileStoreConfig = "configurations.csv";
     static List<String> changedFiles = new ArrayList<>();
     static List<String> changedFilesNext = new ArrayList<>();
+    static List<String> changedFilesPropagate = new ArrayList<>();
     static GitCommit gcPrevious = null;
     static Boolean previous = true;
     static List<String> configurations = new ArrayList<>();
@@ -50,6 +54,8 @@ public class ChangePropagation {
     private static String secondcommit = "1d42a8d2bfa46c4f0874cdae2e9d8757e33b5da6";//"101bf21d414afab092caafcdb83cf035b0d8966b";
     private static String featpropagatename = "featA";
     private static Feature featpropagate = new Feature(featpropagatename);
+    private static String mergeResult = "C:\\Users\\gabil\\Desktop\\PHD\\New research\\ChangePropagation\\merge";
+    private static String backup = "C:\\Users\\gabil\\Desktop\\PHD\\New research\\ChangePropagation\\backup";
 
     public static void main(String[] args) throws Exception {
         if (args.length > 0) {
@@ -469,6 +475,8 @@ public class ChangePropagation {
         GetNodesForChangeVisitor visitor = new GetNodesForChangeVisitor();
         ArrayList<ConditionalNode> changedNodes = new ArrayList<>();
         ArrayList<ConditionalNode> deletedNodes = new ArrayList<>();
+        ArrayList<ConditionalNode> propagateChangedNodes = new ArrayList<>();
+        ArrayList<ConditionalNode> propagateDeletedNodes = new ArrayList<>();
         Map<Feature, ChangeCharacteristic> featureMap = new HashMap<>();
         GitCommit gc1 = gcs.get(0);
         GitCommit gc2 = gcs.get(1);
@@ -609,11 +617,17 @@ public class ChangePropagation {
                 //compute the marked as changed features.
                 changed = constraintComputer.computeChangedFeatures(changedNode, config);
                 if (changed.contains(featpropagate)) {
+                    propagateChangedNodes.add(changedNode);
                     System.out.println("CHANGED NODE CONTAINS FEATURE: " + featpropagate);
-                    if (!changedFiles.contains(changedNode.getContainingFile().getFilePath()))
+                    if (!changedFiles.contains(changedNode.getContainingFile().getFilePath())) {
                         System.out.println("NEW FILE: " + changedNode.getContainingFile().getFilePath());
-                    else
+                        if (!changedFilesPropagate.contains(changedNode.getContainingFile().getFilePath()))
+                            changedFilesPropagate.add(changedNode.getContainingFile().getFilePath());
+                    } else {
+                        if (!changedFilesPropagate.contains(changedNode.getContainingFile().getFilePath()))
+                            changedFilesPropagate.add(changedNode.getContainingFile().getFilePath());
                         System.out.println("CHANGED FILE: " + changedNode.getContainingFile().getFilePath());
+                    }
                     System.out.println("Line numbers insert: " + changedNode.getLineNumberInserts() + " Line numbers removed: " + changedNode.getLineNumberDeleted());
                     System.out.println("Feature interactions: ");
                     for (Feature fea : changed) {
@@ -727,7 +741,10 @@ public class ChangePropagation {
                     //compute the marked as changed features.
                     changed = constraintComputer.computeChangedFeatures(deletedNode, config);
                     if (changed.contains(featpropagate)) {
+                        propagateDeletedNodes.add(deletedNode);
                         System.out.println("DELETED NODE CONTAINS FEATURE: " + featpropagate);
+                        if (!changedFilesPropagate.contains(deletedNode.getContainingFile().getFilePath()))
+                            changedFilesPropagate.add(deletedNode.getContainingFile().getFilePath());
                         if (!changedFiles.contains(deletedNode.getContainingFile().getFilePath()))
                             System.out.println("NEW FILE: " + deletedNode.getContainingFile().getFilePath());
                         else if (!changedFilesNext.contains(deletedNode.getContainingFile().getFilePath()))
@@ -915,6 +932,58 @@ public class ChangePropagation {
                 e.printStackTrace();
             }
         }
+
+        //MERGE OF PROPAGATION OF CHANGES
+        gitHelper.checkOutCommit(gc2.getCommitName());
+        File folderMerge = new File(mergeResult);
+        File folderBackup =  new File (backup);
+        for (File srcFile : gitFolder.listFiles()) {
+            if (srcFile.isDirectory()) {
+                FileUtils.copyDirectoryToDirectory(srcFile, folderBackup);
+            } else {
+                FileUtils.copyFileToDirectory(srcFile, folderBackup);
+            }
+        }
+        gitHelper.checkOutCommit(gc1.getCommitName());
+        for (File srcFile : gitFolder.listFiles()) {
+            if (srcFile.isDirectory()) {
+                FileUtils.copyDirectoryToDirectory(srcFile, folderMerge);
+            } else {
+                if (changedFilesPropagate.contains(srcFile.getName())) {
+                    for (ConditionalNode cn : propagateChangedNodes) {
+                        if(cn.getContainingFile().getFilePath().equals(srcFile.getName())) {
+                            String line;
+                            ArrayList<String> lines = new ArrayList<String>();
+                            File secondCommit = new File(backup, srcFile.getName());
+                            BufferedReader br = new BufferedReader(new
+                                    FileReader(secondCommit));
+                            while ((line = br.readLine()) != null) {
+                                lines.add(line);
+                            }
+
+                            int start = cn.getLineNumberInserts().get(0);
+                            int end = cn.getLineNumberInserts().get(1);
+                            br = new BufferedReader(new
+                                    FileReader(srcFile));
+                            count = 0;
+                            while ((line = br.readLine()) != null) {
+                                if (count < start || count > end) {
+                                    System.out.println(line);
+                                } else {
+                                    System.out.println(lines.get(count));
+                                }
+
+                            }
+
+                            br.close();
+                        }
+                    }
+                } else {
+                    FileUtils.copyFileToDirectory(srcFile, folderMerge);
+                }
+            }
+        }
+        //END MERGE OF PROPAGATION OF CHANGES
 
         changedNodes.clear();
         deletedNodes.clear();
