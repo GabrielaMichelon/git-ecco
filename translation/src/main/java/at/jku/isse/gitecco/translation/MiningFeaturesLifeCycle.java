@@ -34,7 +34,7 @@ public class MiningFeaturesLifeCycle {
     private static ArrayList<Feature> featureList = new ArrayList<>();
     private static ArrayList<String> featureNamesList = new ArrayList<String>();
     private static String REPO_PATH = "";//"C:\\Users\\gabil\\Desktop\\PHD\\Mining\\systems\\Sqlite\\sqlite";
-    private static String FEATURES_PATH =  "";//"C:\\Users\\gabil\\Desktop\\PHD\\Mining\\LOC_fix\\SQLite\\version-3.7.2-em-diante";
+    private static String FEATURES_PATH = "";//"C:\\Users\\gabil\\Desktop\\PHD\\Mining\\LOC_fix\\SQLite\\version-3.7.2-em-diante";
     static String fileReportFeature = "features_report_each_project_commit.csv";
     static String fileStoreConfig = "configurations.csv";
     static List<String> changedFiles = new ArrayList<>();
@@ -45,32 +45,32 @@ public class MiningFeaturesLifeCycle {
     static Map<Feature, Integer> featureVersions = new HashMap<>();
     static String feats;
     static String analyze = "0";
-    static String release="";
+    static String release = "";
 
     public static void main(String[] args) throws Exception {
         if (args.length > 0) {
             REPO_PATH = args[0];
             FEATURES_PATH = args[1];
             analyze = args[2];
-            if(analyze.equals("1")){
-                if(args[3]!=null)
+            if (analyze.equals("1")) {
+                if (args[3] != null)
                     release = args[3];
                 analyze = "0";
             }
-            if(REPO_PATH.contains("//")) {
-                REPO_PATH.replaceAll("//",File.separator);
+            if (REPO_PATH.contains("//")) {
+                REPO_PATH.replaceAll("//", File.separator);
             }
-            if(REPO_PATH.contains("\\\\")) {
-                REPO_PATH.replaceAll("\\\\",File.separator);
+            if (REPO_PATH.contains("\\\\")) {
+                REPO_PATH.replaceAll("\\\\", File.separator);
             }
-            if(FEATURES_PATH.contains("//")) {
-                FEATURES_PATH.replaceAll("//",File.separator);
+            if (FEATURES_PATH.contains("//")) {
+                FEATURES_PATH.replaceAll("//", File.separator);
             }
-            if(FEATURES_PATH.contains("\\\\")) {
-                FEATURES_PATH.replaceAll("\\\\",File.separator);
+            if (FEATURES_PATH.contains("\\\\")) {
+                FEATURES_PATH.replaceAll("\\\\", File.separator);
             }
             identification();
-        }else {
+        } else {
             System.out.println("Incorrect parameters");
         }
     }
@@ -98,7 +98,7 @@ public class MiningFeaturesLifeCycle {
             int i = 0;
             for (Map.Entry<Long, String> releases : orderedMap.entrySet()) {
                 System.out.println("TAG: " + releases.getValue());
-                if(!release.equals("")) {
+                if (!release.equals("")) {
                     if (releases.getValue().contains(release) || analyze.equals("1")) {
                         analyze = "1";
                         gitHelper.getEveryNthCommit2(commitList, releases.getValue(), null, i, Math.toIntExact(releases.getKey()), EVERY_NTH_COMMIT);
@@ -110,6 +110,7 @@ public class MiningFeaturesLifeCycle {
                         final File changeFolder = new File(file, "ChangeCharacteristic");
                         final File folder = new File(file, "FeatureCharacteristic");
                         final File idFeatsfolder = new File(file, "IdentifiedFeatures");
+                        final File filesFeatureFolder = new File(file, "FilesFeature");
                         // if the directory does not exist, create it
                         if (!changeFolder.exists())
                             changeFolder.mkdir();
@@ -117,11 +118,13 @@ public class MiningFeaturesLifeCycle {
                             folder.mkdir();
                         if (!idFeatsfolder.exists())
                             idFeatsfolder.mkdir();
+                        if (!filesFeatureFolder.exists())
+                            filesFeatureFolder.mkdir();
                         //feature identification
                         identifyFeatures(commitList, releases.getValue(), idFeatsfolder);
                         initVars(folderRelease);
                         for (GitCommit commits : commitList) {
-                            ComputeRQMetrics.characteristicsFeature(folder, commits.getNumber(), commits.getTree(), featureNamesList);
+                            ComputeRQMetrics.characteristicsFeature(filesFeatureFolder, folder, commits.getNumber(), commits.getTree(), featureNamesList);
                             configurations.clear();
                             characteristicsChange2(gitHelper, changeFolder, commits, featureNamesList);
                             //dispose tree if it is not needed -> for memory saving reasons.
@@ -139,42 +142,45 @@ public class MiningFeaturesLifeCycle {
                     } else {
                         i = Math.toIntExact(releases.getKey()) + 1;
                     }
-                }else{
-                        gitHelper.getEveryNthCommit2(commitList, releases.getValue(), null, i, Math.toIntExact(releases.getKey()), EVERY_NTH_COMMIT);
-                        i = Math.toIntExact(releases.getKey()) + 1;
-                        File file = new File(FEATURES_PATH, releases.getValue().substring(releases.getValue().lastIndexOf("/") + 1));
-                        if (!file.exists())
-                            file.mkdir();
-                        String folderRelease = file.getAbsolutePath();
-                        final File changeFolder = new File(file, "ChangeCharacteristic");
-                        final File folder = new File(file, "FeatureCharacteristic");
-                        final File idFeatsfolder = new File(file, "IdentifiedFeatures");
-                        // if the directory does not exist, create it
-                        if (!changeFolder.exists())
-                            changeFolder.mkdir();
-                        if (!folder.exists())
-                            folder.mkdir();
-                        if (!idFeatsfolder.exists())
-                            idFeatsfolder.mkdir();
-                        //feature identification
-                        identifyFeatures(commitList, releases.getValue(), idFeatsfolder);
-                        initVars(folderRelease);
-                        for (GitCommit commits : commitList) {
-                            ComputeRQMetrics.characteristicsFeature(folder, commits.getNumber(), commits.getTree(), featureNamesList);
-                            configurations.clear();
-                            characteristicsChange2(gitHelper, changeFolder, commits, featureNamesList);
-                            //dispose tree if it is not needed -> for memory saving reasons.
-                            commits.disposeTree();
-                        }
-                        //RQ.2 How many times one feature changed along a number of Git commits?
-                        File filetxt = new File(folder.getParent(), "TimesEachFeatureChanged.txt");
-                        PrintWriter writerTXT = new PrintWriter(filetxt.getAbsolutePath(), "UTF-8");
-                        for (Map.Entry<Feature, Integer> featureRevision : featureVersions.entrySet()) {
-                            if (featureRevision.getValue() > 1)
-                                writerTXT.println(featureRevision.getKey() + " Changed " + (featureRevision.getValue() - 1) + " times.");
-                        }
-                        writerTXT.close();
-                        commitList = new GitCommitList(gitHelper);
+                } else {
+                    gitHelper.getEveryNthCommit2(commitList, releases.getValue(), null, i, Math.toIntExact(releases.getKey()), EVERY_NTH_COMMIT);
+                    i = Math.toIntExact(releases.getKey()) + 1;
+                    File file = new File(FEATURES_PATH, releases.getValue().substring(releases.getValue().lastIndexOf("/") + 1));
+                    if (!file.exists())
+                        file.mkdir();
+                    String folderRelease = file.getAbsolutePath();
+                    final File changeFolder = new File(file, "ChangeCharacteristic");
+                    final File folder = new File(file, "FeatureCharacteristic");
+                    final File idFeatsfolder = new File(file, "IdentifiedFeatures");
+                    final File filesFeatureFolder = new File(file, "FilesFeature");
+                    // if the directory does not exist, create it
+                    if (!changeFolder.exists())
+                        changeFolder.mkdir();
+                    if (!folder.exists())
+                        folder.mkdir();
+                    if (!idFeatsfolder.exists())
+                        idFeatsfolder.mkdir();
+                    if (!filesFeatureFolder.exists())
+                        filesFeatureFolder.mkdir();
+                    //feature identification
+                    identifyFeatures(commitList, releases.getValue(), idFeatsfolder);
+                    initVars(folderRelease);
+                    for (GitCommit commits : commitList) {
+                        ComputeRQMetrics.characteristicsFeature(filesFeatureFolder, folder, commits.getNumber(), commits.getTree(), featureNamesList);
+                        configurations.clear();
+                        characteristicsChange2(gitHelper, changeFolder, commits, featureNamesList);
+                        //dispose tree if it is not needed -> for memory saving reasons.
+                        commits.disposeTree();
+                    }
+                    //RQ.2 How many times one feature changed along a number of Git commits?
+                    File filetxt = new File(folder.getParent(), "TimesEachFeatureChanged.txt");
+                    PrintWriter writerTXT = new PrintWriter(filetxt.getAbsolutePath(), "UTF-8");
+                    for (Map.Entry<Feature, Integer> featureRevision : featureVersions.entrySet()) {
+                        if (featureRevision.getValue() > 1)
+                            writerTXT.println(featureRevision.getKey() + " Changed " + (featureRevision.getValue() - 1) + " times.");
+                    }
+                    writerTXT.close();
+                    commitList = new GitCommitList(gitHelper);
                 }
             }
         }

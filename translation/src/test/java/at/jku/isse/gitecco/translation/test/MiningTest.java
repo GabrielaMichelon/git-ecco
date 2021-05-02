@@ -38,6 +38,7 @@ public class MiningTest {
     private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\systems\\sqlite-versions\\sqlite-3.13.0\\sqlite";
     private final static File featureFolder = new File("C:\\Users\\gabil\\Desktop\\PHD\\Mining\\systems\\sqlite-versions\\sqlite-3.13.0");
     public final String resultsCSVs_path = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\systems\\feature_identification\\sqlite-versions\\3.13.0";
+    private final File filesFeatureFolder = new File(featureFolder, "FilesFeature");
     //String[] features = {"__TURBOC__","BB_MNC","NO_STDLIB_H","isgraph","lint","BB_FDFLUSH","BB_PRINTF","__STDC__","__alpha__","NFSERR_INVAL","atarist","PIO_FONTX","HAVE_SYS_SYSTEMINFO_H","FULL_SEARCH","S_IFNWK","__ZTC__","SYSNDIR","__linux__","VMS","BB_MATH","__GNU_LIBRARY__","ENOIOCTLCMD","isblank","S_IFBLK","DUMP_BL_TREE","__GLIBC_MINOR__","VAXC","NFS_MOUNT_DEBUG","TOSFS","BASE","AMIGA","OS2FAT","ATARI","PKZIP_BUG_WORKAROUND","EWFLUSH","S_IFMPB","NO_STRING_H","BB_CHOWN","S_IFLNK","BB_LENGTH","MACOS","FEATURE_RECURSIVE","BB_BLOCK_DEVICE","S_IFIFO","MPW","__sparc_v9__","__mips__","BB_MAKEDEVS","BB_DUTMP","TOPS20","PAGE_SIZE","NDIR","__OS2__","NO_ASM","S_IFCHR","SIGHUP","MEDIUM_MEM","S_IFDIR","__GLIBC__","NFS_MOUNT_VERSION","DEBUG","S_IFREG","unix","SI_ARCHITECTURE","UNALIGNED_OK","BB_MTAB","BB_HALT","pyr","__EMX__","__sparc__","__cplusplus","__GNUC__","HAVE_SYSINFO","_MSC_VER","BB_SFDISK","__50SERIES","WIN32","__MSDOS__","NTFAT","BB_MT","S_IFSOCK","NO_TIME_H","__BORLANDC__","FORCE_METHOD","MINIX2_SUPER_MAGIC2"};
     //LibSSH
     //String[] features = {"WITH_SERVER","HAVE_LIBZ","WORDS_BIGENDIAN","DEBUG_CRYPTO","HAVE_OPENSSL_AES_H","HAVE_GETHOSTBYNAME","OPENSSL_VERSION_NUMBER","HAVE_SYS_POLL_H","HAVE_OPENSSL_BLOWFISH_H","HAVE_SYS_TIME_H","BASE","HAVE_POLL","HAVE_SELECT","HAVE_GETHOSTBYADDR","__cplusplus","HAVE_SSH1","NO_SERVER","HAVE_PTY_H","HAVE_STDINT_H","HAVE_MEMORY_H","HAVE_LIBWSOCK32","HAVE_GETPWUID","DEBUG","HAVE_ERRNO_H","HAVE_CTYPE_H","HAVE_NETINET_IN_H","__CYGWIN__","HAVE_STRSEP","HAVE_GETUID","HAVE_STDIO_H","HAVE_CONFIG_H","HAVE_STRING_H","HAVE_ARPA_INET_H","HAVE_STRINGS_H","HAVE_SYS_SOCKET_H","HAVE_SYS_TYPES_H","HAVE_STRTOLL","HAVE_PWD_H","HAVE_FCNTL_H","HAVE_OPENNET_H","TIME_WITH_SYS_TIME","HAVE_DIRENT_H","HAVE_NETDB_H","__WIN32__","HAVE_INTTYPES_H","HAVE_LIBOPENNET","HAVE_SYS_STAT_H","__MINGW32__","HAVE_PAM_PAM_APPL_H","HAVE_SECURITY_PAM_APPL_H","HAVE_LIBGCRYPT","HAVE_OPENSSL_DES_H","HAVE_LIBCRYPTO","GCRYPT"};
@@ -150,13 +151,13 @@ public class MiningTest {
                     if(PARALLEL) {
                         tasks.add(
                                 executorService.submit(() -> {
-                                    ComputeRQMetrics.characteristicsFeature(featureFolder, gc.getNumber(), gc.getTree(),featureNamesList);
+                                    ComputeRQMetrics.characteristicsFeature(filesFeatureFolder, featureFolder, gc.getNumber(), gc.getTree(),featureNamesList);
                                     //dispose tree if it is not needed -> for memory saving reasons.
                                     if (DISPOSE) gc.disposeTree();
                                 })
                         );
                     } else {
-                        ComputeRQMetrics.characteristicsFeature(featureFolder, gc.getNumber(), gc.getTree(),featureNamesList);
+                        ComputeRQMetrics.characteristicsFeature(filesFeatureFolder, featureFolder, gc.getNumber(), gc.getTree(),featureNamesList);
                         //dispose tree if it is not needed -> for memory saving reasons.
                         if (DISPOSE) gc.disposeTree();
                     }

@@ -36,8 +36,8 @@ public class MiningMetricsTest {
     private final static int EVERY_NTH_COMMIT = 1;
     private final static ArrayList<Feature> featureList = new ArrayList<>();
     private final static ArrayList<String> featureNamesList = new ArrayList<String>();
-    private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\systems\\Sqlite\\sqlite";
-    private final static String FEATURES_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\LOC_fix\\SQLite\\version-3.7.2-em-diante";
+    private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\Willian\\libssh-mirror";
+    private final static String FEATURES_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\Willian";
     String fileReportFeature = "features_report_each_project_commit.csv";
     String fileStoreConfig = "configurations.csv";
     List<String> changedFiles = new ArrayList<>();
@@ -73,7 +73,7 @@ public class MiningMetricsTest {
             Boolean analyze = false;
             for (Map.Entry<Long, String> releases : orderedMap.entrySet()) {
                 System.out.println("TAG: " + releases.getValue());
-                if (releases.getValue().contains("version-3.7.14") || analyze) {
+                if (releases.getValue().contains("release-0-3-1") || analyze) {
                     analyze = true;
                     gitHelper.getEveryNthCommit2(commitList, releases.getValue(), null, i, Math.toIntExact(releases.getKey()), EVERY_NTH_COMMIT);
                     i = Math.toIntExact(releases.getKey()) + 1;
@@ -84,6 +84,7 @@ public class MiningMetricsTest {
                     final File changeFolder = new File(file, "ChangeCharacteristic");
                     final File folder = new File(file, "FeatureCharacteristic");
                     final File idFeatsfolder = new File(file, "IdentifiedFeatures");
+                    final File filesFeatureFolder = new File(file, "FilesFeature");
                     // if the directory does not exist, create it
                     if (!changeFolder.exists())
                         changeFolder.mkdir();
@@ -91,11 +92,13 @@ public class MiningMetricsTest {
                         folder.mkdir();
                     if (!idFeatsfolder.exists())
                         idFeatsfolder.mkdir();
+                    if(!filesFeatureFolder.exists())
+                        filesFeatureFolder.mkdir();
                     //feature identification
                     identifyFeatures(commitList, releases.getValue(), idFeatsfolder);
                     initVars(folderRelease);
                     for (GitCommit commits : commitList) {
-                        ComputeRQMetrics.characteristicsFeature(folder, commits.getNumber(), commits.getTree(), featureNamesList);
+                        ComputeRQMetrics.characteristicsFeature(filesFeatureFolder, folder, commits.getNumber(), commits.getTree(), featureNamesList);
                         configurations.clear();
                         characteristicsChange2(gitHelper, changeFolder, commits, featureNamesList);
                         //dispose tree if it is not needed -> for memory saving reasons.

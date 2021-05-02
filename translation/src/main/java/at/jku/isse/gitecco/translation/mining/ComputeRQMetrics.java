@@ -523,9 +523,10 @@ public class ComputeRQMetrics {
      * @param tree
      * @return
      */
-    public static Map<Feature, FeatureCharacteristic> characteristicsFeature(File folderProject, Long commitNr, RootNode tree, ArrayList<String> featureNamesList) {
+    public static Map<Feature, FeatureCharacteristic> characteristicsFeature(File filesFeatureFolder, File folderProject, Long commitNr, RootNode tree, ArrayList<String> featureNamesList) {
 
         Map<Feature, FeatureCharacteristic> featureMap = new HashMap<>();
+        Map<Feature, ArrayList<String>> filesfeatureMap = new HashMap<>();
         GetAllConditionalStatementsVisitor visitor = new GetAllConditionalStatementsVisitor();
         Set<ConditionalNode> conditionalNodes = new HashSet<>();
         Set<ConditionalNode> negatedConditionalNodes = new HashSet<>();
@@ -546,6 +547,7 @@ public class ComputeRQMetrics {
                 String file = child.getFilePath();
                 Boolean first = true;
                 int last = 0;
+                ArrayList<String> files;
                 //RQ3.LOC
                 FeatureCharacteristic featureCharacteristic = featureMap.get(baseFeature);
                 if (visitor.getLinesConditionalNodes().size() != 0) {
@@ -557,6 +559,13 @@ public class ComputeRQMetrics {
                             featureCharacteristic.setLinesOfCode(featureCharacteristic.getLinesOfCode() + (add));
                             last = linesBase.getValue();
                             first = false;
+                            //Lines per file per feature
+                            if (filesfeatureMap.get(baseFeature) == null)
+                                files = new ArrayList<>();
+                            else
+                                files = filesfeatureMap.get(baseFeature);
+                            files.add(file + ":" + String.valueOf(from) + "-" + String.valueOf(last));
+                            filesfeatureMap.put(baseFeature, files);
                         } else {
                             if (last == 0) {
                                 last = linesBase.getValue();
@@ -569,6 +578,10 @@ public class ComputeRQMetrics {
                                         featureCharacteristic = new FeatureCharacteristic();
                                     featureCharacteristic.setLinesOfCode(featureCharacteristic.getLinesOfCode() + (add));
                                 }
+                                //Lines per file per feature
+                                files = filesfeatureMap.get(baseFeature);
+                                files.add(file + ":" + String.valueOf(from) + "-" + String.valueOf(last));
+                                filesfeatureMap.put(baseFeature, files);
                                 last = linesBase.getValue();
                             }
                         }
@@ -588,6 +601,10 @@ public class ComputeRQMetrics {
                         FeatureCharacteristic finalFeatureCharacteristic = featureCharacteristic;
                         featureMap.computeIfAbsent(baseFeature, v -> finalFeatureCharacteristic);
                         featureMap.computeIfPresent(baseFeature, (k, v) -> finalFeatureCharacteristic);
+                        //Lines per file per feature
+                        files = filesfeatureMap.get(baseFeature);
+                        files.add(file + ":" + String.valueOf(from) + "-" + String.valueOf(last));
+                        filesfeatureMap.put(baseFeature, files);
                     }
                 } else {
                     if (featureCharacteristic == null)
@@ -596,10 +613,14 @@ public class ComputeRQMetrics {
                     if (!featureCharacteristic.getScatteringDegreeFiles().contains(file)) {
                         featureCharacteristic.addScatteringDegreeFiles(file);
                     }
-                    featureCharacteristic.setLinesOfCode(featureCharacteristic.getLinesOfCode()  + (to - from));
+                    featureCharacteristic.setLinesOfCode(featureCharacteristic.getLinesOfCode() + (to - from));
                     FeatureCharacteristic finalFeatureCharacteristic = featureCharacteristic;
                     featureMap.computeIfAbsent(baseFeature, v -> finalFeatureCharacteristic);
                     featureMap.computeIfPresent(baseFeature, (k, v) -> finalFeatureCharacteristic);
+                    //Lines per file per feature
+                    files = filesfeatureMap.get(baseFeature);
+                    files.add(file + ":" + String.valueOf(from) + "-" + String.valueOf(last));
+                    filesfeatureMap.put(baseFeature, files);
                 }
                 //}
             }
@@ -664,6 +685,15 @@ public class ComputeRQMetrics {
                             } else {
                                 featureCharacteristic.setNumberOfNonTopLevelBranches(featureCharacteristic.getNumberOfNonTopLevelBranches() + 1);
                             }
+                            //Lines per file per feature
+                            ArrayList<String> files;
+                            if (filesfeatureMap.get(featsConditionalStatement.getKey()) == null)
+                                files = new ArrayList<>();
+                            else
+                                files = filesfeatureMap.get(featsConditionalStatement.getKey());
+                            files.add(file + ":" + String.valueOf(cNode.getLineTo()) + "-" + String.valueOf(cNode.getLineFrom()));
+                            filesfeatureMap.put(featsConditionalStatement.getKey(), files);
+
                             FeatureCharacteristic finalFeatureCharacteristic = featureCharacteristic;
                             featureMap.computeIfAbsent(featsConditionalStatement.getKey(), v -> finalFeatureCharacteristic);
                             featureMap.computeIfPresent(featsConditionalStatement.getKey(), (k, v) -> finalFeatureCharacteristic);
@@ -703,6 +733,7 @@ public class ComputeRQMetrics {
                     FeatureCharacteristic featureCharacteristic = featureMap.get(featsConditionalStatement);
                     if (featureCharacteristic == null)
                         featureCharacteristic = new FeatureCharacteristic();
+
                     //RQ3.LOC
                     featureCharacteristic.setLinesOfCode(featureCharacteristic.getLinesOfCode() - 1 + (cNode.getLineTo() - cNode.getLineFrom()));
                     //RQ3: SD #ifdef
@@ -735,6 +766,15 @@ public class ComputeRQMetrics {
                             featureCharacteristic.setNumberOfNonTopLevelBranches(featureCharacteristic.getNumberOfNonTopLevelBranches() + 1);
                         }
                     }
+                    //Lines per file per feature
+                    ArrayList<String> files = new ArrayList<>();
+                    if (filesfeatureMap.get(featsConditionalStatement) == null)
+                        files = new ArrayList<>();
+                    else
+                        files = filesfeatureMap.get(featsConditionalStatement);
+                    files.add(file + ":" + String.valueOf(cNode.getLineTo()) + "-" + String.valueOf(cNode.getLineFrom()));
+                    filesfeatureMap.put(featsConditionalStatement, files);
+
                     FeatureCharacteristic finalFeatureCharacteristic = featureCharacteristic;
                     featureMap.computeIfAbsent(featsConditionalStatement, v -> finalFeatureCharacteristic);
                     featureMap.computeIfPresent(featsConditionalStatement, (k, v) -> finalFeatureCharacteristic);
@@ -779,6 +819,44 @@ public class ComputeRQMetrics {
             }
 
         }
+
+        for (Map.Entry<Feature, ArrayList<String>> feat : filesfeatureMap.entrySet()) {
+            File featureCSV = new File(filesFeatureFolder, feat.getKey().getName() + ".csv");
+            if (!featureCSV.exists()) {
+                try {
+                    FileWriter csvWriter = new FileWriter(featureCSV);
+                    List<List<String>> headerRows = Arrays.asList(
+                            Arrays.asList("Commit Nr", "File", "From", "To")
+                    );
+                    for (List<String> rowData : headerRows) {
+                        csvWriter.append(String.join(",", rowData));
+                        csvWriter.append("\n");
+                    }
+                    csvWriter.flush();
+                    csvWriter.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            try {
+                FileAppender csvAppender = new FileAppender(featureCSV);
+                for (String filefeature : feat.getValue()) {
+                    String file = filefeature.substring(0, filefeature.indexOf(":"));
+                    String to = filefeature.substring(filefeature.indexOf(":") + 1, filefeature.indexOf("-"));
+                    String from = filefeature.substring(filefeature.indexOf("-") + 1);
+                    List<List<String>> contentRows = Arrays.asList(
+                            Arrays.asList(Long.toString(commitNr), file, from, to));
+                    for (List<String> rowData : contentRows) {
+                        csvAppender.append(String.join(",", rowData));
+                    }
+                }
+                csvAppender.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        }
+
         return featureMap;
     }
 }
