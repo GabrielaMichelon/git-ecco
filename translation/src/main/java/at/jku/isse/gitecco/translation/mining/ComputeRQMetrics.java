@@ -579,7 +579,10 @@ public class ComputeRQMetrics {
                                     featureCharacteristic.setLinesOfCode(featureCharacteristic.getLinesOfCode() + (add));
                                 }
                                 //Lines per file per feature
-                                files = filesfeatureMap.get(baseFeature);
+                                if (filesfeatureMap.get(baseFeature) == null)
+                                    files = new ArrayList<>();
+                                else
+                                    files = filesfeatureMap.get(baseFeature);
                                 files.add(file + ":" + String.valueOf(from) + "-" + String.valueOf(last));
                                 filesfeatureMap.put(baseFeature, files);
                                 last = linesBase.getValue();
@@ -602,7 +605,10 @@ public class ComputeRQMetrics {
                         featureMap.computeIfAbsent(baseFeature, v -> finalFeatureCharacteristic);
                         featureMap.computeIfPresent(baseFeature, (k, v) -> finalFeatureCharacteristic);
                         //Lines per file per feature
-                        files = filesfeatureMap.get(baseFeature);
+                        if (filesfeatureMap.get(baseFeature) == null)
+                            files = new ArrayList<>();
+                        else
+                            files = filesfeatureMap.get(baseFeature);
                         files.add(file + ":" + String.valueOf(from) + "-" + String.valueOf(last));
                         filesfeatureMap.put(baseFeature, files);
                     }
@@ -618,7 +624,10 @@ public class ComputeRQMetrics {
                     featureMap.computeIfAbsent(baseFeature, v -> finalFeatureCharacteristic);
                     featureMap.computeIfPresent(baseFeature, (k, v) -> finalFeatureCharacteristic);
                     //Lines per file per feature
-                    files = filesfeatureMap.get(baseFeature);
+                    if (filesfeatureMap.get(baseFeature) == null)
+                        files = new ArrayList<>();
+                    else
+                        files = filesfeatureMap.get(baseFeature);
                     files.add(file + ":" + String.valueOf(from) + "-" + String.valueOf(last));
                     filesfeatureMap.put(baseFeature, files);
                 }
