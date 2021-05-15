@@ -20,7 +20,7 @@ dependencies {
 	compile fileTree(dir: 'libs/cdt', include: ['*.jar'])
 	compile fileTree(dir: 'libs/ecco', include: ['*.jar'])
 
-	compile project(':jcpp')
+	compile project(':git-ecco-jcpp')
 
 	compile group: 'org.choco-solver', name: 'choco-solver', version: '4.10.1'
 }

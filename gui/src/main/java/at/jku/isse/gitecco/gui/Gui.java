@@ -20,7 +20,7 @@ public class Gui extends Application {
     public void start(Stage primaryStage) throws Exception {
         // INIT
         Application.setUserAgentStylesheet(STYLESHEET_MODENA);
-        primaryStage.setTitle("Mining Feature Revisions");
+        primaryStage.setTitle("Feature Revisions App");
         this.root = new Group();
         Scene scene = new Scene(root, 800, 600);
 

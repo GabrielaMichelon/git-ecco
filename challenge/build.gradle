@@ -1,9 +1,9 @@
 
 dependencies {
-    compile project(':core')
+    compile project(':git-ecco-core')
     implementation files('core/libs/ecco/ecco-service-0.1.8-2019-10-01.jar')
-    compile project(':featureid')
-    compile project(':translation')
+    compile project(':git-ecco-featureid')
+    compile project(':git-ecco-translation')
 
     compile 'org.slf4j:slf4j-nop:1.7.25'
     compile 'com.opencsv:opencsv:4.6'
