@@ -21,6 +21,7 @@ import org.eclipse.jgit.treewalk.AbstractTreeIterator;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.eclipse.jgit.treewalk.EmptyTreeIterator;
 import org.eclipse.jgit.treewalk.TreeWalk;
+import scala.util.parsing.combinator.testing.Str;
 
 
 import java.io.*;
@@ -177,7 +178,7 @@ public class GitHelper {
      */
     public Change[] getFileDiffsTwoCommits(GitCommit newCommit, FileNode sfn, Boolean deletedFile) throws Exception {
         if (sfn instanceof BinaryFileNode) throw new IllegalArgumentException("cannot diff a binary file node");
-        return getFileDiffsTwoCommits(newCommit, sfn.getFilePath(), deletedFile);
+        return getFileDiffsTwoCommitsMethod(newCommit, sfn, deletedFile);
     }
 
 
@@ -191,7 +192,7 @@ public class GitHelper {
      * @return An Array of Changes which contains all the changes between the commits.
      * @throws Exception
      */
-    public Change[] getFileDiffsTwoCommits(GitCommit newCommit, String filePath, Boolean deletedFile) throws Exception {
+    public Change[] getFileDiffsTwoCommitsMethod(GitCommit newCommit, FileNode filePath, Boolean deletedFile) throws Exception {
 
         List<Change> changes = new ArrayList<Change>();
 
@@ -199,12 +200,19 @@ public class GitHelper {
             if (newCommit.getNumber() != Long.valueOf(0))
                 git.stashCreate().setRef("HEAD").call();
             git.checkout().setName(newCommit.getDiffCommitName()).call();
-            if (filePath.contains("arent"))
-                filePath = filePath.replace("arent" + File.separator, "");
-            String newPath = pathUrl + File.separator + filePath;
+            String filePathRenamed = "";
+            if (filePath.getFilePath().contains("arent"))
+                filePathRenamed = filePath.getFilePath().replace("arent" + File.separator, "");
+            else
+                filePathRenamed = filePath.getFilePath();
+            String newPath = pathUrl + File.separator + filePathRenamed;
             ArrayList<Integer> lines = new ArrayList<>();
             lines.add(0);
             lines.add(Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size() - 1);
+            if(filePath.getFileContent().size() == 0){
+                List<String> linesFile = Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1);
+                filePath.setFileContent(linesFile);
+            }
             changes.add(new Change(0, Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size(), lines, "DELETE"));
             git.stashCreate().setRef("HEAD").call();
             git.checkout().setName(newCommit.getCommitName()).call();
@@ -235,13 +243,17 @@ public class GitHelper {
             for (DiffEntry entry : diff) {
                 String newPath = entry.getNewPath().replace("/", "\\");
                 String oldPath = entry.getOldPath().replace("/", "\\");
-                if (filePath.equals(newPath)) {
+                if (filePath.getFilePath().equals(newPath)) {
                     //System.out.println("file diff: " + newPath);
                     if (entry.getChangeType().toString().equals("ADD")) {
                         newPath = pathUrl + File.separator + newPath;
                         ArrayList<Integer> lines = new ArrayList<>();
                         lines.add(0);
                         lines.add(Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size() - 1);
+                        if(filePath.getFileContent().size() == 0){
+                            List<String> linesFile = Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1);
+                            filePath.setFileContent(linesFile);
+                        }
                         changes.add(new Change(0, Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size(), lines, "INSERT"));
                     } else if (entry.getChangeType().toString().equals("MODIFY")) {
                         List<String> actual = new ArrayList<>();
@@ -366,7 +378,7 @@ public class GitHelper {
      */
     public Change[] getFileDiffs(GitCommit newCommit, FileNode sfn, Boolean deletedFile) throws Exception {
         if (sfn instanceof BinaryFileNode) throw new IllegalArgumentException("cannot diff a binary file node");
-        return getFileDiffs(newCommit, sfn.getFilePath(), deletedFile);
+        return getFileDiffsMethod(newCommit, sfn, deletedFile);
     }
 
 
@@ -380,7 +392,7 @@ public class GitHelper {
      * @return An Array of Changes which contains all the changes between the commits.
      * @throws Exception
      */
-    public Change[] getFileDiffs(GitCommit newCommit, String filePath, Boolean deletedFile) throws Exception {
+    public Change[] getFileDiffsMethod(GitCommit newCommit, FileNode filePath, Boolean deletedFile) throws Exception {
 
         List<Change> changes = new ArrayList<Change>();
 
@@ -388,9 +400,16 @@ public class GitHelper {
             if (newCommit.getNumber() != Long.valueOf(0))
                 git.stashCreate().setRef("HEAD").call();
             git.checkout().setName(newCommit.getDiffCommitName()).call();
-            if (filePath.contains("arent"))
-                filePath = filePath.replace("arent" + File.separator, "");
-            String newPath = pathUrl + File.separator + filePath;
+            String filepathRenamed = "";
+            if (filePath.getFilePath().contains("arent"))
+                filepathRenamed = filePath.getFilePath().replace("arent" + File.separator, "");
+            else
+                filepathRenamed = filePath.getFilePath();
+            String newPath = pathUrl + File.separator + filepathRenamed;
+            if(filePath.getFileContent().size() == 0){
+                List<String> linesFile = Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1);
+                filePath.setFileContent(linesFile);
+            }
             ArrayList<Integer> lines = new ArrayList<>();
             lines.add(0);
             lines.add(Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size() - 1);
@@ -424,7 +443,7 @@ public class GitHelper {
             for (DiffEntry entry : diff) {
                 String newPath = entry.getNewPath().replace("/", "\\");
                 String oldPath = entry.getOldPath().replace("/", "\\");
-                if (filePath.equals(newPath)) {
+                if (filePath.getFilePath().equals(newPath)) {
                     //System.out.println("file diff: " + newPath);
                     if (entry.getChangeType().toString().equals("ADD")) {
                         newPath = pathUrl + File.separator + newPath;

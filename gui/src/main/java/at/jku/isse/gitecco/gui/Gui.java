@@ -1,6 +1,7 @@
 package at.jku.isse.gitecco.gui;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
@@ -36,6 +37,7 @@ public class Gui extends Application {
         primaryStage.setScene(scene);
         primaryStage.setMaximized(true);
         primaryStage.show();
+        primaryStage.setOnHidden(e -> Platform.exit());
     }
 
     private void updateView() {
