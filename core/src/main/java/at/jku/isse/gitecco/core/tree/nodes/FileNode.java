@@ -10,11 +10,13 @@ public abstract class FileNode extends Node{
     private final String pathName;
     private final RootNode parent;
     private List<String> fileContent;
+    private List<String> previousFileContent;
 
     public FileNode(RootNode parent, String name) {
         this.parent = parent;
         this.pathName= name;
         this.fileContent = new ArrayList<>();
+        this.previousFileContent = new ArrayList<>();
     }
 
     /**
@@ -31,6 +33,14 @@ public abstract class FileNode extends Node{
 
     public void setFileContent(List<String> fileContent) {
         this.fileContent = fileContent;
+    }
+
+    public List<String> getPreviousFileContent() {
+        return previousFileContent;
+    }
+
+    public void setPreviousFileContent(List<String> previousFileContent) {
+        this.previousFileContent = previousFileContent;
     }
 
     @Override

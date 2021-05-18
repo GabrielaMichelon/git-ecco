@@ -17,9 +17,6 @@ import at.jku.isse.gitecco.translation.visitor.GetNodesForChangeVisitor;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.opencsv.CSVWriter;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.math3.analysis.function.Add;
-import org.apache.tools.ant.taskdefs.Delete;
 import org.glassfish.grizzly.http.server.accesslog.FileAppender;
 
 import java.io.*;
@@ -72,7 +69,7 @@ public class ChangeAnalysis {
         }
 
         Feature featpropagate = new Feature(featpropagatename);
-        Map<Map<String,List<String>>,Changes> results = new HashMap<>();
+        Map<Map<String, List<String>>, Changes> results = new HashMap<>();
 
         long measure = System.currentTimeMillis();
         String repoPath = REPO_PATH;
@@ -454,7 +451,7 @@ public class ChangeAnalysis {
     }
 
     //RQ1
-    public static void characteristicsChange2(GitHelper gitHelper, File changeFolder, GitCommitList gcs, ArrayList<String> featureNamesList, Feature featpropagate, Map<Map<String,List<String>>, Changes> results) throws Exception {
+    public static void characteristicsChange2(GitHelper gitHelper, File changeFolder, GitCommitList gcs, ArrayList<String> featureNamesList, Feature featpropagate, Map<Map<String, List<String>>, Changes> results) throws Exception {
 
         final File gitFolder = new File(gitHelper.getPath());
         final File eccoFolder = new File(gitFolder.getParent(), "ecco");
@@ -669,7 +666,7 @@ public class ChangeAnalysis {
                             mapFile.put(changedNode.getContainingFile().getFilePath(), linesFile);
                             results.put(mapFile, changes);
                         }
-                    }else{ //changed file
+                    } else { //changed file
                         if (results.get(changedNode.getContainingFile().getFilePath()) != null) {
                             ArrayList<Integer> linesInsertArray = new ArrayList<>();
                             ArrayList<Integer> linesRemovedArray = new ArrayList<>();
@@ -798,7 +795,7 @@ public class ChangeAnalysis {
                     if (changed.contains(featpropagate)) {
                         propagateDeletedNodes.add(deletedNode);
                         System.out.println("DELETED NODE CONTAINS FEATURE: " + featpropagate);
-                        ArrayList<String> featureInteraction =  new ArrayList<>();
+                        ArrayList<String> featureInteraction = new ArrayList<>();
                         ArrayList<String> featureMightBeAffected = new ArrayList<>();
                         ArrayList<Integer> linesRemoved = new ArrayList<>();
                         if (!changedFilesPropagate.contains(deletedNode.getContainingFile().getFilePath()))
@@ -829,8 +826,15 @@ public class ChangeAnalysis {
                                 System.out.println(fea.getKey().getName());
                             }
                         }
-
-                        List<String> linesFile = deletedNode.getParent().getParent().getContainingFile().getFileContent();
+                        List<String> linesFile = new ArrayList<>();
+                        if (deletedNode.getContainingFile().getPreviousFileContent().size() == 0 && deletedNode.getContainingFile().getFileContent().size() == 0) {
+                            for (ConditionalNode changedNode : changedNodes) {
+                                if (changedNode.getContainingFile().getFilePath().equals(deletedNode.getContainingFile().getFilePath()))
+                                    linesFile = changedNode.getContainingFile().getPreviousFileContent();
+                            }
+                        } else {
+                            linesFile = deletedNode.getParent().getParent().getContainingFile().getFileContent();
+                        }
 
                         //new file
                         if (!changedFiles.contains(deletedNode.getContainingFile().getFilePath())) {
@@ -854,7 +858,7 @@ public class ChangeAnalysis {
                                 mapFile.put(deletedNode.getContainingFile().getFilePath(), linesFile);
                                 results.put(mapFile, changes);
                             }
-                        }else if (!changedFilesNext.contains(deletedNode.getContainingFile().getFilePath())) { //deleted file
+                        } else if (!changedFilesNext.contains(deletedNode.getContainingFile().getFilePath())) { //deleted file
                             if (results.get(deletedNode.getContainingFile().getFilePath()) != null) {
                                 ArrayList<Integer> linesRemovedArray = new ArrayList<>();
                                 linesRemovedArray.addAll(linesRemoved);
@@ -874,7 +878,7 @@ public class ChangeAnalysis {
                                 mapFile.put(deletedNode.getContainingFile().getFilePath(), linesFile);
                                 results.put(mapFile, changes);
                             }
-                        }else{//changed file
+                        } else {//changed file
                             if (results.get(deletedNode.getContainingFile().getFilePath()) != null) {
                                 ArrayList<Integer> linesInsertArray = new ArrayList<>();
                                 ArrayList<Integer> linesRemovedArray = new ArrayList<>();

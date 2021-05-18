@@ -259,10 +259,22 @@ public class GitHelper {
                         List<String> actual = new ArrayList<>();
                         List<String> old = new ArrayList<>();
                         File filenew = new File(pathUrl + File.separator + newPath);
+                        if(filePath.getFileContent().size() == 0) {
+                            List<String> linesFile = Files.readAllLines(Paths.get(filenew.getAbsolutePath()), StandardCharsets.ISO_8859_1);
+                            filePath.setFileContent(linesFile);
+                            git.stashCreate().setRef("HEAD").call();
+                            git.checkout().setName(newCommit.getDiffCommitName()).call();
+                            if (filePath.getPreviousFileContent().size() == 0) {
+                                linesFile = Files.readAllLines(Paths.get(filenew.getAbsolutePath()), StandardCharsets.ISO_8859_1);
+                                filePath.setPreviousFileContent(linesFile);
+                            }
+                            git.stashCreate().setRef("HEAD").call();
+                            git.checkout().setName(newCommit.getCommitName()).call();
+                        }
                         try {
                             actual = Files.readAllLines(filenew.toPath());
                         } catch (MalformedInputException e) {
-                            StringBuilder contentBuilder = new StringBuilder();
+                            //StringBuilder contentBuilder = new StringBuilder();
                             BufferedReader br = new BufferedReader(new FileReader(filenew.getAbsoluteFile()));
                             String sCurrentLine;
                             while ((sCurrentLine = br.readLine()) != null) {
@@ -318,13 +330,13 @@ public class GitHelper {
                                 last = delta.getRevised().getPosition() + delta.getRevised().getLines().size();
                                 lines.add(first);
                                 lines.add(last - 1);
+                                //changes.add(new Change(first, last, lines, "CHANGE"));
                                 changes.add(new Change(first, last, lines, "INSERT"));
                                 last = delta.getRevised().getPosition() + delta.getOriginal().getLines().size();
                                 lines = new ArrayList<>();
                                 lines.add(first);
                                 lines.add(last - 1);
                                 changes.add(new Change(first, last, lines, "DELETE"));
-
                             }
                         }
 
@@ -445,6 +457,10 @@ public class GitHelper {
                 String oldPath = entry.getOldPath().replace("/", "\\");
                 if (filePath.getFilePath().equals(newPath)) {
                     //System.out.println("file diff: " + newPath);
+                    if(filePath.getFileContent().size() == 0){
+                        List<String> linesFile = Files.readAllLines(Paths.get(pathUrl + File.separator + newPath), StandardCharsets.ISO_8859_1);
+                        filePath.setFileContent(linesFile);
+                    }
                     if (entry.getChangeType().toString().equals("ADD")) {
                         newPath = pathUrl + File.separator + newPath;
                         ArrayList<Integer> lines = new ArrayList<>();
@@ -514,12 +530,13 @@ public class GitHelper {
                                 last = delta.getRevised().getPosition() + delta.getRevised().getLines().size();
                                 lines.add(first);
                                 lines.add(last - 1);
-                                changes.add(new Change(first, last, lines, "INSERT"));
+                                changes.add(new Change(first, last, lines, "CHANGE"));
+                                //changes.add(new Change(first, last, lines, "INSERT"));
                                 last = delta.getRevised().getPosition() + delta.getOriginal().getLines().size();
                                 lines = new ArrayList<>();
                                 lines.add(first);
                                 lines.add(last - 1);
-                                changes.add(new Change(first, last, lines, "DELETE"));
+                                //changes.add(new Change(first, last, lines, "DELETE"));
 
                             }
                         }

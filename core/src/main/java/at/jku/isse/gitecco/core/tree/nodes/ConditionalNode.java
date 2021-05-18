@@ -27,6 +27,18 @@ public abstract class ConditionalNode extends ConditionNode {
         this.lineNumberDeletes =  new ArrayList<Integer>();
     }
 
+    public void setLineNumberInserts(ArrayList<Integer> lineNumberInserts) {
+        this.lineNumberInserts = lineNumberInserts;
+    }
+
+    public ArrayList<Integer> getLineNumberDeletes() {
+        return lineNumberDeletes;
+    }
+
+    public void setLineNumberDeletes(ArrayList<Integer> lineNumberDeletes) {
+        this.lineNumberDeletes = lineNumberDeletes;
+    }
+
     /**
      * Adds a new include as IncludeNode to the ConditionalNode.
      * @param n the IncludeNode
@@ -213,4 +225,5 @@ public abstract class ConditionalNode extends ConditionNode {
 
         return ((BaseNode) n).getFileNode();
     }
+
 }
