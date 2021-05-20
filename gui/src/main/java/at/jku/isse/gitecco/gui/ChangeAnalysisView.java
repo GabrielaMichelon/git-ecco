@@ -1,6 +1,8 @@
 package at.jku.isse.gitecco.gui;
 
 
+import at.jku.isse.gitecco.core.git.FileChange;
+import at.jku.isse.gitecco.core.git.GitHelper;
 import at.jku.isse.gitecco.translation.changepropagation.*;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -32,9 +34,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ChangeAnalysisView extends BorderPane {
 
@@ -138,6 +138,11 @@ public class ChangeAnalysisView extends BorderPane {
         feataff.setCellValueFactory(new PropertyValueFactory<>("feata"));
         feataff.setMinWidth(200);
 
+        //TableColumn colBtn = new TableColumn("File Diff");
+        //feataff.setCellValueFactory(new PropertyValueFactory<>("btnview"));
+        //feataff.setMinWidth(200);
+
+        //table.getColumns().addAll(selectCol, fileCol, changeCol, linesCol, featiCol, feataff, colBtn);
         table.getColumns().addAll(selectCol, fileCol, changeCol, linesCol, featiCol, feataff);
 
         ObservableList<FileChange> data = FXCollections
@@ -152,6 +157,7 @@ public class ChangeAnalysisView extends BorderPane {
 
             try {
                 if (table.getItems().size() > 0) {
+                    table.getColumns().removeAll();
                     table.getSelectionModel().clearSelection();
                     data.removeAll(data);
                 }
@@ -248,7 +254,6 @@ public class ChangeAnalysisView extends BorderPane {
                 }
 
                 table.setItems(data);
-
                 // toolbar
                 ToolBar toolBar = new ToolBar();
                 setTop(toolBar);
@@ -305,6 +310,59 @@ public class ChangeAnalysisView extends BorderPane {
 
                         for (FileChange fileChange : data) {
                             fileChange.setPropagateChange(false);
+                        }
+
+                        toolBar.setDisable(false);
+                    }
+                });
+
+
+                propagateChangesButton.setOnAction(new EventHandler<ActionEvent>() {
+                    @Override
+                    public void handle(ActionEvent e) {
+                        toolBar.setDisable(true);
+
+                        Collection<FileChange> selectedChanges = new ArrayList<>();
+                        for (ChangeAnalysisView.FileChange fileChange : data) {
+                            if (fileChange.isPropagateChange())
+                                selectedChanges.add(fileChange);
+                        }
+
+                        // use composition here to merge selected associations
+                        if (!selectedChanges.isEmpty()) {
+                            Map<String, at.jku.isse.gitecco.core.git.FileChange> filesChanged = new HashMap<>();
+                            ArrayList<String> filesAdded = new ArrayList<>();
+                            ArrayList<String> filesRemoved = new ArrayList<>();
+                            Path baseDir = Paths.get(repositoryDirTextField.getText());
+                            File mergeDir = new File(baseDir.getParent() + File.separator + "merge");
+                            File mergeFolder = new File(String.valueOf(mergeDir));
+                            at.jku.isse.gitecco.core.git.FileChange fileChangeAux;
+                            if (!mergeFolder.exists())
+                                mergeFolder.mkdir();
+                            for (FileChange fileChange : selectedChanges) {
+                                if (fileChange.getChangeType().equals("Removed File")) {
+                                    filesRemoved.add(fileChange.getFileName());
+                                } else if (fileChange.getChangeType().equals("New File")) {
+                                    filesAdded.add(fileChange.getFileName());
+                                } else {
+                                    if (filesChanged.get(fileChange.getFileName()) != null) {
+                                        fileChangeAux = filesChanged.get(fileChange.getFileName());
+                                        fileChangeAux.getLines().add(fileChange.getLines());
+                                        at.jku.isse.gitecco.core.git.FileChange finalFileChangeAux = fileChangeAux;
+                                        filesChanged.computeIfPresent(fileChange.getFileName(), (k, v) -> finalFileChangeAux);
+                                    }else{
+                                        ArrayList<String> lines = new ArrayList<>();
+                                        lines.add(fileChange.getLines());
+                                        fileChangeAux = new at.jku.isse.gitecco.core.git.FileChange(lines, fileChange.getFileLines(), fileChange.getPreviousfileLines());
+                                        filesChanged.put(fileChange.getFileName(), fileChangeAux);
+                                    }
+                                }
+                            }
+                            try {
+                                GitHelper.changePropagation(mergeDir, repositoryDirTextField.getText(), firstcommitTextField.getText(), secondcommitTextField.getText(), filesAdded, filesRemoved, filesChanged);
+                            } catch (Exception ex) {
+                                ex.printStackTrace();
+                            }
                         }
 
                         toolBar.setDisable(false);
@@ -378,12 +436,12 @@ public class ChangeAnalysisView extends BorderPane {
         if (data.getChangeType().equals("Removed File")) {
             // set style of line 4
             //result.setStyle(4,"-fx-fill: red;");
-            result.setStyle(i-1,"-rtfx-background-color: #ffdce0");
+            result.setStyle(i - 1, "-rtfx-background-color: #ffdce0");
             linesremovedinit = index[0].substring(data.getLines().indexOf("removed: [") + 10).replaceAll(" ", "");
             linesremovedend = index[index.length - 1].replaceAll(" ", "");
             signal = "-";
         } else if (data.getChangeType().equals("New File")) {
-            result.setStyle(i-1,"-rtfx-background-color: #dcffe4");
+            result.setStyle(i - 1, "-rtfx-background-color: #dcffe4");
             linesaddinit = index[0].substring(index[0].indexOf("added: [") + 8).replaceAll(" ", "");
             linesaddend = index[1].replaceAll(" ", "");
             signal = "+";
@@ -397,26 +455,26 @@ public class ChangeAnalysisView extends BorderPane {
 
         if (data.getChangeType().equals("Changed File")) {
             for (String line : data.getFileLines()) {
-                if (i-1 >= Integer.valueOf(linesaddinit) && i-1 <= Integer.valueOf(linesaddend)) {
+                if (i - 1 >= Integer.valueOf(linesaddinit) && i - 1 <= Integer.valueOf(linesaddend)) {
                     result.setStyle(i - 1, "-rtfx-background-color: #dcffe4");
                     result.appendText(i + "\t+\t" + line + "\n");
                     //} else if (i >= Integer.valueOf(linesremovedinit) && i <= Integer.valueOf(linesremovedend) && i < data.getFileLines().size()) {
                     //    result.appendText(i + "\t-\t" + line + "\n");
                     //    result.setStyle("-fx-background-color: #ffdce0");
-                    if (i-1 >= Integer.valueOf(linesremovedinit) && i-1 <= Integer.valueOf(linesremovedend)) {
+                    if (i - 1 >= Integer.valueOf(linesremovedinit) && i - 1 <= Integer.valueOf(linesremovedend)) {
                         result.setStyle(i, "-rtfx-background-color: #ffdce0");
                         result.appendText(i + "\t-\t" + data.getPreviousfileLines().get(i - 1) + "\n");
                     }
-                } else if (i-1 >= Integer.valueOf(linesremovedinit) && i-1 <= Integer.valueOf(linesremovedend)) {
+                } else if (i - 1 >= Integer.valueOf(linesremovedinit) && i - 1 <= Integer.valueOf(linesremovedend)) {
                     result.setStyle(i - 1, "-rtfx-background-color: #ffdce0");
                     result.appendText(i + "\t-\t" + data.getPreviousfileLines().get(i - 1));
-                } else if (i-1 < Integer.valueOf(linesaddinit)) {
+                } else if (i - 1 < Integer.valueOf(linesaddinit)) {
                     result.setStyle(i - 1, "-rtfx-background-color: transparent");
                     result.appendText(i + "\t" + line + "\n");
-                } else if(i-1 < data.getFileLines().size() - 1 && i-1 > Integer.valueOf(linesremovedend)){
+                } else if (i - 1 < data.getFileLines().size() - 1 && i - 1 > Integer.valueOf(linesremovedend)) {
                     result.setStyle(i, "-rtfx-background-color: transparent");
                     result.appendText(i + "\t" + line + "\n");
-                }else if(i-1 < data.getFileLines().size() && i-1 > Integer.valueOf(linesremovedend)) {
+                } else if (i - 1 < data.getFileLines().size() && i - 1 > Integer.valueOf(linesremovedend)) {
                     result.setStyle(i, "-rtfx-background-color: transparent");
                     result.appendText(i + "\t" + line);
                 }
@@ -496,6 +554,7 @@ public class ChangeAnalysisView extends BorderPane {
         private final SimpleStringProperty feata;
         private List<String> fileLines = new ArrayList<>();
         private List<String> previousfileLines = new ArrayList<>();
+        //private final Button btnview =  new Button("View");
 
         private FileChange(boolean propagateChange, String fName, String changeType, String lines, String feati, String feata, List<String> fileLines, List<String> previousfileLines) {
             this.propagateChange.set(propagateChange);
@@ -506,6 +565,7 @@ public class ChangeAnalysisView extends BorderPane {
             this.feata = new SimpleStringProperty(feata);
             this.fileLines = fileLines;
             this.previousfileLines = previousfileLines;
+            //this.btnview.setVisible(true);
         }
 
 

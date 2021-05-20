@@ -5,6 +5,7 @@ import at.jku.isse.gitecco.core.tree.nodes.FileNode;
 import difflib.Delta;
 import difflib.DiffUtils;
 import difflib.Patch;
+import org.chocosolver.solver.constraints.nary.nvalue.amnv.mis.F;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.errors.CheckoutConflictException;
@@ -25,11 +26,13 @@ import scala.util.parsing.combinator.testing.Str;
 
 
 import java.io.*;
+import java.nio.charset.Charset;
 import java.nio.charset.MalformedInputException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 import static java.nio.file.Files.copy;
@@ -39,7 +42,7 @@ import static java.nio.file.Files.copy;
  */
 public class GitHelper {
 
-    private final Git git;
+    private static Git git;
     private final String pathUrl;
     private final List<String> dirFiles;
     private Long runtimeGitCommit;
@@ -209,7 +212,7 @@ public class GitHelper {
             ArrayList<Integer> lines = new ArrayList<>();
             lines.add(0);
             lines.add(Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size() - 1);
-            if(filePath.getFileContent().size() == 0){
+            if (filePath.getFileContent().size() == 0) {
                 List<String> linesFile = Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1);
                 filePath.setFileContent(linesFile);
             }
@@ -250,7 +253,7 @@ public class GitHelper {
                         ArrayList<Integer> lines = new ArrayList<>();
                         lines.add(0);
                         lines.add(Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size() - 1);
-                        if(filePath.getFileContent().size() == 0){
+                        if (filePath.getFileContent().size() == 0) {
                             List<String> linesFile = Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1);
                             filePath.setFileContent(linesFile);
                         }
@@ -259,7 +262,7 @@ public class GitHelper {
                         List<String> actual = new ArrayList<>();
                         List<String> old = new ArrayList<>();
                         File filenew = new File(pathUrl + File.separator + newPath);
-                        if(filePath.getFileContent().size() == 0) {
+                        if (filePath.getFileContent().size() == 0) {
                             List<String> linesFile = Files.readAllLines(Paths.get(filenew.getAbsolutePath()), StandardCharsets.ISO_8859_1);
                             filePath.setFileContent(linesFile);
                             git.stashCreate().setRef("HEAD").call();
@@ -376,8 +379,6 @@ public class GitHelper {
     }
 
 
-
-
     /**
      * Gets the Diff between two Commits specified by their commit names.
      * The Diff is stored as a <code>Change</code>.
@@ -418,7 +419,7 @@ public class GitHelper {
             else
                 filepathRenamed = filePath.getFilePath();
             String newPath = pathUrl + File.separator + filepathRenamed;
-            if(filePath.getFileContent().size() == 0){
+            if (filePath.getFileContent().size() == 0) {
                 List<String> linesFile = Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1);
                 filePath.setFileContent(linesFile);
             }
@@ -457,7 +458,7 @@ public class GitHelper {
                 String oldPath = entry.getOldPath().replace("/", "\\");
                 if (filePath.getFilePath().equals(newPath)) {
                     //System.out.println("file diff: " + newPath);
-                    if(filePath.getFileContent().size() == 0){
+                    if (filePath.getFileContent().size() == 0) {
                         List<String> linesFile = Files.readAllLines(Paths.get(pathUrl + File.separator + newPath), StandardCharsets.ISO_8859_1);
                         filePath.setFileContent(linesFile);
                     }
@@ -1069,6 +1070,160 @@ public class GitHelper {
 
             return treeParser;
         }
+    }
+
+    public static void copyFolder(File source, File destination, ArrayList<String> filesRemoved, Map<String, FileChange> filesChanged) {
+        if (source.isDirectory()) {
+            if (!destination.exists()) {
+                destination.mkdirs();
+            }
+
+            String files[] = source.list();
+
+            for (String file : files) {
+                File srcFile = new File(source, file);
+                if (!srcFile.getAbsolutePath().contains(".git")) {
+                    File destFile = new File(destination, file);
+                    copyFolder(srcFile, destFile, filesRemoved, filesChanged);
+                }
+            }
+        } else if (!filesRemoved.contains(source.getName()) && !filesChanged.keySet().contains(source.getName())) {
+            InputStream in = null;
+            OutputStream out = null;
+
+            try {
+                in = new FileInputStream(source);
+                out = new FileOutputStream(destination);
+
+                byte[] buffer = new byte[1024];
+
+                int length;
+                while ((length = in.read(buffer)) > 0) {
+                    out.write(buffer, 0, length);
+                }
+                in.close();
+                out.close();
+            } catch (Exception e) {
+                try {
+                    in.close();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+
+                try {
+                    out.close();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+            }
+        }
+    }
+
+    public static void copyNewFiles(File source, File destination, ArrayList<String> filesAdded, Map<String, FileChange> filesChanged) {
+        if (source.isDirectory()) {
+            String files[] = source.list();
+
+            for (String file : files) {
+                File srcFile = new File(source, file);
+                if (!srcFile.getAbsolutePath().contains(".git")) {
+                    File destFile = new File(destination, file);
+                    copyNewFiles(srcFile, destFile, filesAdded, filesChanged);
+                }
+            }
+        } else if (filesAdded.contains(source.getName()) && !filesChanged.keySet().contains(source.getName())) {
+            InputStream in = null;
+            OutputStream out = null;
+
+            try {
+                in = new FileInputStream(source);
+                out = new FileOutputStream(destination);
+
+                byte[] buffer = new byte[1024];
+
+                int length;
+                while ((length = in.read(buffer)) > 0) {
+                    out.write(buffer, 0, length);
+                }
+                in.close();
+                out.close();
+            } catch (Exception e) {
+                try {
+                    in.close();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+
+                try {
+                    out.close();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+            }
+        }
+    }
+
+    /**
+     * Propagate the changes of a feature between two Commits chosen by the user.
+     * All the changes will be in a folder with the files resulted from the merge of changes.
+     *
+     * @param firstCommit  The commit which should be applied the changes
+     * @param secondCommit The commit which changes are chosen to be propagated
+     * @return
+     * @throws Exception
+     */
+    public static void changePropagation(File mergeDir, String gitDir, String firstCommit, String secondCommit, ArrayList<String> filesAdded, ArrayList<String> filesRemoved, Map<String, FileChange> filesChanged) throws Exception {
+
+        File gitDirectory = new File(gitDir);
+        Map<String, ArrayList<String>> filesToWrite = new HashMap<>();
+        List<String> fileLines = new ArrayList<>();
+        List<String> previousLines = new ArrayList<>();
+
+        git.stashCreate().setRef("HEAD").call();
+        git.checkout().setName(secondCommit).call();
+        copyNewFiles(gitDirectory, mergeDir, filesAdded, filesChanged);
+
+        git.stashCreate().setRef("HEAD").call();
+        git.checkout().setName(firstCommit).call();
+        //Files.copy(gitDirectory, mergeDir, StandardCopyOption.REPLACE_EXISTING);
+        copyFolder(gitDirectory, mergeDir, filesRemoved, filesChanged);
+
+        String linesaddinit = "";
+        String linesaddend = "";
+        String linesremovedinit = "";
+        String linesremovedend = "";
+        for (Map.Entry<String, FileChange> change : filesChanged.entrySet()) {
+            ArrayList<String> lines = change.getValue().getLines();
+            fileLines = change.getValue().getFileLines();
+            previousLines = change.getValue().getPreviousContent();
+            ArrayList<String> linesaddinitArray = new ArrayList<>();
+            ArrayList<String> linesaddendArray = new ArrayList<>();
+            ArrayList<String> linesremovedinitArray = new ArrayList<>();
+            ArrayList<String> linesremovedendArray = new ArrayList<>();
+            List<String> linesToWrite = new ArrayList<>();
+            Map<ArrayList<String>, ArrayList<String>> mapToOrderLines = new HashMap<>();
+            int i = 0;
+            for (String lineChanges : lines) {
+                String[] index = lineChanges.split(",");
+                linesaddinit = index[0].substring(index[0].indexOf("added: [") + 8).replaceAll(" ", "");
+                linesaddend = index[1].replaceAll(" ", "");
+                linesremovedinit = index[2].substring(index[2].indexOf("removed: [") + 10).replaceAll(" ", "");
+                linesremovedend = index[3].replaceAll(" ", "");
+                linesaddinitArray.add(linesaddinit);
+                linesaddendArray.add(linesaddend);
+                linesremovedinitArray.add(linesremovedinit);
+                linesremovedendArray.add(linesremovedend);
+            }
+            for (String l : previousLines) {
+                if (i >= Integer.valueOf(linesaddinit) && i <= Integer.valueOf(linesaddend)) {
+                    linesToWrite.add(fileLines.get(i));
+                } else if (i > Integer.valueOf(linesremovedend) || i < Integer.valueOf(linesremovedinit)) {
+                    linesToWrite.add(l);
+                }
+                i++;
+            }
+            Files.write(Paths.get(mergeDir + File.separator + change.getKey()), linesToWrite, Charset.defaultCharset());
+        }
+
     }
 
 }

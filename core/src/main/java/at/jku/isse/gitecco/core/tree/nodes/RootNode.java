@@ -64,6 +64,10 @@ public final class RootNode extends Node implements Visitable {
         return children;
     }
 
+    public String getPath() {
+        return path;
+    }
+
     /**
      * Return null --> no parent.
      * @return
