@@ -138,12 +138,12 @@ public class ChangeAnalysisView extends BorderPane {
         feataff.setCellValueFactory(new PropertyValueFactory<>("feata"));
         feataff.setMinWidth(200);
 
-        //TableColumn colBtn = new TableColumn("File Diff");
-        //feataff.setCellValueFactory(new PropertyValueFactory<>("btnview"));
-        //feataff.setMinWidth(200);
+        TableColumn colBtn = new TableColumn("File Diff");
+        colBtn.setCellValueFactory(new PropertyValueFactory<>("btnview"));
+        colBtn.setMinWidth(200);
 
-        //table.getColumns().addAll(selectCol, fileCol, changeCol, linesCol, featiCol, feataff, colBtn);
-        table.getColumns().addAll(selectCol, fileCol, changeCol, linesCol, featiCol, feataff);
+        table.getColumns().addAll(selectCol, fileCol, changeCol, linesCol, featiCol, feataff, colBtn);
+        //table.getColumns().addAll(selectCol, fileCol, changeCol, linesCol, featiCol, feataff);
 
         ObservableList<FileChange> data = FXCollections
                 .observableArrayList();
@@ -254,6 +254,15 @@ public class ChangeAnalysisView extends BorderPane {
                 }
 
                 table.setItems(data);
+
+                for (FileChange filechange : data) {
+                    filechange.btnview.setOnAction(new EventHandler<ActionEvent>() {
+                        @Override
+                        public void handle(ActionEvent e) {
+                            showDiff(filechange);
+                        }
+                    });
+                }
                 // toolbar
                 ToolBar toolBar = new ToolBar();
                 setTop(toolBar);
@@ -281,7 +290,7 @@ public class ChangeAnalysisView extends BorderPane {
                     return rowtable;
                 });
 
-                addButtonToTable();
+                // addButtonToTable();
 
                 SplitPane splitPane = new SplitPane();
                 setCenter(splitPane);
@@ -350,7 +359,7 @@ public class ChangeAnalysisView extends BorderPane {
                                         fileChangeAux.getLines().add(fileChange.getLines());
                                         at.jku.isse.gitecco.core.git.FileChange finalFileChangeAux = fileChangeAux;
                                         filesChanged.computeIfPresent(fileChange.getFileName(), (k, v) -> finalFileChangeAux);
-                                    }else{
+                                    } else {
                                         ArrayList<String> lines = new ArrayList<>();
                                         lines.add(fileChange.getLines());
                                         fileChangeAux = new at.jku.isse.gitecco.core.git.FileChange(lines, fileChange.getFileLines(), fileChange.getPreviousfileLines());
@@ -554,7 +563,7 @@ public class ChangeAnalysisView extends BorderPane {
         private final SimpleStringProperty feata;
         private List<String> fileLines = new ArrayList<>();
         private List<String> previousfileLines = new ArrayList<>();
-        //private final Button btnview =  new Button("View");
+        private Button btnview;
 
         private FileChange(boolean propagateChange, String fName, String changeType, String lines, String feati, String feata, List<String> fileLines, List<String> previousfileLines) {
             this.propagateChange.set(propagateChange);
@@ -565,9 +574,8 @@ public class ChangeAnalysisView extends BorderPane {
             this.feata = new SimpleStringProperty(feata);
             this.fileLines = fileLines;
             this.previousfileLines = previousfileLines;
-            //this.btnview.setVisible(true);
+            this.btnview = new Button("View");
         }
-
 
         public boolean isPropagateChange() {
             return this.propagateChange.get();
@@ -655,6 +663,14 @@ public class ChangeAnalysisView extends BorderPane {
 
         public void setPreviousfileLines(List<String> previousfileLines) {
             this.previousfileLines = previousfileLines;
+        }
+
+        public Button getBtnview() {
+            return btnview;
+        }
+
+        public void setBtnview(Button btnview) {
+            this.btnview = btnview;
         }
     }
 
