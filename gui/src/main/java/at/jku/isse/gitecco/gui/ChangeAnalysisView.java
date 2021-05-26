@@ -1,7 +1,7 @@
 package at.jku.isse.gitecco.gui;
 
 
-import at.jku.isse.gitecco.core.git.FileChange;
+import at.jku.isse.ecco.gui.MainView;
 import at.jku.isse.gitecco.core.git.GitHelper;
 import at.jku.isse.gitecco.translation.changepropagation.*;
 import javafx.beans.property.BooleanProperty;
@@ -17,6 +17,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
@@ -26,7 +27,9 @@ import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import javafx.stage.DirectoryChooser;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.util.Callback;
 import org.fxmisc.richtext.InlineCssTextArea;
 
@@ -327,6 +330,7 @@ public class ChangeAnalysisView extends BorderPane {
 
 
                 propagateChangesButton.setOnAction(new EventHandler<ActionEvent>() {
+                    //this.openDialog("Choose a Directory", );
                     @Override
                     public void handle(ActionEvent e) {
                         toolBar.setDisable(true);
@@ -423,6 +427,22 @@ public class ChangeAnalysisView extends BorderPane {
 
     }
 
+    private void openDialog(String title, Parent content) {
+        final Stage dialog = new Stage();
+        dialog.initStyle(StageStyle.UTILITY);
+        dialog.initModality(Modality.WINDOW_MODAL);
+        dialog.initOwner(ChangeAnalysisView.this.getScene().getWindow());
+
+        Scene dialogScene = new Scene(content);
+        dialog.setScene(dialogScene);
+        dialog.setTitle(title);
+
+//		dialog.setMinWidth(400);
+//		dialog.setMinHeight(200);
+
+        dialog.show();
+        dialog.requestFocus();
+    }
 
     private void showDiff(FileChange data) {
         Stage stage = new Stage();
