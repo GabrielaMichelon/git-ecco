@@ -45,7 +45,7 @@ public class MainView extends BorderPane {
         changeTab.setContent(changesView);
 
         Tab miningTab = new Tab();
-        miningTab.setText("Mining Feature Revisions");
+        miningTab.setText("Mine Feature Revisions");
         miningTab.setClosable(false);
         tabPane.getTabs().add(miningTab);
 

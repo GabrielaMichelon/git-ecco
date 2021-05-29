@@ -1,9 +1,9 @@
 package at.jku.isse.gitecco.gui;
 
-import at.jku.isse.ecco.feature.FeatureRevision;
 import at.jku.isse.gitecco.translation.mining.MiningFeatureRevisions;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -26,12 +26,12 @@ import java.util.*;
 public class MiningFeatureRevisionsView extends BorderPane {
 
     ObservableList<Release> data = FXCollections.observableArrayList();
-    CheckBoxTreeItem<Release> dummyRoot = new CheckBoxTreeItem<>();
+    CheckBoxTreeItem<Object> dummyRoot = new CheckBoxTreeItem<>();
     List<String> selectedReleases = new ArrayList<>();
     private Button
             getReleasesButton = new Button("OK");
     private Button cancelButton = new Button("Cancel");
-    TreeTableView<Release> releasesTable = new TreeTableView<Release>();
+    TreeTableView<Object> releasesTable = new TreeTableView<Object>();
     private Button mineFeatureRevisions = new Button("Mine Feature Revisions");
     // toolbar
     ToolBar toolBar = new ToolBar();
@@ -57,7 +57,7 @@ public class MiningFeatureRevisionsView extends BorderPane {
         Label repositoryDirLabel = new Label("Git Repository: ");
         gridPane.add(repositoryDirLabel, 0, row[0], 1, 1);
 
-        TextField repositoryDirTextField = new TextField("C:\\Users\\gabil\\Desktop\\PHD\\New research\\ChangePropagation\\libssh");//Open the folder directory");
+        TextField repositoryDirTextField = new TextField("C:\\Users\\gabil\\Desktop\\PHD\\New research\\ChangePropagation\\runningexample");//Open the folder directory");
         repositoryDirTextField.setDisable(false);
         repositoryDirLabel.setLabelFor(repositoryDirTextField);
         gridPane.add(repositoryDirTextField, 1, row[0], 1, 1);
@@ -118,21 +118,47 @@ public class MiningFeatureRevisionsView extends BorderPane {
             }
         });
 
+        TreeTableColumn<Object, String> treeTableColumnCommit = new TreeTableColumn<>("Commits");
+        treeTableColumnCommit.setCellValueFactory(cellData -> {
+            TreeItem<Object> rowItem = cellData.getValue();
+            if (rowItem != null && rowItem.getValue() instanceof Commit) {
+                Commit commit = (Commit) rowItem.getValue();
+                return new SimpleStringProperty(commit.getCommitHash());
+            } else {
+                return new SimpleStringProperty("");
+            }
+        });
+        treeTableColumnCommit.setMinWidth(300);
+
+        TreeTableColumn<Object, String> treeTableColumnFeatures = new TreeTableColumn<>("Feature Revisions");
+        treeTableColumnFeatures.setCellValueFactory(cellData -> {
+            TreeItem<Object> rowItem = cellData.getValue();
+            if (rowItem != null && rowItem.getValue() instanceof Commit) {
+                Commit commit = (Commit) rowItem.getValue();
+                return new SimpleStringProperty(commit.getFeatureRevisions().toString());
+            } else {
+                return new SimpleStringProperty("");
+            }
+        });
+        treeTableColumnFeatures.setMinWidth(300);
+
         getReleasesButton.setOnAction(event -> {
             try {
                 Map<Long, String> releases = MiningFeatureRevisions.showReleases(repositoryDirTextField.getText());
 
-                TreeTableColumn<Release, Boolean> treeTableColumnCheckBox = new TreeTableColumn<>("Select");
+                TreeTableColumn<Object, Boolean> treeTableColumnCheckBox = new TreeTableColumn<>("Select");
                 CheckBoxTreeTableCell checkCell = new CheckBoxTreeTableCell();
                 treeTableColumnCheckBox.setPrefWidth(100);
                 treeTableColumnCheckBox.setCellValueFactory(new TreeItemPropertyValueFactory<>("selectBoolean"));
                 treeTableColumnCheckBox.setCellFactory(checkCell.forTreeTableColumn(getSelectedProperty));
 
-                TreeTableColumn<Release, String> treeTableColumnRelease = new TreeTableColumn<>("Release");
+
+                TreeTableColumn<Object, String> treeTableColumnRelease = new TreeTableColumn<>("Release");
                 treeTableColumnRelease.setCellValueFactory(new TreeItemPropertyValueFactory<>("name"));
                 treeTableColumnRelease.setMinWidth(200);
 
-                TreeTableColumn<Release, String> treeTableColumnCommitNumber = new TreeTableColumn<>("Commit Number");
+
+                TreeTableColumn<Object, String> treeTableColumnCommitNumber = new TreeTableColumn<>("Commit Number");
                 treeTableColumnCommitNumber.setCellValueFactory(new TreeItemPropertyValueFactory<>("commitNumber"));
                 treeTableColumnCommitNumber.setMinWidth(200);
 
@@ -140,23 +166,24 @@ public class MiningFeatureRevisionsView extends BorderPane {
                 //this line makes possible check each checkbox
                 releasesTable.setEditable(true);
 
-                CheckBoxTreeItem<Release> root1;
+                CheckBoxTreeItem<Object> root1;
 
                 for (Map.Entry<Long, String> release : releases.entrySet()) {
-                    data.add(new Release(release.getValue().substring(release.getValue().lastIndexOf("/") + 1), Long.toString(release.getKey()), new HashMap<>()));
-                    Release releaseadd = new Release(release.getValue().substring(release.getValue().lastIndexOf("/") + 1), Long.toString(release.getKey()), new HashMap<>());
-                    root1 = new CheckBoxTreeItem<Release>(releaseadd);
+                    data.add(new Release(release.getValue().substring(release.getValue().lastIndexOf("/") + 1), Long.toString(release.getKey()), new ArrayList<>()));
+                    Release releaseadd = new Release(release.getValue().substring(release.getValue().lastIndexOf("/") + 1), Long.toString(release.getKey()), new ArrayList<>());
+                    root1 = new CheckBoxTreeItem<Object>(releaseadd);
                     releaseadd.selectBooleanProperty().bind(root1.selectedProperty());
                     root1.setIndependent(false);
-                    dummyRoot.getChildren().addAll(root1);
+                    dummyRoot.getChildren().add(root1);
+                    for (Commit c : releaseadd.getFeatureRevisionPerCommit()) {
+                        CheckBoxTreeItem<Object> commitsItem = new CheckBoxTreeItem<>(c);
+                        root1.getChildren().add(commitsItem);
+                    }
                 }
 
                 releasesTable.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
                 dummyRoot.setExpanded(true);
-                //releasesTable.setRoot(root1);
                 releasesTable.setRoot(dummyRoot);
-
-
                 dummyRoot.setIndependent(false);
 
                 releasesTable.getColumns().setAll(treeTableColumnCheckBox, treeTableColumnRelease, treeTableColumnCommitNumber);
@@ -184,18 +211,71 @@ public class MiningFeatureRevisionsView extends BorderPane {
                     selectChildren(root);
                 }
                 if (!selectedReleases.isEmpty()) {
-                    //TODO
-                    //for (Release rel : selectedReleases) {
-                    //    System.out.println("Selected release: " + rel.name);
-                    //}
-                    try {
-                        Map<String, ArrayList<String>>  featureRevisionsRelease = MiningFeatureRevisions.MiningFeatureRevisions(repositoryDirTextField.getText(), miningResultsDirTextField.getText(), selectedReleases, true);
-                        System.out.println(featureRevisionsRelease.size());
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                    }
+                    for (String releaseName : selectedReleases) {
+                        try {
+                            Map<String, ArrayList<String>> featureRevisionsRelease = MiningFeatureRevisions.MiningFeatureRevisions(repositoryDirTextField.getText(), miningResultsDirTextField.getText(), selectedReleases, true);
+                            releasesTable.getColumns().add(3, treeTableColumnCommit);
+                            releasesTable.getColumns().add(4, treeTableColumnFeatures);
+                            for (Release release : data) {
+                                if (release.getName().equals(releaseName)) {
+                                    Map<String, ArrayList<String>> commitHashes = new HashMap<>();
+                                    ArrayList<Commit> commits = new ArrayList<>();
+                                    for (Map.Entry<String, ArrayList<String>> featuresPerRelease : featureRevisionsRelease.entrySet()) {
+                                        if (commitHashes.get(featuresPerRelease.getKey()) != null) {
+                                            ArrayList<String> featuresName = commitHashes.get(featuresPerRelease.getKey());
+                                            for (String featureName : featuresPerRelease.getValue()) {
+                                                String[] features = featureName.split(",");
+                                                for (String fRevision : features) {
+                                                    if (!featuresName.contains(fRevision)) {
+                                                        featuresName.add(fRevision);
+                                                    }
+                                                }
 
+                                            }
+                                            commitHashes.computeIfPresent(featuresPerRelease.getKey(), (k, v) -> featuresName);
+                                        } else {
+                                            ArrayList<String> featuresName = new ArrayList<>();
+                                            for (String featureName : featuresPerRelease.getValue()) {
+                                                String[] features = featureName.split(",");
+                                                for (String fRevision : features) {
+                                                    if (!featuresName.contains(fRevision)) {
+                                                        featuresName.add(fRevision);
+                                                    }
+                                                }
+
+                                            }
+                                            commitHashes.put(featuresPerRelease.getKey(), featuresName);
+                                        }
+                                    }
+
+                                    for (Map.Entry<String, ArrayList<String>> c : commitHashes.entrySet()) {
+                                        commits.add(new Commit(c.getKey(), c.getValue()));
+                                    }
+                                    //update tree
+                                    int i = 0;
+                                    for (TreeItem<Object> object : dummyRoot.getChildren()) {
+                                        Release rel = (Release) object.getValue();
+                                        if (rel.getName().equals(releaseName)) {
+                                            for (Commit c : commits) {
+                                                CheckBoxTreeItem<Object> commitsItem = new CheckBoxTreeItem<>(c);
+                                                commitsItem.setExpanded(true);
+                                                dummyRoot.getChildren().get(i).setExpanded(true);
+                                                dummyRoot.getChildren().get(i).getChildren().addAll(commitsItem);
+                                            }
+                                            break;
+                                        }
+                                        i++;
+                                    }
+
+                                }
+                            }
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                        }
+                    }
                 }
+
+                releasesTable.refresh();
                 toolBar.setDisable(false);
             }
         });
@@ -224,13 +304,39 @@ public class MiningFeatureRevisionsView extends BorderPane {
         }
     };
 
+    public static class Commit {
+        private String commitHash;
+        private ArrayList<String> featureRevisions;
+
+        public Commit(String commitHash, ArrayList<String> featureRevisions) {
+            this.commitHash = commitHash;
+            this.featureRevisions = featureRevisions;
+        }
+
+        public String getCommitHash() {
+            return commitHash;
+        }
+
+        public void setCommitHash(String commitHash) {
+            this.commitHash = commitHash;
+        }
+
+        public ArrayList<String> getFeatureRevisions() {
+            return featureRevisions;
+        }
+
+        public void setFeatureRevisions(ArrayList<String> featureRevisions) {
+            this.featureRevisions = featureRevisions;
+        }
+    }
+
     public static class Release {
         private String name;
         private String commitNumber;
-        private Map<Integer, ArrayList<FeatureRevision>> featureRevisionPerCommit;
+        private ArrayList<Commit> featureRevisionPerCommit;
         private BooleanProperty selectBoolean;
 
-        public Release(String name, String commitNumber, Map<Integer, ArrayList<FeatureRevision>> featureRevisionPerCommit) {
+        public Release(String name, String commitNumber, ArrayList<Commit> featureRevisionPerCommit) {
             this.name = name;
             this.commitNumber = commitNumber;
             this.featureRevisionPerCommit = featureRevisionPerCommit;
@@ -253,11 +359,11 @@ public class MiningFeatureRevisionsView extends BorderPane {
             this.commitNumber = commitNumber;
         }
 
-        public Map<Integer, ArrayList<FeatureRevision>> getFeatureRevisionPerCommit() {
+        public ArrayList<Commit> getFeatureRevisionPerCommit() {
             return featureRevisionPerCommit;
         }
 
-        public void setFeatureRevisionPerCommit(Map<Integer, ArrayList<FeatureRevision>> featureRevisionPerCommit) {
+        public void setFeatureRevisionPerCommit(ArrayList<Commit> featureRevisionPerCommit) {
             this.featureRevisionPerCommit = featureRevisionPerCommit;
         }
 
