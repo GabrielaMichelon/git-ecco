@@ -28,10 +28,12 @@ public class MiningFeatureRevisionsView extends BorderPane {
     ObservableList<Release> data = FXCollections.observableArrayList();
     CheckBoxTreeItem<Object> dummyRoot = new CheckBoxTreeItem<>();
     List<String> selectedReleases = new ArrayList<>();
+    List<String> selectedCommits = new ArrayList<>();
     private Button getReleasesButton = new Button("OK");
     private Button cancelButton = new Button("Cancel");
     TreeTableView<Object> releasesTable = new TreeTableView<Object>();
     private Button mineFeatureRevisions = new Button("Mine Feature Revisions");
+    private Button ChangeAnalysisButton = new Button("Change Analysis");
     // toolbar
     ToolBar toolBar = new ToolBar();
 
@@ -209,10 +211,33 @@ public class MiningFeatureRevisionsView extends BorderPane {
             }
         });
 
+        ChangeAnalysisButton.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent e) {
+                toolBar.setDisable(true);
+                TreeItem root = releasesTable.getRoot();
+                if (root != null) {
+                    selectedCommits = new ArrayList<>();
+                    selectChildrenCommits(root);
+                }
+                if (!selectedCommits.isEmpty() && selectedCommits.size()>=2) {
+                    ChangeAnalysisView.firstcommitTextField.setText(selectedCommits.get(0));
+                    ChangeAnalysisView.secondcommitTextField.setText(selectedCommits.get(1));
+                    ChangeAnalysisView.repositoryDirTextField.setText(repositoryDirTextField.getText());
+                    ChangeAnalysisView.featureTextField.setText("Type the feature name!");
+                    MainView.tabPane.getSelectionModel().select(MainView.changeTab);
+                }
+
+                toolBar.setDisable(false);
+            }
+        });
+
+
         mineFeatureRevisions.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent e) {
                 toolBar.setDisable(true);
+                toolBar.getItems().addAll(ChangeAnalysisButton);
                 TreeItem root = releasesTable.getRoot();
                 if (root != null) {
                     selectedReleases = new ArrayList<>();
@@ -266,6 +291,7 @@ public class MiningFeatureRevisionsView extends BorderPane {
                                         if (rel.getName().equals(releaseName)) {
                                             for (Commit c : commits) {
                                                 CheckBoxTreeItem<Object> commitsItem = new CheckBoxTreeItem<>(c);
+                                                c.selectBooleanProperty().bind(commitsItem.selectedProperty());
                                                 commitsItem.setExpanded(true);
                                                 dummyRoot.getChildren().get(i).setExpanded(true);
                                                 dummyRoot.getChildren().get(i).getChildren().addAll(commitsItem);
@@ -304,6 +330,24 @@ public class MiningFeatureRevisionsView extends BorderPane {
         }
     }
 
+    private void selectChildrenCommits(TreeItem<Object> root) {
+        for (TreeItem<Object> child : root.getChildren()) {
+            for (TreeItem<Object> childRelease: child.getChildren()) {
+                if(childRelease.getValue() instanceof Commit) {
+                    Commit commit = (Commit) childRelease.getValue();
+                    if (commit.getSelectBoolean().equals(true)) {
+                        selectedCommits.add(commit.getCommitHash());
+                        //((CheckBoxTreeItem) child).setSelected(true);
+                    }
+                }
+            }
+            // IF THERE ARE CHILD NODES, KEEP DIGGING RECURSIVELY
+            if (!child.getChildren().isEmpty()) {
+                selectChildrenCommits(child);
+            }
+        }
+    }
+
 
     Callback<Integer, ObservableValue<Boolean>> getSelectedProperty = new Callback<Integer, ObservableValue<Boolean>>() {
         @Override
@@ -315,10 +359,12 @@ public class MiningFeatureRevisionsView extends BorderPane {
     public static class Commit {
         private String commitHash;
         private ArrayList<String> featureRevisions;
+        private BooleanProperty selectBoolean;
 
         public Commit(String commitHash, ArrayList<String> featureRevisions) {
             this.commitHash = commitHash;
             this.featureRevisions = featureRevisions;
+            this.selectBoolean = new SimpleBooleanProperty(false);
         }
 
         public String getCommitHash() {
@@ -335,6 +381,18 @@ public class MiningFeatureRevisionsView extends BorderPane {
 
         public void setFeatureRevisions(ArrayList<String> featureRevisions) {
             this.featureRevisions = featureRevisions;
+        }
+
+        public BooleanProperty selectBooleanProperty() {
+            return selectBoolean;
+        }
+
+        public Boolean getSelectBoolean() {
+            return selectBoolean.get();
+        }
+
+        public void setSelectBoolean(Boolean select) {
+            this.selectBoolean.set(select);
         }
     }
 

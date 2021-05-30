@@ -40,11 +40,15 @@ import java.util.*;
 
 public class ChangeAnalysisView extends BorderPane {
 
-    private Button mineButton = new Button("OK");
+    private Button changeAnalysisButton = new Button("OK");
     private Button cancelButton = new Button("Cancel");
     private Label headerLabel = new Label();
     private ChangeAnalysis changeAnalysis;
     final TableView<FileChange> table = new TableView<FileChange>();
+    static TextField firstcommitTextField = new TextField("a29e19a4557aa53f123767a5ae0284c01c79390d");//Commit Hash");
+    static TextField secondcommitTextField = new TextField("edbd3d94f93db29d45ff0b7e3e4cbb5933564653");//Commit Hash");
+    static TextField repositoryDirTextField = new TextField("C:\\Users\\gabil\\Desktop\\PHD\\New research\\ChangePropagation\\runningexample");//Open the folder directory");
+    static TextField featureTextField = new TextField("featA");//"Feature Name");
 
     public ChangeAnalysisView() {
 
@@ -73,7 +77,7 @@ public class ChangeAnalysisView extends BorderPane {
         Label repositoryDirLabel = new Label("Git Repository: ");
         gridPane.add(repositoryDirLabel, 0, row[0], 1, 1);
 
-        TextField repositoryDirTextField = new TextField("C:\\Users\\gabil\\Desktop\\PHD\\New research\\ChangePropagation\\runningexample");//Open the folder directory");
+
         repositoryDirTextField.setDisable(false);
         repositoryDirLabel.setLabelFor(repositoryDirTextField);
         gridPane.add(repositoryDirTextField, 1, row[0], 1, 1);
@@ -86,7 +90,7 @@ public class ChangeAnalysisView extends BorderPane {
         Label fistCommitLabel = new Label("First Commit: ");
         gridPane.add(fistCommitLabel, 0, row[0], 1, 1);
 
-        TextField firstcommitTextField = new TextField("a29e19a4557aa53f123767a5ae0284c01c79390d");//Commit Hash");
+
         firstcommitTextField.setDisable(false);
         gridPane.add(firstcommitTextField, 1, row[0], 1, 1);
 
@@ -95,7 +99,6 @@ public class ChangeAnalysisView extends BorderPane {
         Label secondCommitLabel = new Label("Second Commit: ");
         gridPane.add(secondCommitLabel, 0, row[0], 1, 1);
 
-        TextField secondcommitTextField = new TextField("edbd3d94f93db29d45ff0b7e3e4cbb5933564653");//Commit Hash");
         secondcommitTextField.setDisable(false);
         gridPane.add(secondcommitTextField, 1, row[0], 1, 1);
 
@@ -104,12 +107,12 @@ public class ChangeAnalysisView extends BorderPane {
         Label featureLabel = new Label("Feature Name: ");
         gridPane.add(featureLabel, 0, row[0], 1, 1);
 
-        TextField featureTextField = new TextField("featA");//"Feature Name");
+
         featureTextField.setDisable(false);
         gridPane.add(featureTextField, 1, row[0], 1, 1);
 
         row[0]++;
-        gridPane.add(mineButton, 0, row[0], 1, 1);
+        gridPane.add(changeAnalysisButton, 0, row[0], 1, 1);
         //gridPane.add(cancelButton, 4, row, 1, 1);
 
 
@@ -155,7 +158,7 @@ public class ChangeAnalysisView extends BorderPane {
         this.updateView();
         final int[] rowaux = {row[0]};
 
-        mineButton.setOnAction(event -> {
+        changeAnalysisButton.setOnAction(event -> {
 
             try {
                 if (table.getItems().size() > 0) {
@@ -694,7 +697,7 @@ public class ChangeAnalysisView extends BorderPane {
     }
 
     private void updateView() {
-        mineButton.setDisable(false);
+        changeAnalysisButton.setDisable(false);
         cancelButton.setDisable(false);
     }
 

@@ -29,14 +29,14 @@ import java.util.Map;
 
 public class MainView extends BorderPane {
 
+    // tabs
+    static TabPane tabPane = new TabPane();
+    static Tab changeTab = new Tab();
 
     public MainView() {
 
-        // tabs
-        TabPane tabPane = new TabPane();
         this.setCenter(tabPane);
 
-        Tab changeTab = new Tab();
         changeTab.setText("Change Analysis");
         changeTab.setClosable(false);
         tabPane.getTabs().add(changeTab);
