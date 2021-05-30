@@ -81,16 +81,16 @@ public class ChangeAnalysis {
         if (EVERYCOMMIT) {
             //gitHelper.getAllCommits(commitList);
         } else {
-            Map<Long, String> mapTags = gitHelper.getCommitNumberTag();
-            LinkedHashMap<Long, String> orderedMap = mapTags.entrySet() //
+            /* Map<Long, String> mapTags = gitHelper.getCommitNumberTag();
+           LinkedHashMap<Long, String> orderedMap = mapTags.entrySet() //
                     .stream() //
                     .sorted(Map.Entry.comparingByKey()) //
                     .collect(Collectors.toMap(Map.Entry::getKey, //
                             Map.Entry::getValue, //
                             (key, content) -> content, //
                             LinkedHashMap::new)); //
-
-            if (mapTags.size() == 0) {
+            */
+            //if (mapTags.size() == 0) {
                 gitHelper.getTwoCommits(commitList, firstcommit, secondcommit);
                 File file = new File(FEATURES_PATH, "runningex");
                 if (!file.exists())
@@ -130,7 +130,7 @@ public class ChangeAnalysis {
                 writerTXT.close();
                 commitList = new GitCommitList(gitHelper);
 
-            } else {
+          /*  } else {
                 int i = 0;
                 for (Map.Entry<Long, String> releases : orderedMap.entrySet()) {
                     //System.out.println("TAG: " + releases.getValue());
@@ -217,7 +217,7 @@ public class ChangeAnalysis {
                         commitList = new GitCommitList(gitHelper);
                     }
                 }
-            }
+            }*/
         }
 
         System.out.println("finished analyzing repo");

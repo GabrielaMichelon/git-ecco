@@ -28,8 +28,7 @@ public class MiningFeatureRevisionsView extends BorderPane {
     ObservableList<Release> data = FXCollections.observableArrayList();
     CheckBoxTreeItem<Object> dummyRoot = new CheckBoxTreeItem<>();
     List<String> selectedReleases = new ArrayList<>();
-    private Button
-            getReleasesButton = new Button("OK");
+    private Button getReleasesButton = new Button("OK");
     private Button cancelButton = new Button("Cancel");
     TreeTableView<Object> releasesTable = new TreeTableView<Object>();
     private Button mineFeatureRevisions = new Button("Mine Feature Revisions");
@@ -144,6 +143,14 @@ public class MiningFeatureRevisionsView extends BorderPane {
 
         getReleasesButton.setOnAction(event -> {
             try {
+                // in case the button is clicked for the second time, it is necessary to clean the treetableview
+                if (releasesTable.getRoot() != null) {
+                    releasesTable.getRoot().getChildren().removeAll(releasesTable.getRoot().getChildren());
+                    releasesTable.setRoot(null);
+                    releasesTable.getSelectionModel().clearSelection();
+                    data.removeAll(data);
+                }
+
                 Map<Long, String> releases = MiningFeatureRevisions.showReleases(repositoryDirTextField.getText());
 
                 TreeTableColumn<Object, Boolean> treeTableColumnCheckBox = new TreeTableColumn<>("Select");
@@ -188,6 +195,7 @@ public class MiningFeatureRevisionsView extends BorderPane {
 
                 releasesTable.getColumns().setAll(treeTableColumnCheckBox, treeTableColumnRelease, treeTableColumnCommitNumber);
                 setTop(toolBar);
+                toolBar.getItems().removeAll(toolBar.getItems());
                 toolBar.getItems().addAll(mineFeatureRevisions);
 
                 SplitPane splitPane = new SplitPane();

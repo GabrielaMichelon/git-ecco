@@ -1,7 +1,6 @@
 package at.jku.isse.gitecco.gui;
 
 
-import at.jku.isse.ecco.gui.MainView;
 import at.jku.isse.gitecco.core.git.GitHelper;
 import at.jku.isse.gitecco.translation.changepropagation.*;
 import javafx.beans.property.BooleanProperty;
@@ -334,7 +333,6 @@ public class ChangeAnalysisView extends BorderPane {
                     @Override
                     public void handle(ActionEvent e) {
                         toolBar.setDisable(true);
-
                         Collection<FileChange> selectedChanges = new ArrayList<>();
                         for (ChangeAnalysisView.FileChange fileChange : data) {
                             if (fileChange.isPropagateChange())
@@ -372,7 +370,7 @@ public class ChangeAnalysisView extends BorderPane {
                                 }
                             }
                             try {
-                                GitHelper.changePropagation(mergeDir, repositoryDirTextField.getText(), firstcommitTextField.getText(), secondcommitTextField.getText(), filesAdded, filesRemoved, filesChanged);
+                                openDialog("Choose a Directory", new DirectoryView(mergeDir, repositoryDirTextField.getText(), firstcommitTextField.getText(), secondcommitTextField.getText(), filesAdded, filesRemoved, filesChanged));
                             } catch (Exception ex) {
                                 ex.printStackTrace();
                             }
@@ -573,6 +571,7 @@ public class ChangeAnalysisView extends BorderPane {
         table.getColumns().add(colBtn);
 
     }
+
 
     public static class FileChange {
         private BooleanProperty propagateChange = new SimpleBooleanProperty(false);

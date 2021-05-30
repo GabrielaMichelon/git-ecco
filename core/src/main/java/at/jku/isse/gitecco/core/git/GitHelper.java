@@ -1168,10 +1168,10 @@ public class GitHelper {
      *
      * @param firstCommit  The commit which should be applied the changes
      * @param secondCommit The commit which changes are chosen to be propagated
-     * @return
+     * @return true
      * @throws Exception
      */
-    public static void changePropagation(File mergeDir, String gitDir, String firstCommit, String secondCommit, ArrayList<String> filesAdded, ArrayList<String> filesRemoved, Map<String, FileChange> filesChanged) throws Exception {
+    public static Boolean changePropagation(File mergeDir, String gitDir, String firstCommit, String secondCommit, ArrayList<String> filesAdded, ArrayList<String> filesRemoved, Map<String, FileChange> filesChanged) throws Exception {
 
         File gitDirectory = new File(gitDir);
         Map<String, ArrayList<String>> filesToWrite = new HashMap<>();
@@ -1223,7 +1223,7 @@ public class GitHelper {
             }
             Files.write(Paths.get(mergeDir + File.separator + change.getKey()), linesToWrite, Charset.defaultCharset());
         }
-
+        return true;
     }
 
 }
