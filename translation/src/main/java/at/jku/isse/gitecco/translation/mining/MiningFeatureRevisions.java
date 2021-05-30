@@ -148,12 +148,12 @@ public class MiningFeatureRevisions {
                     initVars(folderRelease);
                     for (GitCommit commits : commitList) {
                         configurations.clear();
-                        characteristicsChange(gitHelper, new File(RESULTS_PATH), commits, featureNamesList, featureRevisionsRelease);
+                        characteristicsChange(gitHelper, file, commits, featureNamesList, featureRevisionsRelease);
                         //dispose tree if it is not needed -> for memory saving reasons.
                         commits.disposeTree();
                     }
                     //RQ.2 How many times one feature changed along a number of Git commits?
-                    File filetxt = new File(RESULTS_PATH, "TimesEachFeatureChanged.txt");
+                    File filetxt = new File(file, "TimesEachFeatureChanged.txt");
                     PrintWriter writerTXT = new PrintWriter(filetxt.getAbsolutePath(), "UTF-8");
                     for (Map.Entry<Feature, Integer> featureRevision : featureVersions.entrySet()) {
                         if (featureRevision.getValue() > 1)
@@ -466,6 +466,20 @@ public class MiningFeatureRevisions {
             e.printStackTrace();
         }
 
+        //append results to the feature report csv
+        try {
+            FileAppender csvAppender = new FileAppender(new File(releaseFolder, fileReportFeature));
+            List<List<String>> contentRows = Arrays.asList(
+                    Arrays.asList(Long.toString(gc.getNumber()), newFeatures.toString(), countFeaturesChanged.toString())
+            );
+            for (List<String> rowData : contentRows) {
+                csvAppender.append(String.join(",", rowData));
+            }
+            csvAppender.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        //end append results to the feature report csv
 
         for (Map.Entry<Feature, Integer> featureRevision : featureVersions.entrySet()) {
             System.out.println(featureRevision.getKey() + "." + featureRevision.getValue());
