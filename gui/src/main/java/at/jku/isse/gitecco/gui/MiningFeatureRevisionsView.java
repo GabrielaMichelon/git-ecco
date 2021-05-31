@@ -1,9 +1,11 @@
 package at.jku.isse.gitecco.gui;
 
 import at.jku.isse.gitecco.translation.mining.MiningFeatureRevisions;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -11,11 +13,15 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.*;
+import javafx.scene.input.*;
 import javafx.scene.layout.*;
 import javafx.stage.DirectoryChooser;
+import javafx.stage.Window;
 import javafx.util.Callback;
+import sun.reflect.generics.tree.Tree;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -85,6 +91,29 @@ public class MiningFeatureRevisionsView extends BorderPane {
         gridPane.add(cancelButton, 1, row[0], 1, 1);
 
         row[0]++;
+
+        releasesTable.getSelectionModel().setCellSelectionEnabled(true);
+
+        releasesTable.setOnMouseClicked(new EventHandler<MouseEvent>() {
+            @Override
+            public void handle(MouseEvent event) {
+                String elementTableSelected = "";
+                TreeItem<Object> object = releasesTable.getSelectionModel().getSelectedCells().get(0).getTreeItem();
+                if(object.getValue() instanceof Commit && releasesTable.getSelectionModel().getSelectedCells().get(0).getColumn() == 3)
+                    elementTableSelected = ((Commit) object.getValue()).getCommitHash();
+                else if(object.getValue() instanceof Commit && releasesTable.getSelectionModel().getSelectedCells().get(0).getColumn() == 4)
+                    elementTableSelected = ((Commit) object.getValue()).getFeatureRevisions().toString();
+                else if(object.getValue() instanceof Release)
+                    elementTableSelected = ((Release) object.getValue()).getName();
+                final Clipboard clipboard = Clipboard.getSystemClipboard();
+                final ClipboardContent content = new ClipboardContent();
+                content.putString(elementTableSelected);
+                clipboard.setContent(content);
+                Alert a = new Alert(Alert.AlertType.INFORMATION);
+                a.setContentText("Copied to Clip board Content "+elementTableSelected);
+                a.show();
+            }
+        });
 
         //button action
         cancelButton.setOnAction(event -> repositoryDirTextField.setText("Open the folder directory containing the Git project"));
@@ -220,7 +249,7 @@ public class MiningFeatureRevisionsView extends BorderPane {
                     selectedCommits = new ArrayList<>();
                     selectChildrenCommits(root);
                 }
-                if (!selectedCommits.isEmpty() && selectedCommits.size()>=2) {
+                if (!selectedCommits.isEmpty() && selectedCommits.size() >= 2) {
                     ChangeAnalysisView.firstcommitTextField.setText(selectedCommits.get(0));
                     ChangeAnalysisView.secondcommitTextField.setText(selectedCommits.get(1));
                     ChangeAnalysisView.repositoryDirTextField.setText(repositoryDirTextField.getText());
@@ -332,8 +361,8 @@ public class MiningFeatureRevisionsView extends BorderPane {
 
     private void selectChildrenCommits(TreeItem<Object> root) {
         for (TreeItem<Object> child : root.getChildren()) {
-            for (TreeItem<Object> childRelease: child.getChildren()) {
-                if(childRelease.getValue() instanceof Commit) {
+            for (TreeItem<Object> childRelease : child.getChildren()) {
+                if (childRelease.getValue() instanceof Commit) {
                     Commit commit = (Commit) childRelease.getValue();
                     if (commit.getSelectBoolean().equals(true)) {
                         selectedCommits.add(commit.getCommitHash());
