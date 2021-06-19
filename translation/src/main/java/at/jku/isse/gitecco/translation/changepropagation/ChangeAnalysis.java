@@ -17,6 +17,7 @@ import at.jku.isse.gitecco.translation.visitor.GetNodesForChangeVisitor;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.opencsv.CSVWriter;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.glassfish.grizzly.http.server.accesslog.FileAppender;
 
 import java.io.*;
@@ -563,7 +564,7 @@ public class ChangeAnalysis {
         for (Map.Entry<Change, FileNode> changeInsert : changesDelete.entrySet()) {
             Change change = changeInsert.getKey();
             FileNode childAux = changeInsert.getValue();
-            FileNode child = gc1.getTree().getChild(childAux.getFilePath());
+            FileNode child = childAux;//gc1.getTree().getChild(childAux.getFilePath());
             visitor.setChange(change);
             child.accept(visitor, null);
             deletedNodes.addAll(visitor.getchangedNodes());
@@ -650,19 +651,31 @@ public class ChangeAnalysis {
                         }
                     }
 
-                    List<String> linesFile = changedNode.getParent().getParent().getContainingFile().getFileContent();
+                    List<String> linesFile = changedNode.getContainingFileLines();
 
+                    Boolean mapExist = false;
+                    Changes mapAux = new Changes();;
+                    for (Map<String, List<String>> map:results.keySet()) {
+                        if(map.get(changedNode.getContainingFile().getFilePath()) != null){
+                            mapExist = true;
+                            mapAux = results.get(map);
+                        }
+                    }
 
                     //new file
                     if (!changedFiles.contains(changedNode.getContainingFile().getFilePath())) {
-                        if (results.get(changedNode.getContainingFile().getFilePath()) != null) {
+                        if (mapExist) {
                             ArrayList<Integer> linesInsertArray = new ArrayList<>();
                             linesInsertArray.addAll(linesInsert);
                             AddedFile addedFile = new AddedFile(linesInsertArray, featureInteraction, featureMightBeAffected);
-                            Changes changes = results.get(changedNode.getContainingFile().getFilePath());
+                            Changes changes = mapAux;
                             changes.addAddedFiles(addedFile);
                             Map<String, List<String>> mapFile = new HashMap<>();
-                            mapFile.put(changedNode.getContainingFile().getFilePath(), linesFile);
+                            for ( Map<String, List<String>> mapresults: results.keySet()) {
+                                if(mapresults.keySet().contains(changedNode.getContainingFile().getFilePath())){
+                                    mapFile = mapresults;
+                                }
+                            }
                             results.computeIfPresent(mapFile, (k, v) -> changes);
                         } else {
                             ArrayList<Integer> linesInsertArray = new ArrayList<>();
@@ -675,16 +688,20 @@ public class ChangeAnalysis {
                             results.put(mapFile, changes);
                         }
                     } else { //changed file
-                        if (results.get(changedNode.getContainingFile().getFilePath()) != null) {
+                        if (mapExist) {
                             ArrayList<Integer> linesInsertArray = new ArrayList<>();
                             ArrayList<Integer> linesRemovedArray = new ArrayList<>();
                             linesInsertArray.addAll(linesInsert);
                             linesRemovedArray.addAll(linesRemoved);
                             ChangedFile changedFile = new ChangedFile(linesInsertArray, linesRemovedArray, featureInteraction, featureMightBeAffected);
-                            Changes changes = results.get(changedNode.getContainingFile().getFilePath());
+                            Changes changes = mapAux;
                             changes.addChangedFiles(changedFile);
                             Map<String, List<String>> mapFile = new HashMap<>();
-                            mapFile.put(changedNode.getContainingFile().getFilePath(), linesFile);
+                            for ( Map<String, List<String>> mapresults: results.keySet()) {
+                                if(mapresults.keySet().contains(changedNode.getContainingFile().getFilePath())){
+                                    mapFile = mapresults;
+                                }
+                            }
                             results.computeIfPresent(mapFile, (k, v) -> changes);
                         } else {
                             ArrayList<Integer> linesInsertArray = new ArrayList<>();
@@ -824,8 +841,8 @@ public class ChangeAnalysis {
                             if (!fea.equals(featpropagate)) {
                                 featureInteraction.add(fea.getName());
                                 System.out.println(fea.getName());
-                            }
-                        }
+                    }
+                }
 
                         System.out.println("Feature might be affected: ");
                         for (Map.Entry<Feature, Integer> fea : config.entrySet()) {
@@ -834,25 +851,40 @@ public class ChangeAnalysis {
                                 System.out.println(fea.getKey().getName());
                             }
                         }
-                        List<String> linesFile = new ArrayList<>();
+                        List<String> linesFile = deletedNode.getContainingFileLines();
                         if (deletedNode.getContainingFile().getPreviousFileContent().size() == 0 && deletedNode.getContainingFile().getFileContent().size() == 0) {
                             for (ConditionalNode changedNode : changedNodes) {
                                 if (changedNode.getContainingFile().getFilePath().equals(deletedNode.getContainingFile().getFilePath()))
                                     linesFile = changedNode.getContainingFile().getPreviousFileContent();
                             }
                         } else {
-                            linesFile = deletedNode.getParent().getParent().getContainingFile().getFileContent();
+                            linesFile = deletedNode.getContainingPreviousFileLines();
+                        }
+
+
+                        Boolean mapExist = false;
+                        Changes mapAux = new Changes();;
+                        for (Map<String, List<String>> map:results.keySet()) {
+                            if(map.get(deletedNode.getContainingFile().getFilePath()) != null){
+                                mapExist = true;
+                                mapAux = results.get(map);
+                            }
                         }
 
                         //new file
                         if (!changedFiles.contains(deletedNode.getContainingFile().getFilePath())) {
-                            if (results.get(deletedNode.getContainingFile().getFilePath()) != null) {
+                            if (mapExist) {
                                 ArrayList<Integer> linesRemoveArray = new ArrayList<>();
                                 linesRemoveArray.addAll(linesRemoved);
                                 AddedFile addedFile = new AddedFile(linesRemoveArray, featureInteraction, featureMightBeAffected);
-                                Changes changes = results.get(deletedNode.getContainingFile().getFilePath());
+                                Changes changes = mapAux;
                                 changes.addAddedFiles(addedFile);
                                 Map<String, List<String>> mapFile = new HashMap<>();
+                                for ( Map<String, List<String>> mapresults: results.keySet()) {
+                                    if(mapresults.keySet().contains(deletedNode.getContainingFile().getFilePath())){
+                                        mapFile = mapresults;
+                                    }
+                                }
                                 List<String> fileLines = deletedNode.getParent().getParent().getContainingFile().getFileContent();
                                 mapFile.put(deletedNode.getContainingFile().getFilePath(), fileLines);
                                 results.computeIfPresent(mapFile, (k, v) -> changes);
@@ -867,13 +899,19 @@ public class ChangeAnalysis {
                                 results.put(mapFile, changes);
                             }
                         } else if (!changedFilesNext.contains(deletedNode.getContainingFile().getFilePath())) { //deleted file
-                            if (results.get(deletedNode.getContainingFile().getFilePath()) != null) {
+                            if (mapExist) {
                                 ArrayList<Integer> linesRemovedArray = new ArrayList<>();
                                 linesRemovedArray.addAll(linesRemoved);
                                 DeletedFile deletedFile = new DeletedFile(linesRemovedArray, featureInteraction, featureMightBeAffected);
-                                Changes changes = results.get(deletedNode.getContainingFile().getFilePath());
+                                Changes changes = mapAux;
                                 changes.addDeletedFiles(deletedFile);
                                 Map<String, List<String>> mapFile = new HashMap<>();
+                                for ( Map<String, List<String>> mapresults: results.keySet()) {
+                                    if(mapresults.keySet().contains(deletedNode.getContainingFile().getFilePath())){
+                                        mapFile = mapresults;
+                                    }
+                                }
+                                List<String> fileLines = deletedNode.getParent().getParent().getContainingFile().getFileContent();
                                 mapFile.put(deletedNode.getContainingFile().getFilePath(), linesFile);
                                 results.computeIfPresent(mapFile, (k, v) -> changes);
                             } else {
@@ -887,14 +925,20 @@ public class ChangeAnalysis {
                                 results.put(mapFile, changes);
                             }
                         } else {//changed file
-                            if (results.get(deletedNode.getContainingFile().getFilePath()) != null) {
+                            if (mapExist) {
                                 ArrayList<Integer> linesInsertArray = new ArrayList<>();
                                 ArrayList<Integer> linesRemovedArray = new ArrayList<>();
                                 linesRemovedArray.addAll(linesRemoved);
                                 ChangedFile changedFile = new ChangedFile(linesInsertArray, linesRemovedArray, featureInteraction, featureMightBeAffected);
-                                Changes changes = results.get(deletedNode.getContainingFile().getFilePath());
+                                Changes changes = mapAux;
                                 changes.addChangedFiles(changedFile);
                                 Map<String, List<String>> mapFile = new HashMap<>();
+                                for ( Map<String, List<String>> mapresults: results.keySet()) {
+                                    if(mapresults.keySet().contains(deletedNode.getContainingFile().getFilePath())){
+                                        mapFile = mapresults;
+                                    }
+                                }
+                                List<String> fileLines = deletedNode.getParent().getParent().getContainingFile().getFileContent();
                                 mapFile.put(deletedNode.getContainingFile().getFilePath(), linesFile);
                                 results.computeIfPresent(mapFile, (k, v) -> changes);
                             } else {
