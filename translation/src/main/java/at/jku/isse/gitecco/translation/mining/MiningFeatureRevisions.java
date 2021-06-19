@@ -63,7 +63,7 @@ public class MiningFeatureRevisions {
     }
 
 
-    public static Map<String, Map<String, ArrayList<String>>> MiningFeatureRevisions(String repoPath, String RESULTS_PATH, List<String> selectedReleases, Boolean identifyFeatureRequired) throws Exception {
+    public static Map<String, ArrayList<String>> MiningFeatureRevisions(String repoPath, String RESULTS_PATH, List<String> selectedReleases, Boolean identifyFeatureRequired) throws Exception {
         if (repoPath.contains("//")) {
             repoPath.replaceAll("//", File.separator);
         }
@@ -80,7 +80,7 @@ public class MiningFeatureRevisions {
 
         final GitHelper gitHelper = new GitHelper(repoPath, null);
         GitCommitList commitList = new GitCommitList(gitHelper);
-        Map<String, Map<String, ArrayList<String>>> featureRevisionsRelease = new HashMap<>();
+        Map<String, ArrayList<String>>  featureRevisionsRelease = new HashMap<>();
 
         if (EVERYCOMMIT) {
             //gitHelper.getAllCommits(commitList);
@@ -116,7 +116,7 @@ public class MiningFeatureRevisions {
                         initVars(folderRelease);
                         for (GitCommit commits : commitList) {
                             configurations.clear();
-                            characteristicsChange(releaseName, gitHelper, file, commits, featureNamesList, featureRevisionsRelease);
+                            characteristicsChange(gitHelper, file, commits, featureNamesList, featureRevisionsRelease);
                             //dispose tree if it is not needed -> for memory saving reasons.
                             commits.disposeTree();
                         }
@@ -135,7 +135,6 @@ public class MiningFeatureRevisions {
                 } else {// mine feature revisions in all releases
                     gitHelper.getEveryNthCommit2(commitList, releases.getValue(), null, i, Math.toIntExact(releases.getKey()), EVERY_NTH_COMMIT);
                     i = Math.toIntExact(releases.getKey()) + 1;
-                    String releaseName = releases.getValue().substring(releases.getValue().lastIndexOf("/") + 1);
                     File file = new File(RESULTS_PATH, releases.getValue().substring(releases.getValue().lastIndexOf("/") + 1));
                     if (!file.exists())
                         file.mkdir();
@@ -149,7 +148,7 @@ public class MiningFeatureRevisions {
                     initVars(folderRelease);
                     for (GitCommit commits : commitList) {
                         configurations.clear();
-                        characteristicsChange(releaseName, gitHelper, file, commits, featureNamesList, featureRevisionsRelease);
+                        characteristicsChange(gitHelper, file, commits, featureNamesList, featureRevisionsRelease);
                         //dispose tree if it is not needed -> for memory saving reasons.
                         commits.disposeTree();
                     }
@@ -170,7 +169,7 @@ public class MiningFeatureRevisions {
     }
 
 
-    private static void characteristicsChange(String releaseName, GitHelper gitHelper, File releaseFolder, GitCommit gc, ArrayList<String> featureNamesList, Map<String, Map<String, ArrayList<String>>> featureRevisionsRelease) throws Exception {
+    private static void characteristicsChange(GitHelper gitHelper, File releaseFolder, GitCommit gc, ArrayList<String> featureNamesList, Map<String, ArrayList<String>>  featureRevisionsRelease) throws Exception {
         final File gitFolder = new File(gitHelper.getPath());
         final File eccoFolder = new File(gitFolder.getParent(), "ecco");
 
@@ -452,25 +451,14 @@ public class MiningFeatureRevisions {
                 for (List<String> rowData : headerRows) {
                     csvWriter.append(String.join(",", rowData));
                 }
-
-                if (featureRevisionsRelease.get(releaseName) != null) {
-                    Map<String, ArrayList<String>> commitsMap = featureRevisionsRelease.get(releaseName);
-                    if (commitsMap.get(gc.getCommitName()) != null) {
-                        ArrayList<String> commits = commitsMap.get(gc.getCommitName());
-                        commits.add(configs);
-                        commitsMap.computeIfPresent(gc.getCommitName(), (k, v) -> commits);
-                    } else {
-                        ArrayList<String> commits = new ArrayList<>();
-                        commits.add(configs);
-                        commitsMap.put(gc.getCommitName(), commits);
-                    }
-                    featureRevisionsRelease.computeIfPresent(releaseName, (k, v) -> commitsMap);
+                if (featureRevisionsRelease.get(gc.getCommitName()) != null) {
+                    ArrayList<String> commits = featureRevisionsRelease.get(gc.getCommitName());
+                    commits.add(configs);
+                    featureRevisionsRelease.computeIfPresent(gc.getCommitName(), (k, v) -> commits);
                 } else {
-                    Map<String, ArrayList<String>> commitsMap = new HashMap<>();
                     ArrayList<String> commits = new ArrayList<>();
                     commits.add(configs);
-                    commitsMap.put(gc.getCommitName(), commits);
-                    featureRevisionsRelease.put(releaseName, commitsMap);
+                    featureRevisionsRelease.put(gc.getCommitName(), commits);
                 }
             }
             csvWriter.close();
