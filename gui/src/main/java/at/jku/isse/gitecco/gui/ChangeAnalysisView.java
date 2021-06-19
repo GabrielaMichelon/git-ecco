@@ -25,10 +25,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
-import javafx.stage.DirectoryChooser;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
-import javafx.stage.StageStyle;
+import javafx.stage.*;
 import javafx.util.Callback;
 import org.fxmisc.richtext.InlineCssTextArea;
 
@@ -45,10 +42,11 @@ public class ChangeAnalysisView extends BorderPane {
     private Label headerLabel = new Label();
     private ChangeAnalysis changeAnalysis;
     final TableView<FileChange> table = new TableView<FileChange>();
-    static TextField firstcommitTextField = new TextField("a29e19a4557aa53f123767a5ae0284c01c79390d");//Commit Hash");
-    static TextField secondcommitTextField = new TextField("edbd3d94f93db29d45ff0b7e3e4cbb5933564653");//Commit Hash");
-    static TextField repositoryDirTextField = new TextField("C:\\Users\\gabil\\Desktop\\PHD\\New research\\ChangePropagation\\runningexample");//Open the folder directory");
-    static TextField featureTextField = new TextField("featA");//"Feature Name");
+    static TextField firstcommitTextField = new TextField("10920fc67816f8184499d83ca5786885730fa4b8");//Commit Hash");
+    static TextField secondcommitTextField = new TextField("e0c969bb41008fc20871045b5d3e218ef5dda551");//Commit Hash");
+    static TextField repositoryDirTextField = new TextField("C:\\Users\\gabil\\Desktop\\PHD\\New research\\ChangePropagation\\libssh");//Open the folder directory");
+    static TextField featuresSystemTextField =  new TextField("Select the file containing the features name of the system if it exists");
+    static TextField featureTextField = new TextField("WITH_SFTP");//"Feature Name");
 
     public ChangeAnalysisView() {
 
@@ -84,6 +82,19 @@ public class ChangeAnalysisView extends BorderPane {
 
         Button selectRepositoryDirectoryButton = new Button("...");
         gridPane.add(selectRepositoryDirectoryButton, 2, row[0], 1, 1);
+
+        row[0]++;
+
+        Label featuresDirLabel = new Label("TXT file containing features: ");
+        gridPane.add(featuresDirLabel, 0, row[0], 1, 1);
+
+
+        featuresSystemTextField.setDisable(false);
+        featuresDirLabel.setLabelFor(featuresSystemTextField);
+        gridPane.add(featuresSystemTextField, 1, row[0], 1, 1);
+
+        Button selectFeaturesDirectoryButton = new Button("...");
+        gridPane.add(selectFeaturesDirectoryButton, 2, row[0], 1, 1);
 
         row[0]++;
 
@@ -166,7 +177,7 @@ public class ChangeAnalysisView extends BorderPane {
                     table.getSelectionModel().clearSelection();
                     data.removeAll(data);
                 }
-                Map<Map<String, List<String>>, Changes> returnMethod = this.changeAnalysis.identification(repositoryDirTextField.getText(), firstcommitTextField.getText(), secondcommitTextField.getText(), featureTextField.getText());
+                Map<Map<String, List<String>>, Changes> returnMethod = this.changeAnalysis.identification(featuresSystemTextField.getText(), repositoryDirTextField.getText(), firstcommitTextField.getText(), secondcommitTextField.getText(), featureTextField.getText());
                 rowaux[0]++;
                 for (Map.Entry<Map<String, List<String>>, Changes> changes : returnMethod.entrySet()) {
                     Map<String, List<String>> changesKey = changes.getKey();
@@ -403,6 +414,24 @@ public class ChangeAnalysisView extends BorderPane {
             final File selectedDirectory = directoryChooser.showDialog(this.getScene().getWindow());
             if (selectedDirectory != null) {
                 repositoryDirTextField.setText(selectedDirectory.toPath().toString());
+            }
+        });
+
+        selectFeaturesDirectoryButton.setOnAction(event -> {
+            final FileChooser fileChooser = new FileChooser();
+            try {
+                File directory = new File(featuresSystemTextField.getText());
+                if (directory.exists() && directory.isFile())
+                    fileChooser.setInitialDirectory(directory.getParentFile());
+            } catch (Exception e) {
+                // do nothing
+            }
+            fileChooser.getExtensionFilters().addAll(
+                    new FileChooser.ExtensionFilter("Text Files", "*.txt")
+            );
+            final File selectedDirectory = fileChooser.showOpenDialog(this.getScene().getWindow());
+            if (selectedDirectory != null) {
+                featuresSystemTextField.setText(selectedDirectory.toPath().toString());
             }
         });
 

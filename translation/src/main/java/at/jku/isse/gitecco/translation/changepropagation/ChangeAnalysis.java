@@ -54,7 +54,7 @@ public class ChangeAnalysis {
     private static String backup = "C:\\Users\\gabil\\Desktop\\PHD\\New research\\ChangePropagation\\backup";
 
 
-    public static Map<Map<String, List<String>>, Changes> identification(String REPO_PATH, String firstcommit, String secondcommit, String featpropagatename) throws Exception {
+    public static Map<Map<String, List<String>>, Changes> identification(String featuresRepo, String REPO_PATH, String firstcommit, String secondcommit, String featpropagatename) throws Exception {
         if (REPO_PATH.contains("//")) {
             REPO_PATH.replaceAll("//", File.separator);
         }
@@ -67,6 +67,13 @@ public class ChangeAnalysis {
         if (FEATURES_PATH.contains("\\\\")) {
             FEATURES_PATH.replaceAll("\\\\", File.separator);
         }
+        if(featuresRepo.contains("//")) {
+            featuresRepo.replaceAll("//", File.separator);
+        }
+        if (featuresRepo.contains("\\\\")) {
+            featuresRepo.replaceAll("\\\\", File.separator);
+        }
+        FEATURES_TXT = featuresRepo;
 
         Feature featpropagate = new Feature(featpropagatename);
         Map<Map<String, List<String>>, Changes> results = new HashMap<>();
@@ -107,7 +114,8 @@ public class ChangeAnalysis {
                 if (!idFeatsfolder.exists())
                     idFeatsfolder.mkdir();
                 //feature identification
-                if (FEATURES_TXT.contains(".txt"))
+                final File featuresTXT = new File(FEATURES_TXT);
+                if (featuresTXT.exists())
                     addFeatures();
                 else
                     identifyFeatures(commitList, "runningex", idFeatsfolder);
