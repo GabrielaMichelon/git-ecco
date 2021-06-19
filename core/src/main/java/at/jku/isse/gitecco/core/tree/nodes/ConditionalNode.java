@@ -226,4 +226,19 @@ public abstract class ConditionalNode extends ConditionNode {
         return ((BaseNode) n).getFileNode();
     }
 
+    public List<String> getContainingFileLines() {
+
+        Node n = this;
+        while(!(n instanceof BaseNode)) n = n.getParent();
+
+        return ((BaseNode) n).getFileNode().getFileContent();
+    }
+
+    public List<String> getContainingPreviousFileLines() {
+
+        Node n = this;
+        while(!(n instanceof BaseNode)) n = n.getParent();
+
+        return ((BaseNode) n).getFileNode().getPreviousFileContent();
+    }
 }

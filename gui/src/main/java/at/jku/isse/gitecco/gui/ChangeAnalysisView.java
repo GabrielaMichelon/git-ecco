@@ -25,11 +25,9 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
-import javafx.stage.DirectoryChooser;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
-import javafx.stage.StageStyle;
+import javafx.stage.*;
 import javafx.util.Callback;
+import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.InlineCssTextArea;
 
 import java.io.File;
@@ -45,10 +43,11 @@ public class ChangeAnalysisView extends BorderPane {
     private Label headerLabel = new Label();
     private ChangeAnalysis changeAnalysis;
     final TableView<FileChange> table = new TableView<FileChange>();
-    static TextField firstcommitTextField = new TextField("a29e19a4557aa53f123767a5ae0284c01c79390d");//Commit Hash");
-    static TextField secondcommitTextField = new TextField("edbd3d94f93db29d45ff0b7e3e4cbb5933564653");//Commit Hash");
-    static TextField repositoryDirTextField = new TextField("C:\\Users\\gabil\\Desktop\\PHD\\New research\\ChangePropagation\\runningexample");//Open the folder directory");
-    static TextField featureTextField = new TextField("featA");//"Feature Name");
+    static TextField firstcommitTextField = new TextField("10920fc67816f8184499d83ca5786885730fa4b8");//Commit Hash");
+    static TextField secondcommitTextField = new TextField("e0c969bb41008fc20871045b5d3e218ef5dda551");//Commit Hash");
+    static TextField repositoryDirTextField = new TextField("C:\\Users\\gabil\\Desktop\\PHD\\New research\\ChangePropagation\\libssh");//Open the folder directory");
+    static TextField featuresSystemTextField = new TextField("Select the file containing the features name of the system if it exists");
+    static TextField featureTextField = new TextField("WITH_SFTP");//"Feature Name");
 
     public ChangeAnalysisView() {
 
@@ -84,6 +83,19 @@ public class ChangeAnalysisView extends BorderPane {
 
         Button selectRepositoryDirectoryButton = new Button("...");
         gridPane.add(selectRepositoryDirectoryButton, 2, row[0], 1, 1);
+
+        row[0]++;
+
+        Label featuresDirLabel = new Label("TXT file containing features: ");
+        gridPane.add(featuresDirLabel, 0, row[0], 1, 1);
+
+
+        featuresSystemTextField.setDisable(false);
+        featuresDirLabel.setLabelFor(featuresSystemTextField);
+        gridPane.add(featuresSystemTextField, 1, row[0], 1, 1);
+
+        Button selectFeaturesDirectoryButton = new Button("...");
+        gridPane.add(selectFeaturesDirectoryButton, 2, row[0], 1, 1);
 
         row[0]++;
 
@@ -159,14 +171,14 @@ public class ChangeAnalysisView extends BorderPane {
         final int[] rowaux = {row[0]};
 
         changeAnalysisButton.setOnAction(event -> {
-
+            dataAux.clear();
             try {
                 if (table.getItems().size() > 0) {
                     table.getColumns().removeAll();
                     table.getSelectionModel().clearSelection();
                     data.removeAll(data);
                 }
-                Map<Map<String, List<String>>, Changes> returnMethod = this.changeAnalysis.identification(repositoryDirTextField.getText(), firstcommitTextField.getText(), secondcommitTextField.getText(), featureTextField.getText());
+                Map<Map<String, List<String>>, Changes> returnMethod = this.changeAnalysis.identification(featuresSystemTextField.getText(), repositoryDirTextField.getText(), firstcommitTextField.getText(), secondcommitTextField.getText(), featureTextField.getText());
                 rowaux[0]++;
                 for (Map.Entry<Map<String, List<String>>, Changes> changes : returnMethod.entrySet()) {
                     Map<String, List<String>> changesKey = changes.getKey();
@@ -242,7 +254,7 @@ public class ChangeAnalysisView extends BorderPane {
                 for (int i = 0; i < dataAux.size(); i++) {
                     FileChange fc = dataAux.get(i);
                     if (fc.getLines().contains("Lines removed: []")) {
-                        for (int j = 1; j < dataAux.size(); j++) {
+                        for (int j = 0; j < dataAux.size(); j++) {
                             FileChange fcaux = dataAux.get(j);
                             if (fc.getFileName().equals(fcaux.getFileName())) {
                                 if (!fcaux.getLines().contains("Lines removed: []")) {
@@ -250,11 +262,17 @@ public class ChangeAnalysisView extends BorderPane {
                                     String replacelines = fc.getLines().replace("Lines removed: []", "Lines removed: [" + linesremoved);
                                     fc.setLines(replacelines);
                                     fc.setPreviousfileLines(fcaux.getFileLines());
-                                    data.add(fc);
+                                    if(!data.contains(fc))
+                                        data.add(fc);
                                     break;
                                 }
                             }
                         }
+                    }else if(!fc.getLines().contains("Lines added: []")){
+                        if(!data.contains(fc))
+                            data.add(fc);
+                    }else  if(!data.contains(fc)) {
+                        data.add(fc);
                     }
                 }
 
@@ -406,6 +424,24 @@ public class ChangeAnalysisView extends BorderPane {
             }
         });
 
+        selectFeaturesDirectoryButton.setOnAction(event -> {
+            final FileChooser fileChooser = new FileChooser();
+            try {
+                File directory = new File(featuresSystemTextField.getText());
+                if (directory.exists() && directory.isFile())
+                    fileChooser.setInitialDirectory(directory.getParentFile());
+            } catch (Exception e) {
+                // do nothing
+            }
+            fileChooser.getExtensionFilters().addAll(
+                    new FileChooser.ExtensionFilter("Text Files", "*.txt")
+            );
+            final File selectedDirectory = fileChooser.showOpenDialog(this.getScene().getWindow());
+            if (selectedDirectory != null) {
+                featuresSystemTextField.setText(selectedDirectory.toPath().toString());
+            }
+        });
+
     }
 
     private void stepProgress() {
@@ -454,7 +490,6 @@ public class ChangeAnalysisView extends BorderPane {
         InlineCssTextArea result = new InlineCssTextArea();
         //result.setStyle("-fx-font-family: 'monospaced';");
         //result.setStyle("-fx-font-size: 13px;");
-
         int i = 1;
         String[] index = data.getLines().split(",");
         String linesaddinit = "";
@@ -476,38 +511,48 @@ public class ChangeAnalysisView extends BorderPane {
             linesaddend = index[1].replaceAll(" ", "");
             signal = "+";
         } else {
-            linesaddinit = index[0].substring(index[0].indexOf("added: [") + 8).replaceAll(" ", "");
-            linesaddend = index[1].replaceAll(" ", "");
-            linesremovedinit = index[2].substring(index[2].indexOf("removed: [") + 10).replaceAll(" ", "");
-            linesremovedend = index[3].replaceAll(" ", "");
+            if (!index[0].contains("added: []")) {
+                linesaddinit = index[0].substring(index[0].indexOf("added: [") + 8).replaceAll(" ", "");
+                linesaddend = index[1].replaceAll(" ", "");
+                linesremovedinit = index[2].substring(index[2].indexOf("removed: [") + 10).replaceAll(" ", "");
+                linesremovedend = index[3].replaceAll(" ", "");
+            } else {
+                linesremovedinit = index[0].substring(index[0].indexOf("removed: [") + 10).replaceAll(" ", "");
+                linesremovedend = index[1].replaceAll(" ", "");
+            }
         }
 
 
         if (data.getChangeType().equals("Changed File")) {
             for (String line : data.getFileLines()) {
-                if (i - 1 >= Integer.valueOf(linesaddinit) && i - 1 <= Integer.valueOf(linesaddend)) {
-                    result.setStyle(i - 1, "-rtfx-background-color: #dcffe4");
-                    result.appendText(i + "\t+\t" + line + "\n");
+                //System.out.println("result.length "+result.getParagraphStyleForInsertionAt(i)+" i: "+i);
+                if (!linesaddinit.equals("") && i - 1 >= Integer.valueOf(linesaddinit) && i - 1 <= Integer.valueOf(linesaddend)) {
+                    result.setStyle(i-1, "-rtfx-background-color: #dcffe4");
+                    result.appendText(i + " \t+\t" + line + "\n");
                     //} else if (i >= Integer.valueOf(linesremovedinit) && i <= Integer.valueOf(linesremovedend) && i < data.getFileLines().size()) {
                     //    result.appendText(i + "\t-\t" + line + "\n");
                     //    result.setStyle("-fx-background-color: #ffdce0");
                     if (i - 1 >= Integer.valueOf(linesremovedinit) && i - 1 <= Integer.valueOf(linesremovedend)) {
-                        result.setStyle(i, "-rtfx-background-color: #ffdce0");
-                        result.appendText(i + "\t-\t" + data.getPreviousfileLines().get(i - 1) + "\n");
+                        result.setStyle(i-1, "-rtfx-background-color: #ffdce0");
+                        result.appendText(i + "\t-\t" + data.getFileLines().get(i - 1) + "\n");
                     }
                 } else if (i - 1 >= Integer.valueOf(linesremovedinit) && i - 1 <= Integer.valueOf(linesremovedend)) {
-                    result.setStyle(i - 1, "-rtfx-background-color: #ffdce0");
-                    result.appendText(i + "\t-\t" + data.getPreviousfileLines().get(i - 1));
-                } else if (i - 1 < Integer.valueOf(linesaddinit)) {
-                    result.setStyle(i - 1, "-rtfx-background-color: transparent");
-                    result.appendText(i + "\t" + line + "\n");
+                    result.setStyle(i-1, "-rtfx-background-color: #ffdce0");
+                    result.appendText(i + " \t-\t" + data.getFileLines().get(i - 1) + "\n");
+                } else if (!linesaddinit.equals("") && i - 1 < Integer.valueOf(linesaddinit)) {
+                    result.setStyle(i-1, "-rtfx-background-color: transparent");
+                    result.appendText(i + " \t" + line + "\n");
                 } else if (i - 1 < data.getFileLines().size() - 1 && i - 1 > Integer.valueOf(linesremovedend)) {
-                    result.setStyle(i, "-rtfx-background-color: transparent");
-                    result.appendText(i + "\t" + line + "\n");
+                    result.setStyle(i-1, "-rtfx-background-color: transparent");
+                    result.appendText(i + " \t" + line + "\n");
                 } else if (i - 1 < data.getFileLines().size() && i - 1 > Integer.valueOf(linesremovedend)) {
-                    result.setStyle(i, "-rtfx-background-color: transparent");
-                    result.appendText(i + "\t" + line);
+                    //result.setStyle(Integer.valueOf(linesremovedend)+1, "-rtfx-background-color: transparent");
+                    result.appendText(i + " \t" + line + "\n");
+                }else{
+                    result.setStyle(i-1, "-rtfx-background-color: transparent");
+                    result.appendText(i + " \t" + line + "\n");
                 }
+
                 i++;
             }
         } else {
@@ -524,15 +569,40 @@ public class ChangeAnalysisView extends BorderPane {
 
         VBox vbox = new VBox();
         result.setPrefWidth(600);
-        Label title = new Label(data.getFileName());
+        result.setPrefHeight(1000);
+        VirtualizedScrollPane<InlineCssTextArea> vsPane = new VirtualizedScrollPane<>(result);
+        vsPane.setMaxWidth(600);
+        vsPane.setMaxHeight(1000);
+
+
+        result.moveTo(0);//result.getLength());
+        result.requestFollowCaret();
+        //Scene scene = new Scene(root, 500, 200);
+        // focus area so can see the caret
+        result.requestFocus();
+        Group root = new Group();
+        root.getChildren().add(vsPane);
+        root.setAutoSizeChildren(true);
+        Scene scene = new Scene(root);
+        stage.setScene(scene);
+        stage.setResizable(false);
+        stage.show();
+
+
+        //result.moveTo(0);
+        //result.requestFollowCaret();
+        /*Label title = new Label(data.getFileName());
         vbox.getChildren().add(title);
         vbox.setAlignment(Pos.CENTER);
-        vbox.getChildren().add(result);
+        vbox.getChildren().add(vsPane);
+        vbox.setVgrow(result,Priority.ALWAYS);
         Group root = new Group();
         root.getChildren().add(vbox);
-        Scene scene = new Scene(root, 600, 600);
+        Scene scene = new Scene(root,600,vbox.getHeight());
+
         stage.setScene(scene);
-        stage.show();
+        stage.setHeight(vbox.getHeight());
+        stage.show();*/
 
     }
 

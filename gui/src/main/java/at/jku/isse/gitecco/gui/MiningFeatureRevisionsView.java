@@ -1,11 +1,9 @@
 package at.jku.isse.gitecco.gui;
 
 import at.jku.isse.gitecco.translation.mining.MiningFeatureRevisions;
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -13,15 +11,12 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.*;
 import javafx.scene.input.*;
 import javafx.scene.layout.*;
 import javafx.stage.DirectoryChooser;
-import javafx.stage.Window;
 import javafx.util.Callback;
-import sun.reflect.generics.tree.Tree;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -35,6 +30,8 @@ public class MiningFeatureRevisionsView extends BorderPane {
     CheckBoxTreeItem<Object> dummyRoot = new CheckBoxTreeItem<>();
     List<String> selectedReleases = new ArrayList<>();
     List<String> selectedCommits = new ArrayList<>();
+    List<String> releasesName = new ArrayList<>();
+    Map<String, Map<String, ArrayList<String>>> featureRevisionsRelease = new HashMap<>();
     private Button getReleasesButton = new Button("OK");
     private Button cancelButton = new Button("Cancel");
     TreeTableView<Object> releasesTable = new TreeTableView<Object>();
@@ -99,18 +96,18 @@ public class MiningFeatureRevisionsView extends BorderPane {
             public void handle(MouseEvent event) {
                 String elementTableSelected = "";
                 TreeItem<Object> object = releasesTable.getSelectionModel().getSelectedCells().get(0).getTreeItem();
-                if(object.getValue() instanceof Commit && releasesTable.getSelectionModel().getSelectedCells().get(0).getColumn() == 3)
+                if (object.getValue() instanceof Commit && releasesTable.getSelectionModel().getSelectedCells().get(0).getColumn() == 3)
                     elementTableSelected = ((Commit) object.getValue()).getCommitHash();
-                else if(object.getValue() instanceof Commit && releasesTable.getSelectionModel().getSelectedCells().get(0).getColumn() == 4)
+                else if (object.getValue() instanceof Commit && releasesTable.getSelectionModel().getSelectedCells().get(0).getColumn() == 4)
                     elementTableSelected = ((Commit) object.getValue()).getFeatureRevisions().toString();
-                else if(object.getValue() instanceof Release)
+                else if (object.getValue() instanceof Release)
                     elementTableSelected = ((Release) object.getValue()).getName();
                 final Clipboard clipboard = Clipboard.getSystemClipboard();
                 final ClipboardContent content = new ClipboardContent();
                 content.putString(elementTableSelected);
                 clipboard.setContent(content);
                 Alert a = new Alert(Alert.AlertType.INFORMATION);
-                a.setContentText("Copied to Clip board Content "+elementTableSelected);
+                a.setContentText("Copied to Clip board Content " + elementTableSelected);
                 a.show();
             }
         });
@@ -213,10 +210,10 @@ public class MiningFeatureRevisionsView extends BorderPane {
                     releaseadd.selectBooleanProperty().bind(root1.selectedProperty());
                     root1.setIndependent(false);
                     dummyRoot.getChildren().add(root1);
-                    for (Commit c : releaseadd.getFeatureRevisionPerCommit()) {
-                        CheckBoxTreeItem<Object> commitsItem = new CheckBoxTreeItem<>(c);
-                        root1.getChildren().add(commitsItem);
-                    }
+                    //for (Commit c : releaseadd.getFeatureRevisionPerCommit()) {
+                    //    CheckBoxTreeItem<Object> commitsItem = new CheckBoxTreeItem<>(c);
+                    //    root1.getChildren().add(commitsItem);
+                    //}
                 }
 
                 releasesTable.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
@@ -253,6 +250,13 @@ public class MiningFeatureRevisionsView extends BorderPane {
                     ChangeAnalysisView.firstcommitTextField.setText(selectedCommits.get(0));
                     ChangeAnalysisView.secondcommitTextField.setText(selectedCommits.get(1));
                     ChangeAnalysisView.repositoryDirTextField.setText(repositoryDirTextField.getText());
+                    String releaseName = "";
+                    if (releaseName != null) {
+                        releaseName = releasesName.get(1);
+                        ChangeAnalysisView.featuresSystemTextField.setText(miningResultsDirTextField.getText() + File.separator + "features-" + releaseName + ".txt");
+                    } else {
+                        ChangeAnalysisView.featuresSystemTextField.setText("");
+                    }
                     ChangeAnalysisView.featureTextField.setText("Type the feature name!");
                     MainView.tabPane.getSelectionModel().select(MainView.changeTab);
                 }
@@ -273,16 +277,18 @@ public class MiningFeatureRevisionsView extends BorderPane {
                     selectChildren(root);
                 }
                 if (!selectedReleases.isEmpty()) {
-                    for (String releaseName : selectedReleases) {
-                        try {
-                            Map<String, ArrayList<String>> featureRevisionsRelease = MiningFeatureRevisions.MiningFeatureRevisions(repositoryDirTextField.getText(), miningResultsDirTextField.getText(), selectedReleases, true);
-                            releasesTable.getColumns().add(3, treeTableColumnCommit);
-                            releasesTable.getColumns().add(4, treeTableColumnFeatures);
+                    try {
+                        featureRevisionsRelease = new HashMap<>();
+                        featureRevisionsRelease = MiningFeatureRevisions.MiningFeatureRevisions(repositoryDirTextField.getText(), miningResultsDirTextField.getText(), selectedReleases, true);
+                        releasesTable.getColumns().add(3, treeTableColumnCommit);
+                        releasesTable.getColumns().add(4, treeTableColumnFeatures);
+                        for (String releaseName : selectedReleases) {
                             for (Release release : data) {
                                 if (release.getName().equals(releaseName)) {
                                     Map<String, ArrayList<String>> commitHashes = new HashMap<>();
                                     ArrayList<Commit> commits = new ArrayList<>();
-                                    for (Map.Entry<String, ArrayList<String>> featuresPerRelease : featureRevisionsRelease.entrySet()) {
+                                    Map<String, ArrayList<String>> releaseMap = featureRevisionsRelease.get(releaseName);
+                                    for (Map.Entry<String, ArrayList<String>> featuresPerRelease : releaseMap.entrySet()) {
                                         if (commitHashes.get(featuresPerRelease.getKey()) != null) {
                                             ArrayList<String> featuresName = commitHashes.get(featuresPerRelease.getKey());
                                             for (String featureName : featuresPerRelease.getValue()) {
@@ -332,9 +338,9 @@ public class MiningFeatureRevisionsView extends BorderPane {
 
                                 }
                             }
-                        } catch (Exception ex) {
-                            ex.printStackTrace();
                         }
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
                     }
                 }
 
@@ -366,6 +372,10 @@ public class MiningFeatureRevisionsView extends BorderPane {
                     Commit commit = (Commit) childRelease.getValue();
                     if (commit.getSelectBoolean().equals(true)) {
                         selectedCommits.add(commit.getCommitHash());
+                        if(child.getValue() instanceof Release) {
+                            Release release = (Release) child.getValue();
+                            releasesName.add(release.name);
+                        }
                         //((CheckBoxTreeItem) child).setSelected(true);
                     }
                 }
