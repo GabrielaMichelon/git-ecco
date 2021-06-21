@@ -21,6 +21,7 @@ import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.glassfish.grizzly.http.server.accesslog.FileAppender;
 
 import java.io.*;
+import java.lang.reflect.Array;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -68,7 +69,7 @@ public class ChangeAnalysis {
         if (FEATURES_PATH.contains("\\\\")) {
             FEATURES_PATH.replaceAll("\\\\", File.separator);
         }
-        if(featuresRepo.contains("//")) {
+        if (featuresRepo.contains("//")) {
             featuresRepo.replaceAll("//", File.separator);
         }
         if (featuresRepo.contains("\\\\")) {
@@ -99,134 +100,44 @@ public class ChangeAnalysis {
                             LinkedHashMap::new)); //
             */
             //if (mapTags.size() == 0) {
-                gitHelper.getTwoCommits(commitList, firstcommit, secondcommit);
-                File file = new File(FEATURES_PATH, "runningex");
-                if (!file.exists())
-                    file.mkdir();
-                String folderRelease = file.getAbsolutePath();
-                final File changeFolder = new File(file, "ChangeCharacteristic");
-                final File folder = new File(file, "FeatureCharacteristic");
-                final File idFeatsfolder = new File(file, "IdentifiedFeatures");
-                // if the directory does not exist, create it
-                if (!changeFolder.exists())
-                    changeFolder.mkdir();
-                if (!folder.exists())
-                    folder.mkdir();
-                if (!idFeatsfolder.exists())
-                    idFeatsfolder.mkdir();
-                //feature identification
-                final File featuresTXT = new File(FEATURES_TXT);
-                if (featuresTXT.exists())
-                    addFeatures();
-                else
-                    identifyFeatures(commitList, "runningex", idFeatsfolder);
-                //
-                initVars(folderRelease);
-                //for (GitCommit commits : commitList) {
-                //ComputeRQMetrics.characteristicsFeature(folder, commits.getNumber(), commits.getTree(), featureNamesList);
-                configurations.clear();
-                characteristicsChange2(gitHelper, changeFolder, commitList, featureNamesList, featpropagate, results);
-                //dispose tree if it is not needed -> for memory saving reasons.
-                //commits.disposeTree();
-                //}
-                //RQ.2 How many times one feature changed along a number of Git commits?
-                File filetxt = new File(folder.getParent(), "TimesEachFeatureChanged.txt");
-                PrintWriter writerTXT = new PrintWriter(filetxt.getAbsolutePath(), "UTF-8");
-                for (Map.Entry<Feature, Integer> featureRevision : featureVersions.entrySet()) {
-                    if (featureRevision.getValue() > 1)
-                        writerTXT.println(featureRevision.getKey() + " Changed " + (featureRevision.getValue() - 1) + " times.");
-                }
-                writerTXT.close();
-                commitList = new GitCommitList(gitHelper);
-
-          /*  } else {
-                int i = 0;
-                for (Map.Entry<Long, String> releases : orderedMap.entrySet()) {
-                    //System.out.println("TAG: " + releases.getValue());
-                    if (!release.equals("")) {
-                        if (releases.getValue().contains(release) || analyze.equals("1")) {
-                            //analyze = "1";
-                            gitHelper.getTwoCommits(commitList, firstcommit, secondcommit);
-                            i = Math.toIntExact(releases.getKey()) + 1;
-                            File file = new File(FEATURES_PATH, releases.getValue().substring(releases.getValue().lastIndexOf("/") + 1));
-                            if (!file.exists())
-                                file.mkdir();
-                            String folderRelease = file.getAbsolutePath();
-                            final File changeFolder = new File(file, "ChangeCharacteristic");
-                            final File folder = new File(file, "FeatureCharacteristic");
-                            final File idFeatsfolder = new File(file, "IdentifiedFeatures");
-                            // if the directory does not exist, create it
-                            if (!changeFolder.exists())
-                                changeFolder.mkdir();
-                            if (!folder.exists())
-                                folder.mkdir();
-                            if (!idFeatsfolder.exists())
-                                idFeatsfolder.mkdir();
-                            //feature identification
-                            if (FEATURES_TXT.contains(".txt"))
-                                addFeatures();
-                            else
-                                identifyFeatures(commitList, releases.getValue(), idFeatsfolder);
-                            //
-                            initVars(folderRelease);
-                            //for (GitCommit commits : commitList) {
-                            //ComputeRQMetrics.characteristicsFeature(folder, commits.getNumber(), commits.getTree(), featureNamesList);
-                            configurations.clear();
-                            characteristicsChange2(gitHelper, changeFolder, commitList, featureNamesList, featpropagate, results);
-                            //dispose tree if it is not needed -> for memory saving reasons.
-                            //commits.disposeTree();
-                            //}
-                            //RQ.2 How many times one feature changed along a number of Git commits?
-                            File filetxt = new File(folder.getParent(), "TimesEachFeatureChanged.txt");
-                            PrintWriter writerTXT = new PrintWriter(filetxt.getAbsolutePath(), "UTF-8");
-                            for (Map.Entry<Feature, Integer> featureRevision : featureVersions.entrySet()) {
-                                if (featureRevision.getValue() > 1)
-                                    writerTXT.println(featureRevision.getKey() + " Changed " + (featureRevision.getValue() - 1) + " times.");
-                            }
-                            writerTXT.close();
-                            commitList = new GitCommitList(gitHelper);
-                        } else {
-                            i = Math.toIntExact(releases.getKey()) + 1;
-                        }
-                    } else {
-                        gitHelper.getEveryNthCommit2(commitList, releases.getValue(), null, i, Math.toIntExact(releases.getKey()), EVERY_NTH_COMMIT);
-                        i = Math.toIntExact(releases.getKey()) + 1;
-                        File file = new File(FEATURES_PATH, releases.getValue().substring(releases.getValue().lastIndexOf("/") + 1));
-                        if (!file.exists())
-                            file.mkdir();
-                        String folderRelease = file.getAbsolutePath();
-                        final File changeFolder = new File(file, "ChangeCharacteristic");
-                        final File folder = new File(file, "FeatureCharacteristic");
-                        final File idFeatsfolder = new File(file, "IdentifiedFeatures");
-                        // if the directory does not exist, create it
-                        if (!changeFolder.exists())
-                            changeFolder.mkdir();
-                        if (!folder.exists())
-                            folder.mkdir();
-                        if (!idFeatsfolder.exists())
-                            idFeatsfolder.mkdir();
-                        //feature identification
-                        identifyFeatures(commitList, releases.getValue(), idFeatsfolder);
-                        initVars(folderRelease);
-                        //for (GitCommit commits : commitList) {
-                        //ComputeRQMetrics.characteristicsFeature(folder, commits.getNumber(), commits.getTree(), featureNamesList);
-                        //configurations.clear();
-                        //characteristicsChange2(gitHelper, changeFolder, commits, featureNamesList);
-                        //dispose tree if it is not needed -> for memory saving reasons.
-                        //commits.disposeTree();
-                        //}
-                        //RQ.2 How many times one feature changed along a number of Git commits?
-                        File filetxt = new File(folder.getParent(), "TimesEachFeatureChanged.txt");
-                        PrintWriter writerTXT = new PrintWriter(filetxt.getAbsolutePath(), "UTF-8");
-                        for (Map.Entry<Feature, Integer> featureRevision : featureVersions.entrySet()) {
-                            if (featureRevision.getValue() > 1)
-                                writerTXT.println(featureRevision.getKey() + " Changed " + (featureRevision.getValue() - 1) + " times.");
-                        }
-                        writerTXT.close();
-                        commitList = new GitCommitList(gitHelper);
-                    }
-                }
-            }*/
+            gitHelper.getTwoCommits(commitList, firstcommit, secondcommit);
+            File file = new File(FEATURES_PATH, "runningex");
+            if (!file.exists())
+                file.mkdir();
+            String folderRelease = file.getAbsolutePath();
+            final File changeFolder = new File(file, "ChangeCharacteristic");
+            final File folder = new File(file, "FeatureCharacteristic");
+            final File idFeatsfolder = new File(file, "IdentifiedFeatures");
+            // if the directory does not exist, create it
+            if (!changeFolder.exists())
+                changeFolder.mkdir();
+            if (!folder.exists())
+                folder.mkdir();
+            if (!idFeatsfolder.exists())
+                idFeatsfolder.mkdir();
+            //feature identification
+            final File featuresTXT = new File(FEATURES_TXT);
+            if (featuresTXT.exists())
+                addFeatures();
+            else
+                identifyFeatures(commitList, "runningex", idFeatsfolder);
+            //
+            initVars(folderRelease);
+            //for (GitCommit commits : commitList) {
+            //ComputeRQMetrics.characteristicsFeature(folder, commits.getNumber(), commits.getTree(), featureNamesList);
+            configurations.clear();
+            characteristicsChange(gitHelper, changeFolder, commitList, featureNamesList, featpropagate, results);
+            //dispose tree if it is not needed -> for memory saving reasons.
+            //commits.disposeTree();
+            //}
+            //RQ.2 How many times one feature changed along a number of Git commits?
+            File filetxt = new File(folder.getParent(), "TimesEachFeatureChanged.txt");
+            PrintWriter writerTXT = new PrintWriter(filetxt.getAbsolutePath(), "UTF-8");
+            for (Map.Entry<Feature, Integer> featureRevision : featureVersions.entrySet()) {
+                if (featureRevision.getValue() > 1)
+                    writerTXT.println(featureRevision.getKey() + " Changed " + (featureRevision.getValue() - 1) + " times.");
+            }
+            writerTXT.close();
         }
 
         System.out.println("finished analyzing repo");
@@ -460,7 +371,7 @@ public class ChangeAnalysis {
     }
 
     //RQ1
-    public static void characteristicsChange2(GitHelper gitHelper, File changeFolder, GitCommitList gcs, ArrayList<String> featureNamesList, Feature featpropagate, Map<Map<String, List<String>>, Changes> results) throws Exception {
+    public static void characteristicsChange(GitHelper gitHelper, File changeFolder, GitCommitList gcs, ArrayList<String> featureNamesList, Feature featpropagate, Map<Map<String, List<String>>, Changes> results) throws Exception {
 
         final File gitFolder = new File(gitHelper.getPath());
         final File eccoFolder = new File(gitFolder.getParent(), "ecco");
@@ -476,6 +387,8 @@ public class ChangeAnalysis {
         Map<Feature, ChangeCharacteristic> featureMap = new HashMap<>();
         GitCommit gc1 = gcs.get(0);
         GitCommit gc2 = gcs.get(1);
+
+        int nrChunksInsert, nrChunksRemove;
 
         gcPrevious = new GitCommit(gc2.getCommitName(), gc2.getNumber(), gc1.getCommitName(), gc2.getBranch(), gc2.getRevCommit());
         gcPrevious.setTree(gc2.getTree());
@@ -519,28 +432,11 @@ public class ChangeAnalysis {
 
                 }
             }
-            //if (gc.getNumber() == 0) {
-            //changedFiles.add(child.getFilePath());
             previous = false;
-            //} else {
             changedFilesNext.add(child.getFilePath());
-            //}
         }
 
-        /*if (previous) {
-            for (FileNode child : gcPrevious.getTree().getChildren()) {
-                String start = child.getFilePath().replace("arent" + File.separator, "");
-                changedFiles.add(start);
-                previous = false;
-            }
-        }*/
 
-        //if (gc.getNumber() == 0 || previous) {
-        //    previous = false;
-        //} else {
-
-        //to retrieve changed nodes of deleted files
-        //if (gcPrevious != null) {
         for (String file : changedFiles) {
             if (!changedFilesNext.contains(file)) {
                 FileNode child = gc1.getTree().getChild(file);
@@ -569,13 +465,6 @@ public class ChangeAnalysis {
             child.accept(visitor, null);
             deletedNodes.addAll(visitor.getchangedNodes());
         }
-        //}
-        //next is changedFiles for the next commit
-        //changedFiles.removeAll(changedFiles);
-        //changedFiles.addAll(changedFilesNext);
-        //changedFilesNext.removeAll(changedFilesNext);
-        //}
-
 
         final ConstraintComputer constraintComputer = new ConstraintComputer(featureNamesList);
         final PreprocessorHelper pph = new PreprocessorHelper();
@@ -654,9 +543,10 @@ public class ChangeAnalysis {
                     List<String> linesFile = changedNode.getContainingFileLines();
 
                     Boolean mapExist = false;
-                    Changes mapAux = new Changes();;
-                    for (Map<String, List<String>> map:results.keySet()) {
-                        if(map.get(changedNode.getContainingFile().getFilePath()) != null){
+                    Changes mapAux = new Changes();
+
+                    for (Map<String, List<String>> map : results.keySet()) {
+                        if (map.get(changedNode.getContainingFile().getFilePath()) != null) {
                             mapExist = true;
                             mapAux = results.get(map);
                         }
@@ -665,52 +555,74 @@ public class ChangeAnalysis {
                     //new file
                     if (!changedFiles.contains(changedNode.getContainingFile().getFilePath())) {
                         if (mapExist) {
-                            ArrayList<Integer> linesInsertArray = new ArrayList<>();
-                            linesInsertArray.addAll(linesInsert);
-                            AddedFile addedFile = new AddedFile(linesInsertArray, featureInteraction, featureMightBeAffected);
-                            Changes changes = mapAux;
-                            changes.addAddedFiles(addedFile);
-                            Map<String, List<String>> mapFile = new HashMap<>();
-                            for ( Map<String, List<String>> mapresults: results.keySet()) {
-                                if(mapresults.keySet().contains(changedNode.getContainingFile().getFilePath())){
-                                    mapFile = mapresults;
-                                }
+                            nrChunksInsert = 0;
+                            while (nrChunksInsert < linesInsert.size() - 1) {
+                                Changes changes = mapAux;
+                                ArrayList<Integer> linesInsertAux = new ArrayList<>();
+                                linesInsertAux.add(linesInsert.get(nrChunksInsert) + 1);
+                                linesInsertAux.add(linesInsert.get(nrChunksInsert + 1) + 1);
+                                linesInsertAux.add(linesInsert.get(nrChunksInsert + 2));
+                                nrChunksInsert += 3;
+                                addChange(changes, featureInteraction, featureMightBeAffected, linesInsertAux, new ArrayList<>(), "add", results, changedNode);
                             }
-                            results.computeIfPresent(mapFile, (k, v) -> changes);
                         } else {
-                            ArrayList<Integer> linesInsertArray = new ArrayList<>();
-                            linesInsertArray.addAll(linesInsert);
-                            AddedFile addedFile = new AddedFile(linesInsertArray, featureInteraction, featureMightBeAffected);
+                            nrChunksInsert = 0;
                             Changes changes = new Changes();
-                            changes.addAddedFiles(addedFile);
+                            while (nrChunksInsert < linesInsert.size() - 1) {
+                                ArrayList<Integer> linesInsertArray = new ArrayList<>();
+                                linesInsertArray.add(linesInsert.get(nrChunksInsert) + 1);
+                                linesInsertArray.add(linesInsert.get(nrChunksInsert + 1) + 1);
+                                linesInsertArray.add(linesInsert.get(nrChunksInsert + 2));
+                                nrChunksInsert += 3;
+                                AddedFile addedFile = new AddedFile(linesInsertArray, featureInteraction, featureMightBeAffected);
+                                changes.addAddedFiles(addedFile);
+                            }
                             Map<String, List<String>> mapFile = new HashMap<>();
                             mapFile.put(changedNode.getContainingFile().getFilePath(), linesFile);
                             results.put(mapFile, changes);
                         }
                     } else { //changed file
                         if (mapExist) {
-                            ArrayList<Integer> linesInsertArray = new ArrayList<>();
-                            ArrayList<Integer> linesRemovedArray = new ArrayList<>();
-                            linesInsertArray.addAll(linesInsert);
-                            linesRemovedArray.addAll(linesRemoved);
-                            ChangedFile changedFile = new ChangedFile(linesInsertArray, linesRemovedArray, featureInteraction, featureMightBeAffected);
-                            Changes changes = mapAux;
-                            changes.addChangedFiles(changedFile);
-                            Map<String, List<String>> mapFile = new HashMap<>();
-                            for ( Map<String, List<String>> mapresults: results.keySet()) {
-                                if(mapresults.keySet().contains(changedNode.getContainingFile().getFilePath())){
-                                    mapFile = mapresults;
+                            nrChunksInsert = 0;
+                            nrChunksRemove = 0;
+                            while (nrChunksInsert < linesInsert.size() - 1) {
+                                Changes changes = mapAux;
+                                ArrayList<Integer> linesInsertAux = new ArrayList<>();
+                                ArrayList<Integer> linesRemovedAux = new ArrayList<>();
+                                linesInsertAux.add(linesInsert.get(nrChunksInsert) + 1);
+                                linesInsertAux.add(linesInsert.get(nrChunksInsert + 1) + 1);
+                                linesInsertAux.add(linesInsert.get(nrChunksInsert + 2));
+                                while (nrChunksRemove < linesRemoved.size() - 1) {
+                                    linesRemovedAux.add(linesRemoved.get(nrChunksRemove) + 1);
+                                    linesRemovedAux.add(linesRemoved.get(nrChunksRemove + 1) + 1);
+                                    linesRemovedAux.add(linesRemoved.get(nrChunksRemove + 2));
+                                    break;
                                 }
+                                nrChunksRemove += 3;
+                                nrChunksInsert += 3;
+                                addChange(changes, featureInteraction, featureMightBeAffected, linesInsertAux, linesRemovedAux, "change", results, changedNode);
                             }
-                            results.computeIfPresent(mapFile, (k, v) -> changes);
                         } else {
-                            ArrayList<Integer> linesInsertArray = new ArrayList<>();
-                            ArrayList<Integer> linesRemovedArray = new ArrayList<>();
-                            linesInsertArray.addAll(linesInsert);
-                            linesRemovedArray.addAll(linesRemoved);
-                            ChangedFile changedFile = new ChangedFile(linesInsertArray, linesRemovedArray, featureInteraction, featureMightBeAffected);
+                            nrChunksInsert = 0;
+                            nrChunksRemove = 0;
                             Changes changes = new Changes();
-                            changes.addChangedFiles(changedFile);
+                            while (nrChunksInsert < linesInsert.size() - 1) {
+                                ArrayList<Integer> linesInsertArray = new ArrayList<>();
+                                ArrayList<Integer> linesRemovedArray = new ArrayList<>();
+                                linesInsertArray.add(linesInsert.get(nrChunksInsert) + 1);
+                                linesInsertArray.add(linesInsert.get(nrChunksInsert + 1) + 1);
+                                linesInsertArray.add(linesInsert.get(nrChunksInsert + 2));
+                                while (nrChunksRemove < linesRemoved.size() - 1) {
+                                    linesRemovedArray.add(linesRemoved.get(nrChunksRemove) + 1);
+                                    linesRemovedArray.add(linesRemoved.get(nrChunksRemove + 1) + 1);
+                                    linesRemovedArray.add(linesRemoved.get(nrChunksRemove + 2));
+                                    break;
+                                }
+                                nrChunksRemove += 3;
+                                nrChunksInsert += 3;
+                                ChangedFile changedFile = new ChangedFile(linesInsertArray, linesRemovedArray, featureInteraction, featureMightBeAffected);
+                                changes.addChangedFiles(changedFile);
+                            }
                             Map<String, List<String>> mapFile = new HashMap<>();
                             mapFile.put(changedNode.getContainingFile().getFilePath(), linesFile);
                             results.put(mapFile, changes);
@@ -841,8 +753,8 @@ public class ChangeAnalysis {
                             if (!fea.equals(featpropagate)) {
                                 featureInteraction.add(fea.getName());
                                 System.out.println(fea.getName());
-                    }
-                }
+                            }
+                        }
 
                         System.out.println("Feature might be affected: ");
                         for (Map.Entry<Feature, Integer> fea : config.entrySet()) {
@@ -863,9 +775,10 @@ public class ChangeAnalysis {
 
 
                         Boolean mapExist = false;
-                        Changes mapAux = new Changes();;
-                        for (Map<String, List<String>> map:results.keySet()) {
-                            if(map.get(deletedNode.getContainingFile().getFilePath()) != null){
+                        Changes mapAux = new Changes();
+                        ;
+                        for (Map<String, List<String>> map : results.keySet()) {
+                            if (map.get(deletedNode.getContainingFile().getFilePath()) != null) {
                                 mapExist = true;
                                 mapAux = results.get(map);
                             }
@@ -878,16 +791,18 @@ public class ChangeAnalysis {
                                 linesRemoveArray.addAll(linesRemoved);
                                 AddedFile addedFile = new AddedFile(linesRemoveArray, featureInteraction, featureMightBeAffected);
                                 Changes changes = mapAux;
-                                changes.addAddedFiles(addedFile);
-                                Map<String, List<String>> mapFile = new HashMap<>();
-                                for ( Map<String, List<String>> mapresults: results.keySet()) {
-                                    if(mapresults.keySet().contains(deletedNode.getContainingFile().getFilePath())){
-                                        mapFile = mapresults;
+                                if (!changes.getAddedFiles().contains(addedFile)) {
+                                    changes.addAddedFiles(addedFile);
+                                    Map<String, List<String>> mapFile = new HashMap<>();
+                                    for (Map<String, List<String>> mapresults : results.keySet()) {
+                                        if (mapresults.keySet().contains(deletedNode.getContainingFile().getFilePath())) {
+                                            mapFile = mapresults;
+                                        }
                                     }
+                                    List<String> fileLines = deletedNode.getParent().getParent().getContainingFile().getFileContent();
+                                    mapFile.put(deletedNode.getContainingFile().getFilePath(), fileLines);
+                                    results.computeIfPresent(mapFile, (k, v) -> changes);
                                 }
-                                List<String> fileLines = deletedNode.getParent().getParent().getContainingFile().getFileContent();
-                                mapFile.put(deletedNode.getContainingFile().getFilePath(), fileLines);
-                                results.computeIfPresent(mapFile, (k, v) -> changes);
                             } else {
                                 ArrayList<Integer> linesRemoveArray = new ArrayList<>();
                                 linesRemoveArray.addAll(linesRemoved);
@@ -904,16 +819,18 @@ public class ChangeAnalysis {
                                 linesRemovedArray.addAll(linesRemoved);
                                 DeletedFile deletedFile = new DeletedFile(linesRemovedArray, featureInteraction, featureMightBeAffected);
                                 Changes changes = mapAux;
-                                changes.addDeletedFiles(deletedFile);
-                                Map<String, List<String>> mapFile = new HashMap<>();
-                                for ( Map<String, List<String>> mapresults: results.keySet()) {
-                                    if(mapresults.keySet().contains(deletedNode.getContainingFile().getFilePath())){
-                                        mapFile = mapresults;
+                                if (!changes.getDeletedFiles().contains(deletedFile)) {
+                                    changes.addDeletedFiles(deletedFile);
+                                    Map<String, List<String>> mapFile = new HashMap<>();
+                                    for (Map<String, List<String>> mapresults : results.keySet()) {
+                                        if (mapresults.keySet().contains(deletedNode.getContainingFile().getFilePath())) {
+                                            mapFile = mapresults;
+                                        }
                                     }
+                                    List<String> fileLines = deletedNode.getParent().getParent().getContainingFile().getFileContent();
+                                    mapFile.put(deletedNode.getContainingFile().getFilePath(), linesFile);
+                                    results.computeIfPresent(mapFile, (k, v) -> changes);
                                 }
-                                List<String> fileLines = deletedNode.getParent().getParent().getContainingFile().getFileContent();
-                                mapFile.put(deletedNode.getContainingFile().getFilePath(), linesFile);
-                                results.computeIfPresent(mapFile, (k, v) -> changes);
                             } else {
                                 ArrayList<Integer> linesRemovedArray = new ArrayList<>();
                                 linesRemovedArray.addAll(linesRemoved);
@@ -926,21 +843,27 @@ public class ChangeAnalysis {
                             }
                         } else {//changed file
                             if (mapExist) {
-                                ArrayList<Integer> linesInsertArray = new ArrayList<>();
-                                ArrayList<Integer> linesRemovedArray = new ArrayList<>();
-                                linesRemovedArray.addAll(linesRemoved);
-                                ChangedFile changedFile = new ChangedFile(linesInsertArray, linesRemovedArray, featureInteraction, featureMightBeAffected);
-                                Changes changes = mapAux;
-                                changes.addChangedFiles(changedFile);
-                                Map<String, List<String>> mapFile = new HashMap<>();
-                                for ( Map<String, List<String>> mapresults: results.keySet()) {
-                                    if(mapresults.keySet().contains(deletedNode.getContainingFile().getFilePath())){
-                                        mapFile = mapresults;
+                                nrChunksInsert = 0;
+                                nrChunksRemove = 0;
+                                Boolean addRemovedLines = true;
+                                while (nrChunksInsert < linesRemoved.size() - 1) {
+                                    Changes changes = mapAux;
+                                    ArrayList<Integer> linesRemovedAux = new ArrayList<>();
+                                    linesRemovedAux.add(linesRemoved.get(nrChunksRemove) + 1);
+                                    linesRemovedAux.add(linesRemoved.get(nrChunksRemove + 1) + 1);
+                                    linesRemovedAux.add(linesRemoved.get(nrChunksRemove + 2));
+                                    for (int i = 0; i < changes.getChangedFiles().size(); i++) {
+                                        if (changes.getChangedFiles().get(i).getLinesRemoved().equals(linesRemovedAux)) {
+                                            addRemovedLines = false;
+                                            changes.getChangedFiles().get(i).setPreviousLines(deletedNode.getContainingPreviousFileLines());
+                                            break;
+                                        }
                                     }
+                                    if(addRemovedLines)
+                                        addChange(changes, featureInteraction, featureMightBeAffected, new ArrayList<>(), linesRemovedAux, "change", results, deletedNode);
+                                    nrChunksRemove += 3;
+                                    nrChunksInsert += 3;
                                 }
-                                List<String> fileLines = deletedNode.getParent().getParent().getContainingFile().getFileContent();
-                                mapFile.put(deletedNode.getContainingFile().getFilePath(), linesFile);
-                                results.computeIfPresent(mapFile, (k, v) -> changes);
                             } else {
                                 ArrayList<Integer> linesInsertArray = new ArrayList<>();
                                 ArrayList<Integer> linesRemovedArray = new ArrayList<>();
@@ -1080,9 +1003,6 @@ public class ChangeAnalysis {
         }
         //end append results to the feature report csv
 
-
-        countFeaturesChanged = 0;
-        newFeatures = 0;
         for (Map.Entry<Feature, Integer> featureRevision : featureVersions.entrySet()) {
             System.out.println(featureRevision.getKey() + "." + featureRevision.getValue());
         }
@@ -1125,63 +1045,39 @@ public class ChangeAnalysis {
             }
         }
 
-        //MERGE OF PROPAGATION OF CHANGES
-       /* gitHelper.checkOutCommit(gc2.getCommitName());
-        File folderMerge = new File(mergeResult);
-        File folderBackup = new File(backup);
-        for (File srcFile : gitFolder.listFiles()) {
-            if (srcFile.isDirectory()) {
-                FileUtils.copyDirectoryToDirectory(srcFile, folderBackup);
-            } else {
-                FileUtils.copyFileToDirectory(srcFile, folderBackup);
-            }
-        }
-        gitHelper.checkOutCommit(gc1.getCommitName());
-        for (File srcFile : gitFolder.listFiles()) {
-            if (srcFile.isDirectory()) {
-                FileUtils.copyDirectoryToDirectory(srcFile, folderMerge);
-            } else {
-                if (changedFilesPropagate.contains(srcFile.getName())) {
-                    for (ConditionalNode cn : propagateChangedNodes) {
-                        if (cn.getContainingFile().getFilePath().equals(srcFile.getName())) {
-                            String line;
-                            ArrayList<String> lines = new ArrayList<String>();
-                            File secondCommit = new File(backup, srcFile.getName());
-                            BufferedReader br = new BufferedReader(new
-                                    FileReader(secondCommit));
-                            while ((line = br.readLine()) != null) {
-                                lines.add(line);
-                            }
-
-                            int start = cn.getLineNumberInserts().get(0);
-                            int end = cn.getLineNumberInserts().get(1);
-                            br = new BufferedReader(new
-                                    FileReader(srcFile));
-                            count = 0;
-                            while ((line = br.readLine()) != null) {
-                                if (count < start || count > end) {
-                                    System.out.println(line);
-                                } else {
-                                    System.out.println(lines.get(count));
-                                }
-
-                            }
-
-                            br.close();
-                        }
-                    }
-                } else {
-                    FileUtils.copyFileToDirectory(srcFile, folderMerge);
-                }
-            }
-        }
-        //END MERGE OF PROPAGATION OF CHANGES
-*/
         changedNodes.clear();
         deletedNodes.clear();
         featureMap.clear();
 
     }
 
+    public static void addChange(Changes changes, ArrayList<String> featureInteraction, ArrayList<String> featureMightBeAffected, ArrayList<Integer> linesAddArray, ArrayList<Integer> linesRemArray, String type, Map<Map<String, List<String>>, Changes> results, ConditionalNode changedNode) {
+        if (type.equals("add")) {
+            AddedFile addedFile = new AddedFile(linesAddArray, featureInteraction, featureMightBeAffected);
+            if (!changes.getAddedFiles().contains(addedFile)) {
+                changes.addAddedFiles(addedFile);
+                Map<String, List<String>> mapFile = new HashMap<>();
+                for (Map<String, List<String>> mapresults : results.keySet()) {
+                    if (mapresults.keySet().contains(changedNode.getContainingFile().getFilePath())) {
+                        mapFile = mapresults;
+                    }
+                }
+                results.computeIfPresent(mapFile, (k, v) -> changes);
+            }
+        } else if (type.equals("change")) {
+            ChangedFile changedFile = new ChangedFile(linesAddArray, linesRemArray, featureInteraction, featureMightBeAffected);
+            if (!changes.getChangedFiles().contains(changedFile)) {
+                changes.addChangedFiles(changedFile);
+                Map<String, List<String>> mapFile = new HashMap<>();
+                for (Map<String, List<String>> mapresults : results.keySet()) {
+                    if (mapresults.keySet().contains(changedNode.getContainingFile().getFilePath())) {
+                        mapFile = mapresults;
+                    }
+                }
+                results.computeIfPresent(mapFile, (k, v) -> changes);
+            }
+        }
+
+    }
 
 }

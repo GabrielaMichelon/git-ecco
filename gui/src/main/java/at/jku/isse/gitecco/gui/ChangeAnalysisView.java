@@ -223,7 +223,7 @@ public class ChangeAnalysisView extends BorderPane {
                             featurea = featurea.replaceFirst(", ", "");
                             List<String> previousfileLines = new ArrayList<>();
                             //FileChange fc = new FileChange(false, fileName, "Changed File", "Lines deleted: [" + String.valueOf(changf.getLinesRemoved().get(0) + 1) + ", " + String.valueOf(changf.getLinesRemoved().get(1) + 1) + ", " + String.valueOf((changf.getLinesRemoved().get(2) + 1) / 2) + "]", featurei, featurea, fileLines);
-                            FileChange fc = new FileChange(false, fileName, "Changed File", "Lines added: " + changf.getLinesInsert() + " Lines removed: " + changf.getLinesRemoved(), featurei, featurea, fileLines, previousfileLines);
+                            FileChange fc = new FileChange(false, fileName, "Changed File", "Lines added: " + changf.getLinesInsert() + " Lines removed: " + changf.getLinesRemoved(), featurei, featurea, fileLines, changf.getPreviousLines());
                             dataAux.add(fc);
 
                         }
@@ -253,7 +253,7 @@ public class ChangeAnalysisView extends BorderPane {
                 //add files from the other changf containing the previousfilelines
                 for (int i = 0; i < dataAux.size(); i++) {
                     FileChange fc = dataAux.get(i);
-                    if (fc.getLines().contains("Lines removed: []")) {
+                    /*if (fc.getLines().contains("Lines removed: []")) {
                         for (int j = 0; j < dataAux.size(); j++) {
                             FileChange fcaux = dataAux.get(j);
                             if (fc.getFileName().equals(fcaux.getFileName())) {
@@ -271,7 +271,8 @@ public class ChangeAnalysisView extends BorderPane {
                     }else if(!fc.getLines().contains("Lines added: []")){
                         if(!data.contains(fc))
                             data.add(fc);
-                    }else  if(!data.contains(fc)) {
+                    }else */
+                    if (!data.contains(fc)) {
                         data.add(fc);
                     }
                 }
@@ -496,11 +497,10 @@ public class ChangeAnalysisView extends BorderPane {
         String linesaddend = "";
         String linesremovedinit = "";
         String linesremovedend = "";
+        int posfile = 0;
 
         String signal = "";
         if (data.getChangeType().equals("Removed File")) {
-            // set style of line 4
-            //result.setStyle(4,"-fx-fill: red;");
             result.setStyle(i - 1, "-rtfx-background-color: #ffdce0");
             linesremovedinit = index[0].substring(data.getLines().indexOf("removed: [") + 10).replaceAll(" ", "");
             linesremovedend = index[index.length - 1].replaceAll(" ", "");
@@ -510,12 +510,15 @@ public class ChangeAnalysisView extends BorderPane {
             linesaddinit = index[0].substring(index[0].indexOf("added: [") + 8).replaceAll(" ", "");
             linesaddend = index[1].replaceAll(" ", "");
             signal = "+";
-        } else {
-            if (!index[0].contains("added: []")) {
+        } else {//changed file
+            if (!index[0].contains("added: []") && !index[2].contains("removed: []")) {
                 linesaddinit = index[0].substring(index[0].indexOf("added: [") + 8).replaceAll(" ", "");
                 linesaddend = index[1].replaceAll(" ", "");
                 linesremovedinit = index[2].substring(index[2].indexOf("removed: [") + 10).replaceAll(" ", "");
                 linesremovedend = index[3].replaceAll(" ", "");
+            } else if (!index[0].contains("added: []") && index[2].contains("removed: []")) {
+                linesaddinit = index[0].substring(index[0].indexOf("added: [") + 8).replaceAll(" ", "");
+                linesaddend = index[1].replaceAll(" ", "");
             } else {
                 linesremovedinit = index[0].substring(index[0].indexOf("removed: [") + 10).replaceAll(" ", "");
                 linesremovedend = index[1].replaceAll(" ", "");
@@ -526,30 +529,29 @@ public class ChangeAnalysisView extends BorderPane {
         if (data.getChangeType().equals("Changed File")) {
             for (String line : data.getFileLines()) {
                 //System.out.println("result.length "+result.getParagraphStyleForInsertionAt(i)+" i: "+i);
-                if (!linesaddinit.equals("") && i - 1 >= Integer.valueOf(linesaddinit) && i - 1 <= Integer.valueOf(linesaddend)) {
-                    result.setStyle(i-1, "-rtfx-background-color: #dcffe4");
-                    result.appendText(i + " \t+\t" + line + "\n");
-                    //} else if (i >= Integer.valueOf(linesremovedinit) && i <= Integer.valueOf(linesremovedend) && i < data.getFileLines().size()) {
-                    //    result.appendText(i + "\t-\t" + line + "\n");
-                    //    result.setStyle("-fx-background-color: #ffdce0");
-                    if (i - 1 >= Integer.valueOf(linesremovedinit) && i - 1 <= Integer.valueOf(linesremovedend)) {
-                        result.setStyle(i-1, "-rtfx-background-color: #ffdce0");
-                        result.appendText(i + "\t-\t" + data.getFileLines().get(i - 1) + "\n");
-                    }
-                } else if (i - 1 >= Integer.valueOf(linesremovedinit) && i - 1 <= Integer.valueOf(linesremovedend)) {
-                    result.setStyle(i-1, "-rtfx-background-color: #ffdce0");
-                    result.appendText(i + " \t-\t" + data.getFileLines().get(i - 1) + "\n");
-                } else if (!linesaddinit.equals("") && i - 1 < Integer.valueOf(linesaddinit)) {
-                    result.setStyle(i-1, "-rtfx-background-color: transparent");
+                if (!linesaddinit.equals("") && i - 1 >= (Integer.valueOf(linesaddinit) - 1) && i - 1 <= (Integer.valueOf(linesaddend) - 1) && !linesremovedinit.equals("") && i - 1 >= (Integer.valueOf(linesremovedinit) - 1) && i - 1 <= (Integer.valueOf(linesremovedend) - 1)) {
+                    result.setStyle(i - 1, "-rtfx-background-color: #ffdce0");
+                    result.appendText(i + " -\t" + data.getPreviousfileLines().get(i - 1) + "\n");
+                    result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: #dcffe4");
+                    result.appendText(i + " +\t" + line + "\n");
+                } else if (!linesaddinit.equals("") && linesremovedinit.equals("") && i - 1 >= (Integer.valueOf(linesaddinit) - 2) && i - 1 <= (Integer.valueOf(linesaddend) - 2)) {
+                    result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: #dcffe4");
+                    result.appendText(i + " +\t" + line + "\n");
+                } else if (!linesremovedinit.equals("") && i - 1 >= (Integer.valueOf(linesremovedinit) - 1) && i - 1 <= (Integer.valueOf(linesremovedend) - 1)) {
+                    result.setStyle(i - 1, "-rtfx-background-color: #ffdce0");
+                    result.appendText(i + " -\t" + data.getPreviousfileLines().get(i - 1) + "\n");
+                } else if (!linesaddinit.equals("") && i - 1 < (Integer.valueOf(linesaddinit) - 1)) {
+                    result.setStyle(i - 1, "-rtfx-background-color: transparent");
                     result.appendText(i + " \t" + line + "\n");
-                } else if (i - 1 < data.getFileLines().size() - 1 && i - 1 > Integer.valueOf(linesremovedend)) {
-                    result.setStyle(i-1, "-rtfx-background-color: transparent");
+                    System.out.println("1st: "+result.getCurrentParagraph());
+                } else if (!linesremovedinit.equals("") && i - 1 < data.getFileLines().size() - 1 && i - 1 > (Integer.valueOf(linesremovedend) - 1)) {
+                    result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: transparent");
                     result.appendText(i + " \t" + line + "\n");
-                } else if (i - 1 < data.getFileLines().size() && i - 1 > Integer.valueOf(linesremovedend)) {
+                } else if (!linesremovedinit.equals("") && i - 1 < data.getFileLines().size() && i - 1 > (Integer.valueOf(linesremovedend) - 1)) {
                     //result.setStyle(Integer.valueOf(linesremovedend)+1, "-rtfx-background-color: transparent");
                     result.appendText(i + " \t" + line + "\n");
-                }else{
-                    result.setStyle(i-1, "-rtfx-background-color: transparent");
+                } else {
+                    result.setStyle(i - 1, "-rtfx-background-color: transparent");
                     result.appendText(i + " \t" + line + "\n");
                 }
 
@@ -558,24 +560,26 @@ public class ChangeAnalysisView extends BorderPane {
         } else {
             for (String line : data.getFileLines()) {
                 if (i < data.getFileLines().size())
-                    result.appendText(i + "\t" + signal + "\t" + line + "\n");
+                    result.appendText(i + " " + signal + "\t" + line + "\n");
                 else
-                    result.appendText(i + "\t" + signal + "\t" + line);
+                    result.appendText(i + " " + signal + "\t" + line);
                 i++;
             }
         }
 
         result.setEditable(false);
 
-        VBox vbox = new VBox();
+        //VBox vbox = new VBox();
         result.setPrefWidth(600);
         result.setPrefHeight(1000);
         VirtualizedScrollPane<InlineCssTextArea> vsPane = new VirtualizedScrollPane<>(result);
         vsPane.setMaxWidth(600);
         vsPane.setMaxHeight(1000);
-
-
-        result.moveTo(0);//result.getLength());
+        if(!linesremovedinit.equals(""))
+            posfile=Integer.valueOf(linesremovedinit)-1;
+        else if(!linesaddinit.equals(""))
+            posfile=Integer.valueOf(linesaddinit)-2;
+        result.moveTo(posfile,0);//result.getLength());
         result.requestFollowCaret();
         //Scene scene = new Scene(root, 500, 200);
         // focus area so can see the caret
@@ -585,6 +589,7 @@ public class ChangeAnalysisView extends BorderPane {
         root.setAutoSizeChildren(true);
         Scene scene = new Scene(root);
         stage.setScene(scene);
+        stage.setTitle(data.getFileName());
         stage.setResizable(false);
         stage.show();
 
