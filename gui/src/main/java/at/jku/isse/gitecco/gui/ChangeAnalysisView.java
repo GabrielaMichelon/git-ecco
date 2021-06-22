@@ -1,8 +1,8 @@
 package at.jku.isse.gitecco.gui;
 
-
-import at.jku.isse.gitecco.core.git.GitHelper;
 import at.jku.isse.gitecco.translation.changepropagation.*;
+import com.sun.org.apache.xpath.internal.operations.Bool;
+import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -24,6 +24,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.stage.*;
 import javafx.util.Callback;
@@ -48,15 +50,24 @@ public class ChangeAnalysisView extends BorderPane {
     static TextField repositoryDirTextField = new TextField("C:\\Users\\gabil\\Desktop\\PHD\\New research\\ChangePropagation\\libssh");//Open the folder directory");
     static TextField featuresSystemTextField = new TextField("Select the file containing the features name of the system if it exists");
     static TextField featureTextField = new TextField("WITH_SFTP");//"Feature Name");
+    private GridPane gridPane = new GridPane();
+    private SplitPane splitPane = new SplitPane();
+    private ToolBar toolBar = new ToolBar();
+    private ObservableList<FileChange> data = FXCollections
+            .observableArrayList();
+
+    private ObservableList<FileChange> dataAux = FXCollections.observableArrayList();
+    int row[] = {0};
+    Boolean varLoading = true;
+
 
     public ChangeAnalysisView() {
 
         // main content
-        GridPane gridPane = new GridPane();
+
         gridPane.setHgap(10);
         gridPane.setVgap(10);
         gridPane.setPadding(new Insets(10, 10, 10, 10));
-
 
         ColumnConstraints col1constraint = new ColumnConstraints();
         col1constraint.setMinWidth(GridPane.USE_PREF_SIZE);
@@ -71,11 +82,12 @@ public class ChangeAnalysisView extends BorderPane {
         this.setCenter(gridPane);
 
 
-        int row[] = {0};
-
         Label repositoryDirLabel = new Label("Git Repository: ");
         gridPane.add(repositoryDirLabel, 0, row[0], 1, 1);
 
+        setCenter(splitPane);
+        splitPane.setOrientation(Orientation.VERTICAL);
+        splitPane.setDividerPosition(0, 0);
 
         repositoryDirTextField.setDisable(false);
         repositoryDirLabel.setLabelFor(repositoryDirTextField);
@@ -128,6 +140,23 @@ public class ChangeAnalysisView extends BorderPane {
         //gridPane.add(cancelButton, 4, row, 1, 1);
 
 
+        Image image = new Image("image/loading.gif");
+        ImageView imageView = new ImageView(image);
+
+        //Setting the preserve ratio of the image view
+        imageView.setPreserveRatio(true);
+
+        //Creating a Group object
+        Group root = new Group(imageView);
+
+        //Creating a scene object
+        Scene sceneLoading = new Scene(root, 500, 500);
+        Stage newWindow = new Stage();
+        //Adding scene to the stage
+        newWindow.setScene(sceneLoading);
+        splitPane.getItems().addAll(gridPane);
+
+
         TableColumn selectCol = new TableColumn("Propagate Changes");
         selectCol.setCellValueFactory(new PropertyValueFactory<>("propagateChange"));
         selectCol.setCellFactory(CheckBoxTableCell.forTableColumn(selectCol));
@@ -162,251 +191,144 @@ public class ChangeAnalysisView extends BorderPane {
         table.getColumns().addAll(selectCol, fileCol, changeCol, linesCol, featiCol, feataff, colBtn);
         //table.getColumns().addAll(selectCol, fileCol, changeCol, linesCol, featiCol, feataff);
 
-        ObservableList<FileChange> data = FXCollections
-                .observableArrayList();
+        setTop(toolBar);
 
-        ObservableList<FileChange> dataAux = FXCollections.observableArrayList();
+        Button selectAllButton = new Button("Select All");
+        Button unselectAllButton = new Button("Unselect All");
+        Button propagateChangesButton = new Button("Propagate Changes Selected");
+
+        toolBar.getItems().addAll(selectAllButton, unselectAllButton, propagateChangesButton);
 
         this.updateView();
         final int[] rowaux = {row[0]};
 
+
         changeAnalysisButton.setOnAction(event -> {
-            dataAux.clear();
-            try {
-                if (table.getItems().size() > 0) {
-                    table.getColumns().removeAll();
-                    table.getSelectionModel().clearSelection();
-                    data.removeAll(data);
-                }
-                Map<Map<String, List<String>>, Changes> returnMethod = this.changeAnalysis.identification(featuresSystemTextField.getText(), repositoryDirTextField.getText(), firstcommitTextField.getText(), secondcommitTextField.getText(), featureTextField.getText());
-                rowaux[0]++;
-                for (Map.Entry<Map<String, List<String>>, Changes> changes : returnMethod.entrySet()) {
-                    Map<String, List<String>> changesKey = changes.getKey();
-                    String fileName = "";
-                    List<String> fileLines = new ArrayList<>();
-                    for (Map.Entry<String, List<String>> changeskeyMap : changesKey.entrySet()) {
-                        fileName = changeskeyMap.getKey();
-                        fileLines = changeskeyMap.getValue();
-                    }
-                    ArrayList<AddedFile> addedfiles = changes.getValue().getAddedFiles();
-                    if (addedfiles.size() > 0) {
-                        for (AddedFile addf : addedfiles) {
-                            String featurei = "";
-                            for (String feati : addf.getFeatureInteractions()) {
-                                featurei += ", " + feati;
-                            }
-                            featurei = featurei.replaceFirst(", ", "");
-                            String featurea = "";
-                            for (String feati : addf.getFeatureMightAffected()) {
-                                featurea += ", " + feati;
-                            }
-                            featurea = featurea.replaceFirst(", ", "");
-                            List<String> previousfileLines = new ArrayList<>();
-                            FileChange fc = new FileChange(false, fileName, "New File", "Lines added: [" + String.valueOf(addf.getLinesInsert().get(0) + 1) + ", " + String.valueOf(addf.getLinesInsert().get(1) + 1) + ", " + String.valueOf(addf.getLinesInsert().get(2) + 1) + "]", featurei, featurea, fileLines, previousfileLines);
-                            //FileChange fc = new FileChange(false, fileName, "New File", "Lines added: " + addf.getLinesInsert(), featurei, featurea, fileLines);
-                            data.add(fc);
-                        }
-                    }
+            StackPane root2 = new StackPane();
 
-                    ArrayList<ChangedFile> changedFiles = changes.getValue().getChangedFiles();
-                    if (changedFiles.size() > 0) {
-                        for (ChangedFile changf : changedFiles) {
-                            String featurei = "";
-                            for (String feati : changf.getFeatureInteractions()) {
-                                featurei += ", " + feati;
-                            }
-                            featurei = featurei.replaceFirst(", ", "");
-                            String featurea = "";
-                            for (String feati : changf.getFeatureMightAffected()) {
-                                featurea += ", " + feati;
-                            }
-                            featurea = featurea.replaceFirst(", ", "");
-                            List<String> previousfileLines = new ArrayList<>();
-                            //FileChange fc = new FileChange(false, fileName, "Changed File", "Lines deleted: [" + String.valueOf(changf.getLinesRemoved().get(0) + 1) + ", " + String.valueOf(changf.getLinesRemoved().get(1) + 1) + ", " + String.valueOf((changf.getLinesRemoved().get(2) + 1) / 2) + "]", featurei, featurea, fileLines);
-                            FileChange fc = new FileChange(false, fileName, "Changed File", "Lines added: " + changf.getLinesInsert() + " Lines removed: " + changf.getLinesRemoved(), featurei, featurea, fileLines, changf.getPreviousLines());
-                            dataAux.add(fc);
+            // Label to show count down
+            Label showCount = new Label();
+            showCount.setAlignment(Pos.CENTER);
+            root2.getChildren().add(showCount);
 
-                        }
-                    }
+            root2.getChildren().add(imageView);
 
-                    ArrayList<DeletedFile> deletedFiles = changes.getValue().getDeletedFiles();
-                    if (deletedFiles.size() > 0) {
-                        for (DeletedFile delf : deletedFiles) {
-                            String featurei = "";
-                            for (String feati : delf.getFeatureInteractions()) {
-                                featurei += ", " + feati;
-                            }
-                            featurei = featurei.replaceFirst(", ", "");
-                            String featurea = "";
-                            for (String feati : delf.getFeatureMightAffected()) {
-                                featurea += ", " + feati;
-                            }
-                            featurea = featurea.replaceFirst(", ", "");
-                            List<String> previousfileLines = new ArrayList<>();
-                            FileChange fc = new FileChange(false, fileName, "Removed File", "Lines removed: [" + String.valueOf(delf.getLinesRemoved().get(0) + 1) + ", " + String.valueOf(delf.getLinesRemoved().get(1) + 1) + ", " + String.valueOf(delf.getLinesRemoved().get(2) + 1) + "]", featurei, featurea, fileLines, previousfileLines);
-                            //FileChange fc = new FileChange(false, fileName, "Removed File", "Lines removed: " + delf.getLinesRemoved(), featurei, featurea, fileLines);
-                            data.add(fc);
-                        }
-                    }
+            Scene scene = new Scene(root2, 500, 500);
+            Stage stage = new Stage();
+            stage.setScene(scene);
+            stage.show();
+
+            Runnable task = () -> {
+
+                // Emulate a long task
+                // Use Platform.runLater()
+
+                changeAnalysisMethod(rowaux);
+                while(varLoading){
+                    changeAnalysisMethod(rowaux);
                 }
 
-                //add files from the other changf containing the previousfilelines
-                for (int i = 0; i < dataAux.size(); i++) {
-                    FileChange fc = dataAux.get(i);
-                    /*if (fc.getLines().contains("Lines removed: []")) {
-                        for (int j = 0; j < dataAux.size(); j++) {
-                            FileChange fcaux = dataAux.get(j);
-                            if (fc.getFileName().equals(fcaux.getFileName())) {
-                                if (!fcaux.getLines().contains("Lines removed: []")) {
-                                    String linesremoved = fcaux.getLines().substring(fcaux.getLines().indexOf("Lines removed: [") + 16);
-                                    String replacelines = fc.getLines().replace("Lines removed: []", "Lines removed: [" + linesremoved);
-                                    fc.setLines(replacelines);
-                                    fc.setPreviousfileLines(fcaux.getFileLines());
-                                    if(!data.contains(fc))
-                                        data.add(fc);
-                                    break;
-                                }
-                            }
-                        }
-                    }else if(!fc.getLines().contains("Lines added: []")){
-                        if(!data.contains(fc))
-                            data.add(fc);
-                    }else */
-                    if (!data.contains(fc)) {
-                        data.add(fc);
-                    }
+               // try {
+                    //Thread.sleep(1000);
+               // } catch (InterruptedException e) {
+               //     e.printStackTrace();
+              //  }
+
+
+                // Stop count down and remove the GIF
+                Platform.runLater(() -> {
+                    showCount.setText("Done");
+                    root2.getChildren().remove(imageView);
+                });
+            };
+
+            Thread thread = new Thread(task);
+            thread.setDaemon(true);
+            thread.start();
+
+
+            //newWindow.show();
+            //changeAnalysisMethod(rowaux);
+            //newWindow.close();
+        });
+
+
+        selectAllButton.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent e) {
+                toolBar.setDisable(true);
+
+                for (FileChange fileChange : data) {
+                    fileChange.setPropagateChange(true);
                 }
 
-                table.setItems(data);
-
-                for (FileChange filechange : data) {
-                    filechange.btnview.setOnAction(new EventHandler<ActionEvent>() {
-                        @Override
-                        public void handle(ActionEvent e) {
-                            showDiff(filechange);
-                        }
-                    });
-                }
-                // toolbar
-                ToolBar toolBar = new ToolBar();
-                setTop(toolBar);
-
-                Button selectAllButton = new Button("Select All");
-                Button unselectAllButton = new Button("Unselect All");
-                Button propagateChangesButton = new Button("Propagate Changes Selected");
-
-                toolBar.getItems().addAll(selectAllButton, unselectAllButton, propagateChangesButton);
-                FilteredList<FileChange> filteredData = new FilteredList<>(data, p -> true);
-                SortedList<FileChange> sortedData = new SortedList<>(filteredData);
-                sortedData.comparatorProperty().bind(table.comparatorProperty());
-                table.setItems(sortedData);
-                //this line makes possible check each checkbox
-                table.setEditable(true);
-
-                table.setRowFactory(tv -> {
-                    TableRow<FileChange> rowtable = new TableRow<>();
-                    rowtable.setOnMouseClicked(eventRow -> {
-                        if (eventRow.getClickCount() == 2 && (!rowtable.isEmpty())) {
-                            FileChange rowData = rowtable.getItem();
-                            //System.out.println(rowData);
-                        }
-                    });
-                    return rowtable;
-                });
-
-                // addButtonToTable();
-
-                SplitPane splitPane = new SplitPane();
-                setCenter(splitPane);
-                splitPane.setOrientation(Orientation.VERTICAL);
-                splitPane.getItems().addAll(gridPane, toolBar, table);
-                splitPane.setDividerPosition(0, 0);
-
-
-                selectAllButton.setOnAction(new EventHandler<ActionEvent>() {
-                    @Override
-                    public void handle(ActionEvent e) {
-                        toolBar.setDisable(true);
-
-                        for (FileChange fileChange : data) {
-                            fileChange.setPropagateChange(true);
-                        }
-
-                        toolBar.setDisable(false);
-                    }
-                });
-
-                unselectAllButton.setOnAction(new EventHandler<ActionEvent>() {
-                    @Override
-                    public void handle(ActionEvent e) {
-                        toolBar.setDisable(true);
-
-                        for (FileChange fileChange : data) {
-                            fileChange.setPropagateChange(false);
-                        }
-
-                        toolBar.setDisable(false);
-                    }
-                });
-
-
-                propagateChangesButton.setOnAction(new EventHandler<ActionEvent>() {
-                    //this.openDialog("Choose a Directory", );
-                    @Override
-                    public void handle(ActionEvent e) {
-                        toolBar.setDisable(true);
-                        Collection<FileChange> selectedChanges = new ArrayList<>();
-                        for (ChangeAnalysisView.FileChange fileChange : data) {
-                            if (fileChange.isPropagateChange())
-                                selectedChanges.add(fileChange);
-                        }
-
-                        // use composition here to merge selected associations
-                        if (!selectedChanges.isEmpty()) {
-                            Map<String, at.jku.isse.gitecco.core.git.FileChange> filesChanged = new HashMap<>();
-                            ArrayList<String> filesAdded = new ArrayList<>();
-                            ArrayList<String> filesRemoved = new ArrayList<>();
-                            Path baseDir = Paths.get(repositoryDirTextField.getText());
-                            File mergeDir = new File(baseDir.getParent() + File.separator + "merge");
-                            File mergeFolder = new File(String.valueOf(mergeDir));
-                            at.jku.isse.gitecco.core.git.FileChange fileChangeAux;
-                            if (!mergeFolder.exists())
-                                mergeFolder.mkdir();
-                            for (FileChange fileChange : selectedChanges) {
-                                if (fileChange.getChangeType().equals("Removed File")) {
-                                    filesRemoved.add(fileChange.getFileName());
-                                } else if (fileChange.getChangeType().equals("New File")) {
-                                    filesAdded.add(fileChange.getFileName());
-                                } else {
-                                    if (filesChanged.get(fileChange.getFileName()) != null) {
-                                        fileChangeAux = filesChanged.get(fileChange.getFileName());
-                                        fileChangeAux.getLines().add(fileChange.getLines());
-                                        at.jku.isse.gitecco.core.git.FileChange finalFileChangeAux = fileChangeAux;
-                                        filesChanged.computeIfPresent(fileChange.getFileName(), (k, v) -> finalFileChangeAux);
-                                    } else {
-                                        ArrayList<String> lines = new ArrayList<>();
-                                        lines.add(fileChange.getLines());
-                                        fileChangeAux = new at.jku.isse.gitecco.core.git.FileChange(lines, fileChange.getFileLines(), fileChange.getPreviousfileLines());
-                                        filesChanged.put(fileChange.getFileName(), fileChangeAux);
-                                    }
-                                }
-                            }
-                            try {
-                                openDialog("Choose a Directory", new DirectoryView(mergeDir, repositoryDirTextField.getText(), firstcommitTextField.getText(), secondcommitTextField.getText(), filesAdded, filesRemoved, filesChanged));
-                            } catch (Exception ex) {
-                                ex.printStackTrace();
-                            }
-                        }
-
-                        toolBar.setDisable(false);
-                    }
-                });
-
-            } catch (Exception e) {
-                e.printStackTrace();
+                toolBar.setDisable(false);
             }
         });
 
+        unselectAllButton.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent e) {
+                toolBar.setDisable(true);
+
+                for (FileChange fileChange : data) {
+                    fileChange.setPropagateChange(false);
+                }
+
+                toolBar.setDisable(false);
+            }
+        });
+
+
+        propagateChangesButton.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent e) {
+                toolBar.setDisable(true);
+                Collection<FileChange> selectedChanges = new ArrayList<>();
+                for (ChangeAnalysisView.FileChange fileChange : data) {
+                    if (fileChange.isPropagateChange())
+                        selectedChanges.add(fileChange);
+                }
+
+                if (!selectedChanges.isEmpty()) {
+                    Map<String, at.jku.isse.gitecco.core.git.FileChange> filesChanged = new HashMap<>();
+                    ArrayList<String> filesAdded = new ArrayList<>();
+                    ArrayList<String> filesRemoved = new ArrayList<>();
+                    Path baseDir = Paths.get(repositoryDirTextField.getText());
+                    File mergeDir = new File(baseDir.getParent() + File.separator + "merge");
+                    File mergeFolder = new File(String.valueOf(mergeDir));
+                    at.jku.isse.gitecco.core.git.FileChange fileChangeAux;
+                    if (!mergeFolder.exists())
+                        mergeFolder.mkdir();
+                    for (FileChange fileChange : selectedChanges) {
+                        if (fileChange.getChangeType().equals("Removed File")) {
+                            filesRemoved.add(fileChange.getFileName());
+                        } else if (fileChange.getChangeType().equals("New File")) {
+                            filesAdded.add(fileChange.getFileName());
+                        } else {
+                            if (filesChanged.get(fileChange.getFileName()) != null) {
+                                fileChangeAux = filesChanged.get(fileChange.getFileName());
+                                fileChangeAux.getLines().add(fileChange.getLines());
+                                at.jku.isse.gitecco.core.git.FileChange finalFileChangeAux = fileChangeAux;
+                                filesChanged.computeIfPresent(fileChange.getFileName(), (k, v) -> finalFileChangeAux);
+                            } else {
+                                ArrayList<String> lines = new ArrayList<>();
+                                lines.add(fileChange.getLines());
+                                fileChangeAux = new at.jku.isse.gitecco.core.git.FileChange(lines, fileChange.getFileLines(), fileChange.getPreviousfileLines());
+                                filesChanged.put(fileChange.getFileName(), fileChangeAux);
+                            }
+                        }
+                    }
+                    try {
+                        openDialog("Choose a Directory", new DirectoryView(mergeDir, repositoryDirTextField.getText(), firstcommitTextField.getText(), secondcommitTextField.getText(), filesAdded, filesRemoved, filesChanged));
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                }
+
+                toolBar.setDisable(false);
+            }
+        });
 
         //this.mineButton.setOnAction(event -> ChangeAnalysis.identification(repositoryDirTextField.getText()));
         //cancelButton.setOnAction(event -> repositoryDirTextField.setText("Open the folder directory"));
@@ -543,7 +465,7 @@ public class ChangeAnalysisView extends BorderPane {
                 } else if (!linesaddinit.equals("") && i - 1 < (Integer.valueOf(linesaddinit) - 1)) {
                     result.setStyle(i - 1, "-rtfx-background-color: transparent");
                     result.appendText(i + " \t" + line + "\n");
-                    System.out.println("1st: "+result.getCurrentParagraph());
+                    System.out.println("1st: " + result.getCurrentParagraph());
                 } else if (!linesremovedinit.equals("") && i - 1 < data.getFileLines().size() - 1 && i - 1 > (Integer.valueOf(linesremovedend) - 1)) {
                     result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: transparent");
                     result.appendText(i + " \t" + line + "\n");
@@ -575,11 +497,11 @@ public class ChangeAnalysisView extends BorderPane {
         VirtualizedScrollPane<InlineCssTextArea> vsPane = new VirtualizedScrollPane<>(result);
         vsPane.setMaxWidth(600);
         vsPane.setMaxHeight(1000);
-        if(!linesremovedinit.equals(""))
-            posfile=Integer.valueOf(linesremovedinit)-1;
-        else if(!linesaddinit.equals(""))
-            posfile=Integer.valueOf(linesaddinit)-2;
-        result.moveTo(posfile,0);//result.getLength());
+        if (!linesremovedinit.equals(""))
+            posfile = Integer.valueOf(linesremovedinit) - 1;
+        else if (!linesaddinit.equals(""))
+            posfile = Integer.valueOf(linesaddinit) - 2;
+        result.moveTo(posfile, 0);//result.getLength());
         result.requestFollowCaret();
         //Scene scene = new Scene(root, 500, 200);
         // focus area so can see the caret
@@ -771,9 +693,155 @@ public class ChangeAnalysisView extends BorderPane {
         }
     }
 
+    public void changeAnalysisMethod(int[] rowaux) {
+        dataAux.clear();
+        try {
+            if (table.getItems().size() > 0) {
+                table.getColumns().removeAll();
+                table.getSelectionModel().clearSelection();
+                data.removeAll(data);
+            }
+            Map<Map<String, List<String>>, Changes> returnMethod = this.changeAnalysis.identification(featuresSystemTextField.getText(), repositoryDirTextField.getText(), firstcommitTextField.getText(), secondcommitTextField.getText(), featureTextField.getText());
+            rowaux[0]++;
+            for (Map.Entry<Map<String, List<String>>, Changes> changes : returnMethod.entrySet()) {
+                Map<String, List<String>> changesKey = changes.getKey();
+                String fileName = "";
+                List<String> fileLines = new ArrayList<>();
+                for (Map.Entry<String, List<String>> changeskeyMap : changesKey.entrySet()) {
+                    fileName = changeskeyMap.getKey();
+                    fileLines = changeskeyMap.getValue();
+                }
+                ArrayList<AddedFile> addedfiles = changes.getValue().getAddedFiles();
+                if (addedfiles.size() > 0) {
+                    for (AddedFile addf : addedfiles) {
+                        String featurei = "";
+                        for (String feati : addf.getFeatureInteractions()) {
+                            featurei += ", " + feati;
+                        }
+                        featurei = featurei.replaceFirst(", ", "");
+                        String featurea = "";
+                        for (String feati : addf.getFeatureMightAffected()) {
+                            featurea += ", " + feati;
+                        }
+                        featurea = featurea.replaceFirst(", ", "");
+                        List<String> previousfileLines = new ArrayList<>();
+                        FileChange fc = new FileChange(false, fileName, "New File", "Lines added: [" + String.valueOf(addf.getLinesInsert().get(0) + 1) + ", " + String.valueOf(addf.getLinesInsert().get(1) + 1) + ", " + String.valueOf(addf.getLinesInsert().get(2) + 1) + "]", featurei, featurea, fileLines, previousfileLines);
+                        //FileChange fc = new FileChange(false, fileName, "New File", "Lines added: " + addf.getLinesInsert(), featurei, featurea, fileLines);
+                        data.add(fc);
+                    }
+                }
+
+                ArrayList<ChangedFile> changedFiles = changes.getValue().getChangedFiles();
+                if (changedFiles.size() > 0) {
+                    for (ChangedFile changf : changedFiles) {
+                        String featurei = "";
+                        for (String feati : changf.getFeatureInteractions()) {
+                            featurei += ", " + feati;
+                        }
+                        featurei = featurei.replaceFirst(", ", "");
+                        String featurea = "";
+                        for (String feati : changf.getFeatureMightAffected()) {
+                            featurea += ", " + feati;
+                        }
+                        featurea = featurea.replaceFirst(", ", "");
+                        List<String> previousfileLines = new ArrayList<>();
+                        //FileChange fc = new FileChange(false, fileName, "Changed File", "Lines deleted: [" + String.valueOf(changf.getLinesRemoved().get(0) + 1) + ", " + String.valueOf(changf.getLinesRemoved().get(1) + 1) + ", " + String.valueOf((changf.getLinesRemoved().get(2) + 1) / 2) + "]", featurei, featurea, fileLines);
+                        FileChange fc = new FileChange(false, fileName, "Changed File", "Lines added: " + changf.getLinesInsert() + " Lines removed: " + changf.getLinesRemoved(), featurei, featurea, fileLines, changf.getPreviousLines());
+                        dataAux.add(fc);
+
+                    }
+                }
+
+                ArrayList<DeletedFile> deletedFiles = changes.getValue().getDeletedFiles();
+                if (deletedFiles.size() > 0) {
+                    for (DeletedFile delf : deletedFiles) {
+                        String featurei = "";
+                        for (String feati : delf.getFeatureInteractions()) {
+                            featurei += ", " + feati;
+                        }
+                        featurei = featurei.replaceFirst(", ", "");
+                        String featurea = "";
+                        for (String feati : delf.getFeatureMightAffected()) {
+                            featurea += ", " + feati;
+                        }
+                        featurea = featurea.replaceFirst(", ", "");
+                        List<String> previousfileLines = new ArrayList<>();
+                        FileChange fc = new FileChange(false, fileName, "Removed File", "Lines removed: [" + String.valueOf(delf.getLinesRemoved().get(0) + 1) + ", " + String.valueOf(delf.getLinesRemoved().get(1) + 1) + ", " + String.valueOf(delf.getLinesRemoved().get(2) + 1) + "]", featurei, featurea, fileLines, previousfileLines);
+                        //FileChange fc = new FileChange(false, fileName, "Removed File", "Lines removed: " + delf.getLinesRemoved(), featurei, featurea, fileLines);
+                        data.add(fc);
+                    }
+                }
+            }
+
+            //add files from the other changf containing the previousfilelines
+            for (int j = 0; j < dataAux.size(); j++) {
+                FileChange fc = dataAux.get(j);
+                    /*if (fc.getLines().contains("Lines removed: []")) {
+                        for (int j = 0; j < dataAux.size(); j++) {
+                            FileChange fcaux = dataAux.get(j);
+                            if (fc.getFileName().equals(fcaux.getFileName())) {
+                                if (!fcaux.getLines().contains("Lines removed: []")) {
+                                    String linesremoved = fcaux.getLines().substring(fcaux.getLines().indexOf("Lines removed: [") + 16);
+                                    String replacelines = fc.getLines().replace("Lines removed: []", "Lines removed: [" + linesremoved);
+                                    fc.setLines(replacelines);
+                                    fc.setPreviousfileLines(fcaux.getFileLines());
+                                    if(!data.contains(fc))
+                                        data.add(fc);
+                                    break;
+                                }
+                            }
+                        }
+                    }else if(!fc.getLines().contains("Lines added: []")){
+                        if(!data.contains(fc))
+                            data.add(fc);
+                    }else */
+                if (!data.contains(fc)) {
+                    data.add(fc);
+                }
+            }
+
+            table.setItems(data);
+
+            for (FileChange filechange : data) {
+                filechange.btnview.setOnAction(new EventHandler<ActionEvent>() {
+                    @Override
+                    public void handle(ActionEvent e) {
+                        showDiff(filechange);
+                    }
+                });
+            }
+
+            FilteredList<FileChange> filteredData = new FilteredList<>(data, p -> true);
+            SortedList<FileChange> sortedData = new SortedList<>(filteredData);
+            sortedData.comparatorProperty().bind(table.comparatorProperty());
+            table.setItems(sortedData);
+            //this line makes possible check each checkbox
+            table.setEditable(true);
+
+            table.setRowFactory(tv -> {
+                TableRow<FileChange> rowtable = new TableRow<>();
+                rowtable.setOnMouseClicked(eventRow -> {
+                    if (eventRow.getClickCount() == 2 && (!rowtable.isEmpty())) {
+                        FileChange rowData = rowtable.getItem();
+                        //System.out.println(rowData);
+                    }
+                });
+                return rowtable;
+            });
+
+            splitPane.getItems().addAll(toolBar, table);
+
+
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        varLoading = false;
+    }
+
     private void updateView() {
         changeAnalysisButton.setDisable(false);
         cancelButton.setDisable(false);
     }
-
 }

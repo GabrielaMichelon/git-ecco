@@ -1,0 +1,135 @@
+ChangeLog
+==========
+
+version 0.3.2 (released 2009-08-05)
+  * Added ssh_init() function.
+  * Added sftp_readlink() function.
+  * Added sftp_symlink() function.
+  * Fixed ssh_write_knownhost().
+  * Fixed compilation on Solaris.
+  * Fixed SSHv1 compilation.
+
+version 0.3.1 (released 2009-07-14)
+  * Added return code SSH_SERVER_FILE_NOT_FOUND.
+  * Fixed compilation of SSHv1.
+  * Fixed several memory leaks.
+  * Fixed possible infinite loops.
+  * Fixed a possible crash bug.
+  * Fixed build warnings.
+  * Fixed cmake on BSD.
+
+version 0.3 (released 2009-05-21)
+  * Added support for ssh-agent authentication.
+  * Added POSIX like sftp implementation.
+  * Added error checking to all functions.
+  * Added const to arguments where it was needed.
+  * Added a channel_get_exit_status() function.
+  * Added a channel_read_buffer() function, channel_read() is now
+    a POSIX like function.
+  * Added a more generic auth callback function.
+  * Added printf attribute checking for log and error functions.
+  * Added runtime function tracer support.
+  * Added NSIS build support with CPack.
+  * Added openssh hashed host support.
+  * Added API documentation for all public functions.
+  * Added asynchronous SFTP read function.
+  * Added a ssh_bind_set_fd() function.
+  * Fixed known_hosts parsing.
+  * Fixed a lot of build warnings.
+  * Fixed the Windows build.
+  * Fixed a lot of memory leaks.
+  * Fixed a double free corruption in the server support.
+  * Fixed the "ssh_accept:" bug in server support.
+  * Fixed important channel bugs.
+  * Refactored the socket handling.
+  * Switched to CMake build system.
+  * Improved performance.
+
+version 0.2 (released 2007-11-29)
+  * General cleanup
+  * More comprehensive API
+  * Up-to-date Doxygen documentation of each public function
+  * Basic server-based support
+  * Libgcrypt support (alternative to openssl and its license)
+  * SSH1 support (disabled by default)
+  * Added 3des-cbc
+  * A lot of bugfixes
+
+version 0.11-dev
+  * Server implementation development.
+  * Small bug corrected when connecting to sun ssh servers.
+  * Channel wierdness corrected (writing huge data packets)
+  * Channel_read_nonblocking added
+  * Channel bug where stderr wasn't correctly read fixed.
+  * Added sftp_file_set_nonblocking(), which is nonblocking SFTP IO
+  * Connect_status callback.
+  * Priv.h contains the internal functions, libssh.h the public interface
+  * Options_set_timeout (thx marcelo) really working.
+  * Tcp tunneling through channel_open_forward.
+  * Channel_request_exec()
+  * Channel_request_env()
+  * Ssh_get_pubkey_hash()
+  * Ssh_is_server_known()
+  * Ssh_write_known_host()
+  * Options_set_ssh_dir
+  * How could this happen ! there weren't any channel_close !
+  * Nasty channel_free bug resolved.
+  * Removed the unsigned long all around the code. use only u8,u32 & u64.
+  * It now compiles and runs under amd64 !
+  * Channel_request_pty_size
+  * Channel_change_pty_size
+  * Options_copy()
+  * Ported the doc to an HTML file.
+  * Small bugfix in packet.c
+  * Prefixed error constants with SSH_
+  * Sftp_stat, sftp_lstat, sftp_fstat. thanks Michel Bardiaux for the patch.
+  * Again channel number mismatch fixed.
+  * Fixed a bug in ssh_select making the select fail when a signal has been
+    caught.
+  * Keyboard-interactive authentication working.
+
+version 0.1 (released 2004-03-05)
+  * Begining of sftp subsystem implementation.
+  * Some cleanup into channels implementation
+  * Now every channel functions is called by its CHANNEL handler.
+  * Added channel_poll() and channel_read().
+  * Changed the client so it uses the new channel_poll and channel_read interface
+  * Small use-after-free bug with channels resolved
+  * Changed stupidities in lot of function names.
+  * Removed a debug output file opened by default.
+  * Added API.txt, the libssh programmer handbook.
+  * Various bug fixes from Nick Zitzmann.
+  * Developed a cryptographic structure for handling protocols.
+  * An autoconf script which took me half of a day to set up.
+  * A ssh_select wrapper has been written.
+
+version 0.0.4 (released 2003-10-10)
+  * Some terminal code (eof handling) added
+  * Channels bugfix (it still needs some tweaking though)
+  * Zlib support
+  * Added a wrapper.c file. The goal is to provide a similar API to every
+    cryptographic functions. bignums and sha/md5 are wrapped now.
+  * More work than it first looks.
+  * Support for other crypto libs planed (lighter libs)
+  * Fixed stupid select() bug.
+  * Libssh now compiles and links with openssl 0.9.6
+  * RSA pubkey authentication code now works !
+
+version 0.0.3 (released 2003-09-15)
+  * Added install target in makefile
+  * Some cleanup in headers files and source code
+  * Change default banner and project name to libssh.
+  * New file auth.c to support more and more authentication ways
+  * Bugfix(read offbyone) in send_kex
+  * A base64 parser. don't read the source, it's awful. pure 0xbadc0de.
+  * Changed the client filename to "ssh". logic isn't it ?
+  * Dss publickey authentication ! still need to wait for the rsa one
+  * Bugfix in packet.c
+  * New misc.c contains misc functions
+
+version 0.0.2 (released 2003-09-03)
+  * Initial release.
+  * Client supports both ssh and dss hostkey verification, but doesn't compare them to openssh's files. (~/.ssh/known_hosts)
+  * The only supported authentication method is password.
+  * Compiles on linux and openbsd. freebsd and netbsd should work, too
+  * Lot of work which hasn't been discussed here.

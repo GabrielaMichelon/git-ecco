@@ -1195,31 +1195,97 @@ public class GitHelper {
             ArrayList<String> lines = change.getValue().getLines();
             fileLines = change.getValue().getFileLines();
             previousLines = change.getValue().getPreviousContent();
-            ArrayList<String> linesaddinitArray = new ArrayList<>();
-            ArrayList<String> linesaddendArray = new ArrayList<>();
-            ArrayList<String> linesremovedinitArray = new ArrayList<>();
-            ArrayList<String> linesremovedendArray = new ArrayList<>();
+            ArrayList<Integer> linesaddinitArray = new ArrayList<>();
+            ArrayList<Integer> linesaddendArray = new ArrayList<>();
+            ArrayList<Integer> linesremovedinitArray = new ArrayList<>();
+            ArrayList<Integer> linesremovedendArray = new ArrayList<>();
             List<String> linesToWrite = new ArrayList<>();
-            Map<ArrayList<String>, ArrayList<String>> mapToOrderLines = new HashMap<>();
+
             int i = 0;
             for (String lineChanges : lines) {
                 String[] index = lineChanges.split(",");
-                linesaddinit = index[0].substring(index[0].indexOf("added: [") + 8).replaceAll(" ", "");
-                linesaddend = index[1].replaceAll(" ", "");
-                linesremovedinit = index[2].substring(index[2].indexOf("removed: [") + 10).replaceAll(" ", "");
-                linesremovedend = index[3].replaceAll(" ", "");
-                linesaddinitArray.add(linesaddinit);
-                linesaddendArray.add(linesaddend);
-                linesremovedinitArray.add(linesremovedinit);
-                linesremovedendArray.add(linesremovedend);
-            }
-            for (String l : previousLines) {
-                if (i >= Integer.valueOf(linesaddinit) && i <= Integer.valueOf(linesaddend)) {
-                    linesToWrite.add(fileLines.get(i));
-                } else if (i > Integer.valueOf(linesremovedend) || i < Integer.valueOf(linesremovedinit)) {
-                    linesToWrite.add(l);
+                if(!lineChanges.contains("added: []")) {
+                    linesaddinit = index[0].substring(index[0].indexOf("added: [") + 8).replaceAll(" ", "");
+                    linesaddend = index[1].replaceAll(" ", "");
+                    linesaddinitArray.add(Integer.valueOf(linesaddinit));
+                    linesaddendArray.add(Integer.valueOf(linesaddend));
                 }
-                i++;
+                if (!lineChanges.contains("removed: []")) {
+                    linesremovedinit = index[2].substring(index[2].indexOf("removed: [") + 10).replaceAll(" ", "");
+                    linesremovedend = index[3].replaceAll(" ", "");
+                    linesremovedinitArray.add(Integer.valueOf(linesremovedinit));
+                    linesremovedendArray.add(Integer.valueOf(linesremovedend));
+                }
+            }
+            ArrayList<Integer> linesaddinitArrayAux = new ArrayList<>();
+            ArrayList<Integer> linesaddendArrayAux = new ArrayList<>();
+            ArrayList<Integer> linesremovedinitArrayAux = new ArrayList<>();
+            ArrayList<Integer> linesremovedendArrayAux = new ArrayList<>();
+
+            int index = 0;
+            for (Integer value:linesaddinitArray) {
+                if(!value.equals("")){
+                    linesaddinitArrayAux.add(value);
+                    linesaddendArrayAux.add(linesaddendArray.get(index));
+                }
+                index++;
+            }
+            index=0;
+            for (Integer value:linesremovedinitArray) {
+                if(!value.equals("")){
+                    linesremovedinitArrayAux.add(value);
+                    linesremovedendArrayAux.add(linesremovedendArray.get(index));
+                }
+                index++;
+            }
+
+            if(linesaddinitArrayAux.size() > 0){
+                linesaddinit = String.valueOf(linesaddinitArrayAux.remove(0));
+                linesaddend =  String.valueOf(linesaddendArrayAux.remove(0));
+            }
+            if(linesremovedinitArrayAux.size() > 0){
+                linesremovedinit = String.valueOf(linesremovedinitArray.remove(0));
+                linesremovedend =  String.valueOf(linesremovedendArray.remove(0));
+            }
+            int linesaddinitAux=Integer.valueOf(linesaddinit);
+            int end = fileLines.size();
+            if(previousLines != null && previousLines.size()>fileLines.size())
+                end=previousLines.size();
+            while(i<end) {
+                if (!linesaddinit.equals("") && i >= (Integer.valueOf(linesaddinit)-1) && i <= (Integer.valueOf(linesaddend)-1)) {
+                    linesToWrite.add(fileLines.get(i));
+                    if(i==(Integer.valueOf(linesaddend)-1) && linesaddinitArrayAux.size() > 0){
+                        i=Integer.valueOf(linesaddinit)-1;
+                        linesaddinit = String.valueOf(linesaddinitArrayAux.remove(0));
+                        linesaddend = String.valueOf(linesaddendArrayAux.remove(0));
+                        i++;
+                    }else if(i==(Integer.valueOf(linesaddend)-1)){
+                        i=linesaddinitAux;
+                        linesaddinit="";
+                        i++;
+                    }else if(!linesremovedend.equals("") && Integer.valueOf(linesremovedend)==i){
+
+                    }else{
+                        i++;
+                    }
+                } else if (!linesremovedend.equals("")  && (i > (Integer.valueOf(linesremovedend)-1) || i < (Integer.valueOf(linesremovedinit)-1))) {
+                    linesToWrite.add(previousLines.get(i));
+                    if(i > (Integer.valueOf(linesremovedend)-1) && linesremovedendArrayAux.size() > 0){
+                        linesremovedend = String.valueOf(linesremovedendArrayAux.remove(0));
+                        linesremovedinit = String.valueOf(linesremovedinitArrayAux.remove(0));
+                    }
+                    i++;
+                }else{
+                    if(previousLines!=null)
+                        linesToWrite.add(previousLines.get(i));
+                    else
+                        linesToWrite.add(fileLines.get(i));
+                    i++;
+                }
+
+            }
+            if(previousLines != null) {
+                linesToWrite.add(previousLines.get(i));
             }
             Files.write(Paths.get(mergeDir + File.separator + change.getKey()), linesToWrite, Charset.defaultCharset());
         }
