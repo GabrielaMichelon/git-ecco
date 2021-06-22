@@ -220,26 +220,19 @@ public class ChangeAnalysisView extends BorderPane {
 
             Runnable task = () -> {
 
-                // Emulate a long task
-                // Use Platform.runLater()
-
                 changeAnalysisMethod(rowaux);
-                while(varLoading){
-                    changeAnalysisMethod(rowaux);
-                }
 
-               // try {
-                    //Thread.sleep(1000);
-               // } catch (InterruptedException e) {
-               //     e.printStackTrace();
-              //  }
+                //try {
+                //    Thread.sleep(1000);
+                //} catch (InterruptedException e) {
+               //    e.printStackTrace();
+               // }
 
 
-                // Stop count down and remove the GIF
-                Platform.runLater(() -> {
-                    showCount.setText("Done");
-                    root2.getChildren().remove(imageView);
-                });
+                //Platform.runLater(() -> {
+                //    showCount.setText("Done");
+                //    root2.getChildren().remove(imageView);
+                //});
             };
 
             Thread thread = new Thread(task);
@@ -830,8 +823,6 @@ public class ChangeAnalysisView extends BorderPane {
             });
 
             splitPane.getItems().addAll(toolBar, table);
-
-
 
 
         } catch (Exception e) {
