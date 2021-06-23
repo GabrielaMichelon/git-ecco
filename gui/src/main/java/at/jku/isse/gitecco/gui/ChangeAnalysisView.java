@@ -1,7 +1,6 @@
 package at.jku.isse.gitecco.gui;
 
 import at.jku.isse.gitecco.translation.changepropagation.*;
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -27,6 +26,8 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
 import javafx.stage.*;
 import javafx.util.Callback;
 import org.fxmisc.flowless.VirtualizedScrollPane;
@@ -44,50 +45,88 @@ public class ChangeAnalysisView extends BorderPane {
     private Button cancelButton = new Button("Cancel");
     private Label headerLabel = new Label();
     private ChangeAnalysis changeAnalysis;
-    final TableView<FileChange> table = new TableView<FileChange>();
-    static TextField firstcommitTextField = new TextField("10920fc67816f8184499d83ca5786885730fa4b8");//Commit Hash");
-    static TextField secondcommitTextField = new TextField("e0c969bb41008fc20871045b5d3e218ef5dda551");//Commit Hash");
-    static TextField repositoryDirTextField = new TextField("C:\\Users\\gabil\\Desktop\\PHD\\New research\\ChangePropagation\\libssh");//Open the folder directory");
-    static TextField featuresSystemTextField = new TextField("Select the file containing the features name of the system if it exists");
-    static TextField featureTextField = new TextField("WITH_SFTP");//"Feature Name");
+    private final TableView<FileChange> table = new TableView<FileChange>();
+    private static TextField firstcommitTextField = new TextField("10920fc67816f8184499d83ca5786885730fa4b8");//Commit Hash");
+    private static TextField secondcommitTextField = new TextField("e0c969bb41008fc20871045b5d3e218ef5dda551");//Commit Hash");
+    private static TextField repositoryDirTextField = new TextField("C:\\Users\\gabil\\Desktop\\PHD\\New research\\ChangePropagation\\libssh");//Open the folder directory");
+    private static TextField featuresSystemTextField = new TextField("Select the file containing the features name of the system if it exists");
+    private static TextField featureTextField = new TextField("WITH_SFTP");//"Feature Name");
     private GridPane gridPane = new GridPane();
-    private SplitPane splitPane = new SplitPane();
     private ToolBar toolBar = new ToolBar();
+    private TableColumn selectCol = new TableColumn("Propagate Changes");
+    private TableColumn fileCol = new TableColumn("File Name");
+    private TableColumn changeCol = new TableColumn("Change Type");
+    private TableColumn linesCol = new TableColumn("Lines");
+    private TableColumn featiCol = new TableColumn("Feature interactions");
+    private TableColumn feataff = new TableColumn("Feature might be affected");
+    private TableColumn colBtn = new TableColumn("File Diff");
+    private Button selectAllButton = new Button("Select All");
+    private Button unselectAllButton = new Button("Unselect All");
+    private Button propagateChangesButton = new Button("Propagate Changes Selected");
+    private Label loadingLabel = new Label("It can take some minutes. Please wait... ");
     private ObservableList<FileChange> data = FXCollections
             .observableArrayList();
-
     private ObservableList<FileChange> dataAux = FXCollections.observableArrayList();
-    int row[] = {0};
-    Boolean varLoading = true;
+    private int row[] = {0};
+    private Stage stage = new Stage();
 
+    public static TextField getFirstcommitTextField() {
+        return firstcommitTextField;
+    }
+
+    public static void setFirstcommitTextField(TextField firstcommitTextField) {
+        ChangeAnalysisView.firstcommitTextField = firstcommitTextField;
+    }
+
+    public static TextField getSecondcommitTextField() {
+        return secondcommitTextField;
+    }
+
+    public static void setSecondcommitTextField(TextField secondcommitTextField) {
+        ChangeAnalysisView.secondcommitTextField = secondcommitTextField;
+    }
+
+    public static TextField getRepositoryDirTextField() {
+        return repositoryDirTextField;
+    }
+
+    public static void setRepositoryDirTextField(TextField repositoryDirTextField) {
+        ChangeAnalysisView.repositoryDirTextField = repositoryDirTextField;
+    }
+
+    public static TextField getFeaturesSystemTextField() {
+        return featuresSystemTextField;
+    }
+
+    public static void setFeaturesSystemTextField(TextField featuresSystemTextField) {
+        ChangeAnalysisView.featuresSystemTextField = featuresSystemTextField;
+    }
+
+    public static TextField getFeatureTextField() {
+        return featureTextField;
+    }
+
+    public static void setFeatureTextField(TextField featureTextField) {
+        ChangeAnalysisView.featureTextField = featureTextField;
+    }
 
     public ChangeAnalysisView() {
-
         // main content
-
         gridPane.setHgap(10);
         gridPane.setVgap(10);
         gridPane.setPadding(new Insets(10, 10, 10, 10));
 
         ColumnConstraints col1constraint = new ColumnConstraints();
         col1constraint.setMinWidth(GridPane.USE_PREF_SIZE);
-        //col1constraint.setPercentWidth(30);
         ColumnConstraints col2constraint = new ColumnConstraints();
         col2constraint.setFillWidth(true);
         col2constraint.setHgrow(Priority.ALWAYS);
-        //col2constraint.setPercentWidth(30);
-        //col2constraint.setMinWidth(GridPane.USE_PREF_SIZE);
         gridPane.getColumnConstraints().addAll(col1constraint, col2constraint);
 
         this.setCenter(gridPane);
 
-
         Label repositoryDirLabel = new Label("Git Repository: ");
         gridPane.add(repositoryDirLabel, 0, row[0], 1, 1);
-
-        setCenter(splitPane);
-        splitPane.setOrientation(Orientation.VERTICAL);
-        splitPane.setDividerPosition(0, 0);
 
         repositoryDirTextField.setDisable(false);
         repositoryDirLabel.setLabelFor(repositoryDirTextField);
@@ -101,7 +140,6 @@ public class ChangeAnalysisView extends BorderPane {
         Label featuresDirLabel = new Label("TXT file containing features: ");
         gridPane.add(featuresDirLabel, 0, row[0], 1, 1);
 
-
         featuresSystemTextField.setDisable(false);
         featuresDirLabel.setLabelFor(featuresSystemTextField);
         gridPane.add(featuresSystemTextField, 1, row[0], 1, 1);
@@ -113,7 +151,6 @@ public class ChangeAnalysisView extends BorderPane {
 
         Label fistCommitLabel = new Label("First Commit: ");
         gridPane.add(fistCommitLabel, 0, row[0], 1, 1);
-
 
         firstcommitTextField.setDisable(false);
         gridPane.add(firstcommitTextField, 1, row[0], 1, 1);
@@ -131,14 +168,41 @@ public class ChangeAnalysisView extends BorderPane {
         Label featureLabel = new Label("Feature Name: ");
         gridPane.add(featureLabel, 0, row[0], 1, 1);
 
-
         featureTextField.setDisable(false);
         gridPane.add(featureTextField, 1, row[0], 1, 1);
 
         row[0]++;
         gridPane.add(changeAnalysisButton, 0, row[0], 1, 1);
-        //gridPane.add(cancelButton, 4, row, 1, 1);
 
+        row[0]+=8;
+
+
+        selectCol.setCellValueFactory(new PropertyValueFactory<>("propagateChange"));
+        selectCol.setCellFactory(CheckBoxTableCell.forTableColumn(selectCol));
+        selectCol.setEditable(true);
+        selectCol.setMinWidth(200);
+
+        fileCol.setCellValueFactory(new PropertyValueFactory<>("fileName"));
+        fileCol.setMinWidth(200);
+
+        changeCol.setCellValueFactory(new PropertyValueFactory<>("changeType"));
+        changeCol.setMinWidth(200);
+
+
+        linesCol.setCellValueFactory(new PropertyValueFactory<>("lines"));
+        linesCol.setMinWidth(400);
+
+
+        featiCol.setCellValueFactory(new PropertyValueFactory<>("feati"));
+        featiCol.setMinWidth(200);
+
+        feataff.setCellValueFactory(new PropertyValueFactory<>("feata"));
+        feataff.setMinWidth(200);
+
+        colBtn.setCellValueFactory(new PropertyValueFactory<>("btnview"));
+        colBtn.setMinWidth(200);
+
+        setTop(toolBar);
 
         Image image = new Image("image/loading.gif");
         ImageView imageView = new ImageView(image);
@@ -146,105 +210,35 @@ public class ChangeAnalysisView extends BorderPane {
         //Setting the preserve ratio of the image view
         imageView.setPreserveRatio(true);
 
-        //Creating a Group object
-        Group root = new Group(imageView);
-
-        //Creating a scene object
-        Scene sceneLoading = new Scene(root, 500, 500);
-        Stage newWindow = new Stage();
-        //Adding scene to the stage
-        newWindow.setScene(sceneLoading);
-        splitPane.getItems().addAll(gridPane);
-
-
-        TableColumn selectCol = new TableColumn("Propagate Changes");
-        selectCol.setCellValueFactory(new PropertyValueFactory<>("propagateChange"));
-        selectCol.setCellFactory(CheckBoxTableCell.forTableColumn(selectCol));
-        selectCol.setEditable(true);
-        selectCol.setMinWidth(200);
-
-
-        TableColumn fileCol = new TableColumn("File Name");
-        fileCol.setCellValueFactory(new PropertyValueFactory<>("fileName"));
-        fileCol.setMinWidth(200);
-
-        TableColumn changeCol = new TableColumn("Change Type");
-        changeCol.setCellValueFactory(new PropertyValueFactory<>("changeType"));
-        changeCol.setMinWidth(200);
-
-        TableColumn linesCol = new TableColumn("Lines");
-        linesCol.setCellValueFactory(new PropertyValueFactory<>("lines"));
-        linesCol.setMinWidth(400);
-
-        TableColumn featiCol = new TableColumn("Feature interactions");
-        featiCol.setCellValueFactory(new PropertyValueFactory<>("feati"));
-        featiCol.setMinWidth(200);
-
-        TableColumn feataff = new TableColumn("Feature might be affected");
-        feataff.setCellValueFactory(new PropertyValueFactory<>("feata"));
-        feataff.setMinWidth(200);
-
-        TableColumn colBtn = new TableColumn("File Diff");
-        colBtn.setCellValueFactory(new PropertyValueFactory<>("btnview"));
-        colBtn.setMinWidth(200);
-
-        table.getColumns().addAll(selectCol, fileCol, changeCol, linesCol, featiCol, feataff, colBtn);
-        //table.getColumns().addAll(selectCol, fileCol, changeCol, linesCol, featiCol, feataff);
-
-        setTop(toolBar);
-
-        Button selectAllButton = new Button("Select All");
-        Button unselectAllButton = new Button("Unselect All");
-        Button propagateChangesButton = new Button("Propagate Changes Selected");
-
-        toolBar.getItems().addAll(selectAllButton, unselectAllButton, propagateChangesButton);
-
         this.updateView();
         final int[] rowaux = {row[0]};
 
 
         changeAnalysisButton.setOnAction(event -> {
-            StackPane root2 = new StackPane();
+            loadingLabel.setTextFill(Color.color(1, 0, 0));
+            loadingLabel.setFont(new Font(15.0));
+            gridPane.add(loadingLabel, 0, row[0], 2, 3);
 
-            // Label to show count down
-            Label showCount = new Label();
-            showCount.setAlignment(Pos.CENTER);
-            root2.getChildren().add(showCount);
+            //StackPane root2 = new StackPane();
+            //root2.getChildren().add(imageView);
+            //Scene scene = new Scene(root2, 500, 500);
+            //stage.setScene(scene);
+            //stage.show();
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
 
-            root2.getChildren().add(imageView);
-
-            Scene scene = new Scene(root2, 500, 500);
-            Stage stage = new Stage();
-            stage.setScene(scene);
-            stage.show();
-
-            Runnable task = () -> {
-
-                changeAnalysisMethod(rowaux);
-
-                //try {
-                //    Thread.sleep(1000);
-                //} catch (InterruptedException e) {
-               //    e.printStackTrace();
-               // }
-
-
-                //Platform.runLater(() -> {
-                //    showCount.setText("Done");
-                //    root2.getChildren().remove(imageView);
-                //});
-            };
-
-            Thread thread = new Thread(task);
-            thread.setDaemon(true);
-            thread.start();
-
-
-            //newWindow.show();
-            //changeAnalysisMethod(rowaux);
-            //newWindow.close();
+            Platform.runLater(() ->
+                    changeAnalysisMethod(rowaux));
         });
 
+        SplitPane splitPane = new SplitPane();
+        setCenter(splitPane);
+        splitPane.setOrientation(Orientation.VERTICAL);
+        splitPane.getItems().addAll(gridPane, toolBar, table);
+        splitPane.setDividerPosition(0, 0);
 
         selectAllButton.setOnAction(new EventHandler<ActionEvent>() {
             @Override
@@ -458,7 +452,6 @@ public class ChangeAnalysisView extends BorderPane {
                 } else if (!linesaddinit.equals("") && i - 1 < (Integer.valueOf(linesaddinit) - 1)) {
                     result.setStyle(i - 1, "-rtfx-background-color: transparent");
                     result.appendText(i + " \t" + line + "\n");
-                    System.out.println("1st: " + result.getCurrentParagraph());
                 } else if (!linesremovedinit.equals("") && i - 1 < data.getFileLines().size() - 1 && i - 1 > (Integer.valueOf(linesremovedend) - 1)) {
                     result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: transparent");
                     result.appendText(i + " \t" + line + "\n");
@@ -688,6 +681,7 @@ public class ChangeAnalysisView extends BorderPane {
 
     public void changeAnalysisMethod(int[] rowaux) {
         dataAux.clear();
+
         try {
             if (table.getItems().size() > 0) {
                 table.getColumns().removeAll();
@@ -793,6 +787,8 @@ public class ChangeAnalysisView extends BorderPane {
                 }
             }
 
+            table.getColumns().addAll(selectCol, fileCol, changeCol, linesCol, featiCol, feataff, colBtn);
+            toolBar.getItems().addAll(selectAllButton, unselectAllButton, propagateChangesButton);
             table.setItems(data);
 
             for (FileChange filechange : data) {
@@ -821,14 +817,13 @@ public class ChangeAnalysisView extends BorderPane {
                 });
                 return rowtable;
             });
-
-            splitPane.getItems().addAll(toolBar, table);
-
+            //stage.close();
+            gridPane.getChildren().remove(loadingLabel);
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-        varLoading = false;
+
     }
 
     private void updateView() {
