@@ -1204,10 +1204,15 @@ public class GitHelper {
                     linesaddend = index[1].replaceAll(" ", "");
                     linesaddinitArray.add(Integer.valueOf(linesaddinit));
                     linesaddendArray.add(Integer.valueOf(linesaddend));
-                }
-                if (!lineChanges.contains("removed: []")) {
-                    linesremovedinit = index[2].substring(index[2].indexOf("removed: [") + 10).replaceAll(" ", "");
-                    linesremovedend = index[3].replaceAll(" ", "");
+                    if (!lineChanges.contains("removed: []")) {
+                        linesremovedinit = index[2].substring(index[2].indexOf("removed: [") + 10).replaceAll(" ", "");
+                        linesremovedend = index[3].replaceAll(" ", "");
+                        linesremovedinitArray.add(Integer.valueOf(linesremovedinit));
+                        linesremovedendArray.add(Integer.valueOf(linesremovedend));
+                    }
+                }else if (!lineChanges.contains("removed: []")) {
+                    linesremovedinit = index[0].substring(index[0].indexOf("removed: [") + 10).replaceAll(" ", "");
+                    linesremovedend = index[1].replaceAll(" ", "");
                     linesremovedinitArray.add(Integer.valueOf(linesremovedinit));
                     linesremovedendArray.add(Integer.valueOf(linesremovedend));
                 }
@@ -1267,7 +1272,7 @@ public class GitHelper {
                         linesremovedend = "";
                     }
                     k += ((Integer.valueOf(linesremovedend)) - Integer.valueOf(linesremovedinit))+1;
-                } else if (!linesremovedend.equals("") && k <= (Integer.valueOf(linesremovedend) - 2) && k >= (Integer.valueOf(linesremovedinit) - 2)) {
+                } else if (!linesremovedend.equals("") && k <= (Integer.valueOf(linesremovedend) - 1) && k >= (Integer.valueOf(linesremovedinit) - 1)) {
                     if (linesremovedinitArrayAux.size() > 0) {
                         linesremovedinit = String.valueOf(linesremovedinitArrayAux.remove(0));
                         linesremovedend = String.valueOf(linesremovedendArrayAux.remove(0));
