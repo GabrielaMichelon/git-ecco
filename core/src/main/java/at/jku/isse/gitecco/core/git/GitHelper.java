@@ -309,10 +309,10 @@ public class GitHelper {
                             if (delta.getType().toString().equals("DELETE")) {
                                 changeType = delta.getType().toString();
                                 first = delta.getOriginal().getPosition();
-                                last = delta.getOriginal().getPosition() + delta.getOriginal().getLines().size();
+                                last = delta.getOriginal().getPosition() + delta.getOriginal().getLines().size()-1;
                                 ArrayList<Integer> lines = new ArrayList<>();
                                 lines.add(first);
-                                lines.add(last - 1);
+                                lines.add(last);
                                 changes.add(new Change(first, last, lines, changeType));
                             } else if (delta.getType().toString().equals("INSERT")) {
                                 changeType = delta.getType().toString();
@@ -507,10 +507,10 @@ public class GitHelper {
                             if (delta.getType().toString().equals("DELETE")) {
                                 changeType = delta.getType().toString();
                                 first = delta.getOriginal().getPosition();
-                                last = delta.getOriginal().getPosition() + delta.getOriginal().getLines().size();
+                                last = delta.getOriginal().getPosition() + delta.getOriginal().getLines().size()-1;
                                 ArrayList<Integer> lines = new ArrayList<>();
                                 lines.add(first);
-                                lines.add(last - 1);
+                                lines.add(last);
                                 changes.add(new Change(first, last, lines, changeType));
                             } else if (delta.getType().toString().equals("INSERT")) {
                                 changeType = delta.getType().toString();
@@ -1273,13 +1273,13 @@ public class GitHelper {
                     }
                     k += ((Integer.valueOf(linesremovedend)) - Integer.valueOf(linesremovedinit))+1;
                 } else if (!linesremovedend.equals("") && k <= (Integer.valueOf(linesremovedend) - 1) && k >= (Integer.valueOf(linesremovedinit) - 1)) {
+                    k += ( (Integer.valueOf(linesremovedend) - Integer.valueOf(linesremovedinit)));
                     if (linesremovedinitArrayAux.size() > 0) {
                         linesremovedinit = String.valueOf(linesremovedinitArrayAux.remove(0));
                         linesremovedend = String.valueOf(linesremovedendArrayAux.remove(0));
                     }else{
                         linesremovedend = "";
                     }
-                    k += (Integer.valueOf(linesremovedinit) - (Integer.valueOf(linesremovedend)));
                 } else if (!linesaddinit.equals("") && k >= (Integer.valueOf(linesaddinit) - 2) && k <= (Integer.valueOf(linesaddend) - 2)) {
                     for (int j = 0; j <= (Integer.valueOf(linesaddend)-Integer.valueOf(linesaddinit)); j++) {
                         System.out.println("add: "+fileLines.get((Integer.valueOf(linesaddinit) - 2 + j)));
