@@ -8,13 +8,16 @@ public class ChangedFile {
     private ArrayList<Integer> linesRemoved;
     private ArrayList<String> featureInteractions;
     private ArrayList<String> featureMightAffected;
+    private List<String> currentLines;
     private List<String> previousLines;
 
-    public ChangedFile(ArrayList<Integer> linesInsert, ArrayList<Integer> linesRemoved, ArrayList<String> featureInteractions, ArrayList<String> featureMightAffected) {
+    public ChangedFile(ArrayList<Integer> linesInsert, ArrayList<Integer> linesRemoved, ArrayList<String> featureInteractions, ArrayList<String> featureMightAffected, List<String> currentLines, List<String> previousLines) {
         this.linesInsert = linesInsert;
         this.linesRemoved = linesRemoved;
         this.featureInteractions = featureInteractions;
         this.featureMightAffected = featureMightAffected;
+        this.currentLines = currentLines;
+        this.previousLines = previousLines;
     }
 
     public ArrayList<Integer> getLinesInsert() {
@@ -55,5 +58,13 @@ public class ChangedFile {
 
     public void setPreviousLines(List<String> previousLines) {
         this.previousLines = previousLines;
+    }
+
+    public List<String> getCurrentLines() {
+        return currentLines;
+    }
+
+    public void setCurrentLines(List<String> currentLines) {
+        this.currentLines = currentLines;
     }
 }

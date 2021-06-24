@@ -238,11 +238,6 @@ public class GitHelper {
             //to filter on Suffix use the following instead
             //setPathFilter(PathSuffixFilter.create(".cpp"))
 
-
-            ByteArrayOutputStream diffStream = new ByteArrayOutputStream();
-            DiffParser fileDiffParser = new DiffParser();
-
-
             for (DiffEntry entry : diff) {
                 String newPath = entry.getNewPath().replace("/", "\\");
                 String oldPath = entry.getOldPath().replace("/", "\\");
@@ -1204,7 +1199,7 @@ public class GitHelper {
             int i = 0;
             for (String lineChanges : lines) {
                 String[] index = lineChanges.split(",");
-                if(!lineChanges.contains("added: []")) {
+                if (!lineChanges.contains("added: []")) {
                     linesaddinit = index[0].substring(index[0].indexOf("added: [") + 8).replaceAll(" ", "");
                     linesaddend = index[1].replaceAll(" ", "");
                     linesaddinitArray.add(Integer.valueOf(linesaddinit));
@@ -1223,70 +1218,82 @@ public class GitHelper {
             ArrayList<Integer> linesremovedendArrayAux = new ArrayList<>();
 
             int index = 0;
-            for (Integer value:linesaddinitArray) {
-                if(!value.equals("")){
+            for (Integer value : linesaddinitArray) {
+                if (!value.equals("")) {
                     linesaddinitArrayAux.add(value);
                     linesaddendArrayAux.add(linesaddendArray.get(index));
                 }
                 index++;
             }
-            index=0;
-            for (Integer value:linesremovedinitArray) {
-                if(!value.equals("")){
+            index = 0;
+            for (Integer value : linesremovedinitArray) {
+                if (!value.equals("")) {
                     linesremovedinitArrayAux.add(value);
                     linesremovedendArrayAux.add(linesremovedendArray.get(index));
                 }
                 index++;
             }
 
-            if(linesaddinitArrayAux.size() > 0){
+            if (linesaddinitArrayAux.size() > 0) {
                 linesaddinit = String.valueOf(linesaddinitArrayAux.remove(0));
-                linesaddend =  String.valueOf(linesaddendArrayAux.remove(0));
+                linesaddend = String.valueOf(linesaddendArrayAux.remove(0));
             }
-            if(linesremovedinitArrayAux.size() > 0){
+            if (linesremovedinitArrayAux.size() > 0) {
                 linesremovedinit = String.valueOf(linesremovedinitArray.remove(0));
-                linesremovedend =  String.valueOf(linesremovedendArray.remove(0));
+                linesremovedend = String.valueOf(linesremovedendArray.remove(0));
             }
-            int linesaddinitAux=Integer.valueOf(linesaddinit);
-            int end = fileLines.size();
-            if(previousLines != null && previousLines.size()>fileLines.size())
-                end=previousLines.size();
-            while(i<end) {
-                if (!linesaddinit.equals("") && i >= (Integer.valueOf(linesaddinit)-1) && i <= (Integer.valueOf(linesaddend)-1)) {
-                    linesToWrite.add(fileLines.get(i));
-                    if(i==(Integer.valueOf(linesaddend)-1) && linesaddinitArrayAux.size() > 0){
-                        i=Integer.valueOf(linesaddinit)-1;
+
+            if (previousLines == null)
+                previousLines = fileLines;
+
+            for (int k = 0; k < previousLines.size(); k++) {
+                if (!linesremovedend.equals("") && k <= (Integer.valueOf(linesremovedend) - 2) && k >= (Integer.valueOf(linesremovedinit) - 2) && !linesaddinit.equals("") && k >= (Integer.valueOf(linesaddinit) - 2) && k <= (Integer.valueOf(linesaddend) - 2)) {
+                    linesToWrite.add(previousLines.get(k));
+                    System.out.println(previousLines.get(k));
+                    for (int j = 0; j <= (Integer.valueOf(linesaddend)-Integer.valueOf(linesaddinit)); j++) {
+                        System.out.println("add: "+fileLines.get((Integer.valueOf(linesaddinit) - 1 + j)));
+                        linesToWrite.add(fileLines.get((Integer.valueOf(linesaddinit) - 1 + j)));
+                    }
+                    if (linesaddinitArrayAux.size() > 0) {
                         linesaddinit = String.valueOf(linesaddinitArrayAux.remove(0));
                         linesaddend = String.valueOf(linesaddendArrayAux.remove(0));
-                        i++;
-                    }else if(i==(Integer.valueOf(linesaddend)-1)){
-                        i=linesaddinitAux;
-                        linesaddinit="";
-                        i++;
-                    }else if(!linesremovedend.equals("") && Integer.valueOf(linesremovedend)==i){
-
                     }else{
-                        i++;
+                        linesaddinit = "";
                     }
-                } else if (!linesremovedend.equals("")  && (i > (Integer.valueOf(linesremovedend)-1) || i < (Integer.valueOf(linesremovedinit)-1))) {
-                    linesToWrite.add(previousLines.get(i));
-                    if(i > (Integer.valueOf(linesremovedend)-1) && linesremovedendArrayAux.size() > 0){
-                        linesremovedend = String.valueOf(linesremovedendArrayAux.remove(0));
+                    if (linesremovedinitArrayAux.size() > 0) {
                         linesremovedinit = String.valueOf(linesremovedinitArrayAux.remove(0));
+                        linesremovedend = String.valueOf(linesremovedendArrayAux.remove(0));
+                    }else{
+                        linesremovedend = "";
                     }
-                    i++;
-                }else{
-                    if(previousLines!=null)
-                        linesToWrite.add(previousLines.get(i));
-                    else
-                        linesToWrite.add(fileLines.get(i));
-                    i++;
+                    k += ((Integer.valueOf(linesremovedend)) - Integer.valueOf(linesremovedinit))+1;
+                } else if (!linesremovedend.equals("") && k <= (Integer.valueOf(linesremovedend) - 2) && k >= (Integer.valueOf(linesremovedinit) - 2)) {
+                    if (linesremovedinitArrayAux.size() > 0) {
+                        linesremovedinit = String.valueOf(linesremovedinitArrayAux.remove(0));
+                        linesremovedend = String.valueOf(linesremovedendArrayAux.remove(0));
+                    }else{
+                        linesremovedend = "";
+                    }
+                    k += (Integer.valueOf(linesremovedinit) - (Integer.valueOf(linesremovedend)));
+                } else if (!linesaddinit.equals("") && k >= (Integer.valueOf(linesaddinit) - 2) && k <= (Integer.valueOf(linesaddend) - 2)) {
+                    for (int j = 0; j <= (Integer.valueOf(linesaddend)-Integer.valueOf(linesaddinit)); j++) {
+                        System.out.println("add: "+fileLines.get((Integer.valueOf(linesaddinit) - 2 + j)));
+                        linesToWrite.add(fileLines.get((Integer.valueOf(linesaddinit) - 2 + j)));
+                    }
+                    if (linesaddinitArrayAux.size() > 0) {
+                        linesaddinit = String.valueOf(linesaddinitArrayAux.remove(0));
+                        linesaddend = String.valueOf(linesaddendArrayAux.remove(0));
+                    }else{
+                        linesaddinit = "";
+                    }
+                    System.out.println(previousLines.get(k));
+                    linesToWrite.add(previousLines.get(k));
+                } else {
+                    System.out.println(previousLines.get(k));
+                    linesToWrite.add(previousLines.get(k));
                 }
+            }
 
-            }
-            if(previousLines != null) {
-                linesToWrite.add(previousLines.get(i));
-            }
             Files.write(Paths.get(mergeDir + File.separator + change.getKey()), linesToWrite, Charset.defaultCharset());
         }
         return true;

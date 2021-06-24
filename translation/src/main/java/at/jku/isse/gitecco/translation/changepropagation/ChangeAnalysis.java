@@ -620,7 +620,13 @@ public class ChangeAnalysis {
                                 }
                                 nrChunksRemove += 3;
                                 nrChunksInsert += 3;
-                                ChangedFile changedFile = new ChangedFile(linesInsertArray, linesRemovedArray, featureInteraction, featureMightBeAffected);
+                                for (int i = 0; i < changes.getChangedFiles().size(); i++) {
+                                    if (changes.getChangedFiles().get(i).getLinesInsert().equals(linesInsertArray)) {
+                                        changes.getChangedFiles().get(i).setPreviousLines(changedNode.getContainingPreviousFileLines());
+                                        break;
+                                    }
+                                }
+                                ChangedFile changedFile = new ChangedFile(linesInsertArray, linesRemovedArray, featureInteraction, featureMightBeAffected, changedNode.getContainingFileLines(), changedNode.getContainingPreviousFileLines());
                                 changes.addChangedFiles(changedFile);
                             }
                             Map<String, List<String>> mapFile = new HashMap<>();
@@ -868,7 +874,7 @@ public class ChangeAnalysis {
                                 ArrayList<Integer> linesInsertArray = new ArrayList<>();
                                 ArrayList<Integer> linesRemovedArray = new ArrayList<>();
                                 linesRemovedArray.addAll(linesRemoved);
-                                ChangedFile changedFile = new ChangedFile(linesInsertArray, linesRemovedArray, featureInteraction, featureMightBeAffected);
+                                ChangedFile changedFile = new ChangedFile(linesInsertArray, linesRemovedArray, featureInteraction, featureMightBeAffected, deletedNode.getContainingFileLines(), deletedNode.getContainingPreviousFileLines());
                                 Changes changes = new Changes();
                                 changes.addChangedFiles(changedFile);
                                 Map<String, List<String>> mapFile = new HashMap<>();
@@ -1054,6 +1060,7 @@ public class ChangeAnalysis {
     public static void addChange(Changes changes, ArrayList<String> featureInteraction, ArrayList<String> featureMightBeAffected, ArrayList<Integer> linesAddArray, ArrayList<Integer> linesRemArray, String type, Map<Map<String, List<String>>, Changes> results, ConditionalNode changedNode) {
         if (type.equals("add")) {
             AddedFile addedFile = new AddedFile(linesAddArray, featureInteraction, featureMightBeAffected);
+
             if (!changes.getAddedFiles().contains(addedFile)) {
                 changes.addAddedFiles(addedFile);
                 Map<String, List<String>> mapFile = new HashMap<>();
@@ -1065,7 +1072,7 @@ public class ChangeAnalysis {
                 results.computeIfPresent(mapFile, (k, v) -> changes);
             }
         } else if (type.equals("change")) {
-            ChangedFile changedFile = new ChangedFile(linesAddArray, linesRemArray, featureInteraction, featureMightBeAffected);
+            ChangedFile changedFile = new ChangedFile(linesAddArray, linesRemArray, featureInteraction, featureMightBeAffected,changedNode.getContainingFileLines(), changedNode.getContainingPreviousFileLines());
             if (!changes.getChangedFiles().contains(changedFile)) {
                 changes.addChangedFiles(changedFile);
                 Map<String, List<String>> mapFile = new HashMap<>();

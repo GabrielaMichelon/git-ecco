@@ -786,9 +786,10 @@ public class ChangeAnalysisView extends BorderPane {
                     data.add(fc);
                 }
             }
-
-            table.getColumns().addAll(selectCol, fileCol, changeCol, linesCol, featiCol, feataff, colBtn);
-            toolBar.getItems().addAll(selectAllButton, unselectAllButton, propagateChangesButton);
+            if(table.getColumns().size()==0)
+                table.getColumns().addAll(selectCol, fileCol, changeCol, linesCol, featiCol, feataff, colBtn);
+            if(table.getItems().size()==0)
+                toolBar.getItems().addAll(selectAllButton, unselectAllButton, propagateChangesButton);
             table.setItems(data);
 
             for (FileChange filechange : data) {
