@@ -446,9 +446,9 @@ public class ChangeAnalysisView extends BorderPane {
                 } else if (!linesaddinit.equals("") && linesremovedinit.equals("") && i - 1 >= (Integer.valueOf(linesaddinit) - 2) && i - 1 <= (Integer.valueOf(linesaddend) - 2)) {
                     result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: #dcffe4");
                     result.appendText(i + " +\t" + line + "\n");
-                } else if (!linesremovedinit.equals("") && i - 1 >= (Integer.valueOf(linesremovedinit) - 1) && i - 1 <= (Integer.valueOf(linesremovedend) - 1)) {
-                    result.setStyle(i - 1, "-rtfx-background-color: #ffdce0");
-                    result.appendText(i + " -\t" + data.getPreviousfileLines().get(i - 1) + "\n");
+                } else if (!linesremovedinit.equals("") && i - 1 >= (Integer.valueOf(linesremovedinit) - 1) && i - 1 <= (Integer.valueOf(linesremovedend)) - 1) {
+                    result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: #ffdce0");
+                    result.appendText(i + " -\t" + data.getPreviousfileLines().get(i-1) + "\n");
                 } else if (!linesaddinit.equals("") && i - 1 < (Integer.valueOf(linesaddinit) - 1)) {
                     result.setStyle(i - 1, "-rtfx-background-color: transparent");
                     result.appendText(i + " \t" + line + "\n");

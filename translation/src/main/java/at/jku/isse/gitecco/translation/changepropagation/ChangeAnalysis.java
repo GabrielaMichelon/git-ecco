@@ -873,7 +873,9 @@ public class ChangeAnalysis {
                             } else {
                                 ArrayList<Integer> linesInsertArray = new ArrayList<>();
                                 ArrayList<Integer> linesRemovedArray = new ArrayList<>();
-                                linesRemovedArray.addAll(linesRemoved);
+                                linesRemovedArray.add((linesRemoved.get(0))+1);
+                                linesRemovedArray.add((linesRemoved.get(1))+1);
+                                linesRemovedArray.add(linesRemoved.get(2));
                                 ChangedFile changedFile = new ChangedFile(linesInsertArray, linesRemovedArray, featureInteraction, featureMightBeAffected, deletedNode.getContainingFileLines(), deletedNode.getContainingPreviousFileLines());
                                 Changes changes = new Changes();
                                 changes.addChangedFiles(changedFile);
