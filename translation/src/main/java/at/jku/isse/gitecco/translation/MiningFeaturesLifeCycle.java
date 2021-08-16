@@ -33,8 +33,8 @@ public class MiningFeaturesLifeCycle {
     private static int EVERY_NTH_COMMIT = 1;
     private static ArrayList<Feature> featureList = new ArrayList<>();
     private static ArrayList<String> featureNamesList = new ArrayList<String>();
-    private static String REPO_PATH = "";//"C:\\Users\\gabil\\Desktop\\PHD\\Mining\\systems\\Sqlite\\sqlite";
-    private static String FEATURES_PATH =  "";//"C:\\Users\\gabil\\Desktop\\PHD\\Mining\\LOC_fix\\SQLite\\version-3.7.2-em-diante";
+    private static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\systems\\Sqlite - Copy\\sqlite";
+    private static String FEATURES_PATH =  "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\systems\\Sqlite - Copy\\results";
     static String fileReportFeature = "features_report_each_project_commit.csv";
     static String fileStoreConfig = "configurations.csv";
     static List<String> changedFiles = new ArrayList<>();
@@ -45,7 +45,7 @@ public class MiningFeaturesLifeCycle {
     static Map<Feature, Integer> featureVersions = new HashMap<>();
     static String feats;
     static String analyze = "0";
-    static String release="";
+    static String release="version-3.7.6.1";
 
     public static void main(String[] args) throws Exception {
         if (args.length > 0) {
@@ -70,7 +70,9 @@ public class MiningFeaturesLifeCycle {
                 FEATURES_PATH.replaceAll("\\\\",File.separator);
             }
             identification();
-        }else {
+        }else if(!REPO_PATH.equals("")){
+            identification();
+        } else{
             System.out.println("Incorrect parameters");
         }
     }
@@ -120,13 +122,24 @@ public class MiningFeaturesLifeCycle {
                         //feature identification
                         identifyFeatures(commitList, releases.getValue(), idFeatsfolder);
                         initVars(folderRelease);
+                        List<String> runtimes = new ArrayList<>();
+                        Long runtimeMining, timeBefore, timeAfter;
                         for (GitCommit commits : commitList) {
+                            timeBefore = System.currentTimeMillis();
                             ComputeRQMetrics.characteristicsFeature(folder, commits.getNumber(), commits.getTree(), featureNamesList);
                             configurations.clear();
                             characteristicsChange2(gitHelper, changeFolder, commits, featureNamesList);
+                            timeAfter = System.currentTimeMillis();
+                            runtimeMining = timeAfter - timeBefore;
+                            System.out.println("TIME COMPUTE METRICS: "+runtimeMining);
+                            runtimes.add("commit number: " + commits.getNumber() + "  " + Long.toString(runtimeMining));
                             //dispose tree if it is not needed -> for memory saving reasons.
                             commits.disposeTree();
                         }
+                        //write runtime per commit in a file
+                        Path writeMetricsRuntime = Paths.get(folder.getParent()+File.separator+"runtime.txt");
+                        Files.write(writeMetricsRuntime, runtimes.stream().map(Object::toString).collect(Collectors.toList()));
+
                         //RQ.2 How many times one feature changed along a number of Git commits?
                         File filetxt = new File(folder.getParent(), "TimesEachFeatureChanged.txt");
                         PrintWriter writerTXT = new PrintWriter(filetxt.getAbsolutePath(), "UTF-8");

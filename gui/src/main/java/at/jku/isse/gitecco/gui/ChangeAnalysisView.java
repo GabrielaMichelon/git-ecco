@@ -434,33 +434,53 @@ public class ChangeAnalysisView extends BorderPane {
             }
         }
 
-
+        int count=0;
+        i=0;
         if (data.getChangeType().equals("Changed File")) {
-            for (String line : data.getFileLines()) {
+            while (i<data.getFileLines().size()) {
                 //System.out.println("result.length "+result.getParagraphStyleForInsertionAt(i)+" i: "+i);
-                if (!linesaddinit.equals("") && i - 1 >= (Integer.valueOf(linesaddinit) - 1) && i - 1 <= (Integer.valueOf(linesaddend) - 1) && !linesremovedinit.equals("") && i - 1 >= (Integer.valueOf(linesremovedinit) - 1) && i - 1 <= (Integer.valueOf(linesremovedend) - 1)) {
-                    result.setStyle(i - 1, "-rtfx-background-color: #ffdce0");
-                    result.appendText(i + " -\t" + data.getPreviousfileLines().get(i - 1) + "\n");
+                if (!linesremovedinit.equals("") && i >= (Integer.valueOf(linesremovedinit)) && i <= (Integer.valueOf(linesremovedend))) {
+                    if(!linesaddinit.equals("") && Integer.valueOf(linesaddinit)>Integer.valueOf(linesremovedinit)){
+                        count=i;
+                        int init=Integer.valueOf(linesremovedinit)-1;
+                        while(count<Integer.valueOf(linesaddend)){
+                            if(count>=(Integer.valueOf(linesaddinit)-1)) {
+                                while(init<Integer.valueOf(linesremovedend)){
+                                    result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: #ffdce0");
+                                    result.appendText((init+1)+" -\t" + data.getPreviousfileLines().get(init) + "\n");
+                                    init++;
+                                }
+                                result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: #dcffe4");
+                                result.appendText((count + 1) + " +\t" + data.getFileLines().get(count) + "\n");
+                            }else{
+                                result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: transparent");
+                                result.appendText(count+1 + " \t" + data.getFileLines().get(count) + "\n");
+                            }
+                            count++;
+                        }
+                        i=Integer.valueOf(linesaddend)-1;
+                    }else {
+                        result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: #ffdce0");
+                        result.appendText((i+1) + " -\t" + data.getPreviousfileLines().get(i) + "\n");
+                    }
+                } else if (!linesaddinit.equals("") && linesremovedinit.equals("") && i >= (Integer.valueOf(linesaddinit) - 1) && i - 1 <= (Integer.valueOf(linesaddend) - 1)) {
                     result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: #dcffe4");
-                    result.appendText(i + " +\t" + line + "\n");
-                } else if (!linesaddinit.equals("") && linesremovedinit.equals("") && i - 1 >= (Integer.valueOf(linesaddinit) - 2) && i - 1 <= (Integer.valueOf(linesaddend) - 2)) {
+                    result.appendText((i+1) + " +\t" + data.getFileLines().get(i) + "\n");
+                }else if  (!linesaddinit.equals("") && i >= (Integer.valueOf(linesaddinit)) && i <= (Integer.valueOf(linesaddend)) && linesremovedinit.equals("")) {
                     result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: #dcffe4");
-                    result.appendText(i + " +\t" + line + "\n");
-                } else if (!linesremovedinit.equals("") && i - 1 >= (Integer.valueOf(linesremovedinit) - 1) && i - 1 <= (Integer.valueOf(linesremovedend)) - 1) {
-                    result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: #ffdce0");
-                    result.appendText(i + " -\t" + data.getPreviousfileLines().get(i-1) + "\n");
-                } else if (!linesaddinit.equals("") && i - 1 < (Integer.valueOf(linesaddinit) - 1)) {
-                    result.setStyle(i - 1, "-rtfx-background-color: transparent");
-                    result.appendText(i + " \t" + line + "\n");
-                } else if (!linesremovedinit.equals("") && i - 1 < data.getFileLines().size() - 1 && i - 1 > (Integer.valueOf(linesremovedend) - 1)) {
+                    result.appendText((i+1) + " +\t" + data.getFileLines().get(i) + "\n");
+                } else if (!linesaddinit.equals("") && i < (Integer.valueOf(linesaddinit))) {
                     result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: transparent");
-                    result.appendText(i + " \t" + line + "\n");
-                } else if (!linesremovedinit.equals("") && i - 1 < data.getFileLines().size() && i - 1 > (Integer.valueOf(linesremovedend) - 1)) {
+                    result.appendText((i+1) + " \t" + data.getFileLines().get(i) + "\n");
+                } else if (!linesremovedinit.equals("") && i < data.getFileLines().size() - 1 && i > (Integer.valueOf(linesremovedend))) {
+                    result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: transparent");
+                    result.appendText((i+1) + " \t" + data.getFileLines().get(i) + "\n");
+                } else if (!linesremovedinit.equals("") && i < data.getFileLines().size() && i > (Integer.valueOf(linesremovedend))) {
                     //result.setStyle(Integer.valueOf(linesremovedend)+1, "-rtfx-background-color: transparent");
-                    result.appendText(i + " \t" + line + "\n");
+                    result.appendText((i+1) + " \t" + data.getFileLines().get(i) + "\n");
                 } else {
-                    result.setStyle(i - 1, "-rtfx-background-color: transparent");
-                    result.appendText(i + " \t" + line + "\n");
+                    result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: transparent");
+                    result.appendText((i+1) + " \t" + data.getFileLines().get(i) + "\n");
                 }
 
                 i++;
@@ -468,9 +488,9 @@ public class ChangeAnalysisView extends BorderPane {
         } else {
             for (String line : data.getFileLines()) {
                 if (i < data.getFileLines().size())
-                    result.appendText(i + " " + signal + "\t" + line + "\n");
+                    result.appendText((i+1) + " " + signal + "\t" + line + "\n");
                 else
-                    result.appendText(i + " " + signal + "\t" + line);
+                    result.appendText((i+1) + " " + signal + "\t" + line);
                 i++;
             }
         }

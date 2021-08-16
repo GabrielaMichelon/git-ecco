@@ -14,6 +14,7 @@ public class Change {
     private final int from;
     private final int to;
     private final ArrayList<Integer> lines;
+    private final ArrayList<Integer> linesPrevious;
     private final String changeType;
 
 
@@ -23,10 +24,11 @@ public class Change {
      * @param from int value of the starting line number of the change.
      * @param cnt  int value which indicates how many lines are covered by this change.
      */
-    public Change(int from, int cnt, ArrayList<Integer> lines, String changeType) {
+    public Change(int from, int cnt, ArrayList<Integer> lines, ArrayList<Integer> linesPrevious, String changeType) {
         this.from = from;
         this.to = cnt;
         this.lines = lines;
+        this.linesPrevious = linesPrevious;
         this.changeType = changeType;
         //this.to = from+cnt;
     }
@@ -60,7 +62,6 @@ public class Change {
         return this.to;
     }
 
-
     /**
      * Gets number of lines of the change
      * @return
@@ -69,14 +70,13 @@ public class Change {
         return lines;
     }
 
-    public void addLines(int line){
-        this.lines.add(line);
-    }
-
+    /**
+     * Gets the type of the change: DELETE, INSERT, CHANGE
+     * @return
+     */
     public String getChangeType() {
         return changeType;
     }
-
 
     @Override
     public String toString() {

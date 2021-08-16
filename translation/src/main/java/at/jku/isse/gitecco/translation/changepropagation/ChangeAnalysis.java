@@ -436,7 +436,7 @@ public class ChangeAnalysis {
             changedFilesNext.add(child.getFilePath());
         }
 
-
+        //The deleted nodes are
         for (String file : changedFiles) {
             if (!changedFilesNext.contains(file)) {
                 FileNode child = gc1.getTree().getChild(file);
@@ -675,7 +675,7 @@ public class ChangeAnalysis {
                         else
                             eccoConfig += "," + configFeature.getKey().toString() + ".$$";
 
-                        //RQ1.
+
                         ChangeCharacteristic changeCharacteristic;
                         if (featureMap.get(configFeature.getKey()) == null) {
                             changeCharacteristic = new ChangeCharacteristic();
