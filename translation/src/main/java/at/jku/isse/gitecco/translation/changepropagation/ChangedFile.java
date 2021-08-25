@@ -6,14 +6,16 @@ import java.util.List;
 public class ChangedFile {
     private ArrayList<Integer> linesInsert;
     private ArrayList<Integer> linesRemoved;
+    private int oldFilePosition;
     private ArrayList<String> featureInteractions;
     private ArrayList<String> featureMightAffected;
     private List<String> currentLines;
     private List<String> previousLines;
 
-    public ChangedFile(ArrayList<Integer> linesInsert, ArrayList<Integer> linesRemoved, ArrayList<String> featureInteractions, ArrayList<String> featureMightAffected, List<String> currentLines, List<String> previousLines) {
+    public ChangedFile(ArrayList<Integer> linesInsert, ArrayList<Integer> linesRemoved, int  oldFilePosition, ArrayList<String> featureInteractions, ArrayList<String> featureMightAffected, List<String> currentLines, List<String> previousLines) {
         this.linesInsert = linesInsert;
         this.linesRemoved = linesRemoved;
+        this.oldFilePosition = oldFilePosition;
         this.featureInteractions = featureInteractions;
         this.featureMightAffected = featureMightAffected;
         this.currentLines = currentLines;
@@ -21,7 +23,7 @@ public class ChangedFile {
     }
 
     public ArrayList<Integer> getLinesInsert() {
-        return linesInsert;
+        return this.linesInsert;
     }
 
     public void setLinesInsert(ArrayList<Integer> linesInsert) {
@@ -29,15 +31,23 @@ public class ChangedFile {
     }
 
     public ArrayList<Integer> getLinesRemoved() {
-        return linesRemoved;
+        return this.linesRemoved;
     }
 
     public void setLinesRemoved(ArrayList<Integer> linesRemoved) {
         this.linesRemoved = linesRemoved;
     }
 
+    public int getOldFilePosition() {
+        return this.oldFilePosition;
+    }
+
+    public void setOldFilePosition(int oldFilePosition) {
+        this.oldFilePosition = oldFilePosition;
+    }
+
     public ArrayList<String> getFeatureInteractions() {
-        return featureInteractions;
+        return this.featureInteractions;
     }
 
     public void setFeatureInteractions(ArrayList<String> featureInteractions) {
@@ -45,7 +55,7 @@ public class ChangedFile {
     }
 
     public ArrayList<String> getFeatureMightAffected() {
-        return featureMightAffected;
+        return this.featureMightAffected;
     }
 
     public void setFeatureMightAffected(ArrayList<String> featureMightAffected) {
@@ -53,7 +63,7 @@ public class ChangedFile {
     }
 
     public List<String> getPreviousLines() {
-        return previousLines;
+        return this.previousLines;
     }
 
     public void setPreviousLines(List<String> previousLines) {
@@ -61,7 +71,7 @@ public class ChangedFile {
     }
 
     public List<String> getCurrentLines() {
-        return currentLines;
+        return this.currentLines;
     }
 
     public void setCurrentLines(List<String> currentLines) {

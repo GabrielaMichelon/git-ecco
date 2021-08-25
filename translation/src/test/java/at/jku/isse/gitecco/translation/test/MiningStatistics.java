@@ -18,7 +18,7 @@ public class MiningStatistics {
     //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\Ready\\SQLite";
     //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\Ready\\LibSSH\\Mining";
     //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\LOC_fix\\Irssi\\Mining";
-    private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\LOC_fix\\LibSSH\\Mining";
+    private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\LOC_fix\\Bison\\Mining";
     //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\LOC_fix\\SQLite-ready";
     //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\LOC_fix\\Bison\\Mining";
     //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\Ready\\Irssi\\Mining\\Mining";

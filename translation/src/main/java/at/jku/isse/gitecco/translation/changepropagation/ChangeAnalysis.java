@@ -5,15 +5,13 @@ import at.jku.isse.gitecco.core.git.GitCommit;
 import at.jku.isse.gitecco.core.git.GitCommitList;
 import at.jku.isse.gitecco.core.git.GitHelper;
 import at.jku.isse.gitecco.core.preprocessor.PreprocessorHelper;
-import at.jku.isse.gitecco.core.tree.nodes.BaseNode;
-import at.jku.isse.gitecco.core.tree.nodes.ConditionalNode;
-import at.jku.isse.gitecco.core.tree.nodes.FileNode;
-import at.jku.isse.gitecco.core.tree.nodes.SourceFileNode;
+import at.jku.isse.gitecco.core.tree.nodes.*;
 import at.jku.isse.gitecco.core.type.Feature;
 import at.jku.isse.gitecco.featureid.type.TraceableFeature;
 import at.jku.isse.gitecco.translation.constraintcomputation.util.ConstraintComputer;
 import at.jku.isse.gitecco.translation.mining.ChangeCharacteristic;
 import at.jku.isse.gitecco.translation.visitor.GetNodesForChangeVisitor;
+import com.google.common.collect.Multimap;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.opencsv.CSVWriter;
@@ -398,6 +396,7 @@ public class ChangeAnalysis {
         gcl.addTreeParent(gcPrevious, gc2.getCommitName());
 
         Map<Change, FileNode> changesDelete = new HashMap<>();
+        Map<Change, FileNode> changesInsertAndDelete = new HashMap<>();
 
         for (FileNode nod : gc1.getTree().getChildren()) {
             if (nod instanceof SourceFileNode) {
@@ -418,18 +417,13 @@ public class ChangeAnalysis {
                 }
 
                 for (Change change : changes) {
-                    if (change.getChangeType().equals("INSERT")) {
+                    if (!change.getChangeType().equals("DELETE")) {
                         visitor.setChange(change);
                         child.accept(visitor, null);
                         changedNodes.addAll(visitor.getchangedNodes());
                     } else if (change.getChangeType().equals("DELETE")) {
                         changesDelete.put(change, child);
-                    } else if (change.getChangeType().equals("CHANGE")) {
-                        visitor.setChange(change);
-                        child.accept(visitor, null);
-                        changedNodes.addAll(visitor.getchangedNodes());
                     }
-
                 }
             }
             previous = false;
@@ -466,6 +460,7 @@ public class ChangeAnalysis {
             deletedNodes.addAll(visitor.getchangedNodes());
         }
 
+
         final ConstraintComputer constraintComputer = new ConstraintComputer(featureNamesList);
         final PreprocessorHelper pph = new PreprocessorHelper();
         Map<Feature, Integer> config;
@@ -491,11 +486,23 @@ public class ChangeAnalysis {
             }
         }
 
+        ArrayList<ConditionalNode> changedNodesAux = new ArrayList<>();
+        for (ConditionalNode changedNode : changedNodes) {
+            if (!changedNodesAux.contains(changedNode))
+                changedNodesAux.add(changedNode);
+        }
+
+        ArrayList<ConditionalNode> deletedNodesAux = new ArrayList<>();
+        for (ConditionalNode deletedNode : deletedNodes) {
+            if (!deletedNodesAux.contains(deletedNode))
+                deletedNodesAux.add(deletedNode);
+        }
+
         ArrayList<String> configsToCommit = new ArrayList<>();
         Map<Map<Feature, Integer>, String> configsToGenerateVariant = new HashMap<>();
         Feature base = new Feature("BASE");
         //changedNodes = changedNodes.stream().filter(x -> x.getLocalCondition().equals("__AVR_ATmega644P__ || __AVR_ATmega644__")).collect(Collectors.toSet());
-        for (ConditionalNode changedNode : changedNodes) {
+        for (ConditionalNode changedNode : changedNodesAux) {
             //compute the config for the var gen
             config = constraintComputer.computeConfig(changedNode, gc2.getTree());
             if (config != null && !config.isEmpty()) {
@@ -510,17 +517,17 @@ public class ChangeAnalysis {
                     ArrayList<String> featureMightBeAffected = new ArrayList<>();
                     if (!changedFiles.contains(changedNode.getContainingFile().getFilePath())) {
                         System.out.println("NEW FILE: " + changedNode.getContainingFile().getFilePath());
-                        linesInsert.addAll(changedNode.getLineNumberInserts());
-                        System.out.println("Line numbers insert: " + changedNode.getLineNumberInserts());
+                        //linesInsert.addAll(changedNode.getLineNumberInserts());
+                        //System.out.println("Line numbers insert: " + changedNode.getLineNumberInserts());
                         if (!changedFilesPropagate.contains(changedNode.getContainingFile().getFilePath()))
                             changedFilesPropagate.add(changedNode.getContainingFile().getFilePath());
                     } else {
                         if (!changedFilesPropagate.contains(changedNode.getContainingFile().getFilePath()))
                             changedFilesPropagate.add(changedNode.getContainingFile().getFilePath());
                         System.out.println("CHANGED FILE: " + changedNode.getContainingFile().getFilePath());
-                        linesInsert.addAll(changedNode.getLineNumberInserts());
-                        linesRemoved.addAll(changedNode.getLineNumberDeleted());
-                        System.out.println("Line numbers insert: " + changedNode.getLineNumberInserts() + " Line numbers removed: " + changedNode.getLineNumberDeleted());
+                        //linesInsert.addAll(changedNode.getLineNumberInserts());
+                        //linesRemoved.addAll(changedNode.getLineNumberDeleted());
+                        //System.out.println("Line numbers insert: " + changedNode.getLineNumberInserts() + " Line numbers removed: " + changedNode.getLineNumberDeleted());
                     }
 
                     System.out.println("Feature interactions: ");
@@ -554,93 +561,48 @@ public class ChangeAnalysis {
 
                     //new file
                     if (!changedFiles.contains(changedNode.getContainingFile().getFilePath())) {
-                        if (mapExist) {
-                            nrChunksInsert = 0;
-                            while (nrChunksInsert < linesInsert.size() - 1) {
-                                Changes changes = mapAux;
-                                ArrayList<Integer> linesInsertAux = new ArrayList<>();
-                                linesInsertAux.add(linesInsert.get(nrChunksInsert) + 1);
-                                linesInsertAux.add(linesInsert.get(nrChunksInsert + 1) + 1);
-                                linesInsertAux.add(linesInsert.get(nrChunksInsert + 2));
-                                nrChunksInsert += 3;
-                                addChange(changes, featureInteraction, featureMightBeAffected, linesInsertAux, new ArrayList<>(), "add", results, changedNode);
-                            }
-                        } else {
-                            nrChunksInsert = 0;
-                            Changes changes = new Changes();
-                            while (nrChunksInsert < linesInsert.size() - 1) {
-                                ArrayList<Integer> linesInsertArray = new ArrayList<>();
-                                linesInsertArray.add(linesInsert.get(nrChunksInsert) + 1);
-                                linesInsertArray.add(linesInsert.get(nrChunksInsert + 1) + 1);
-                                linesInsertArray.add(linesInsert.get(nrChunksInsert + 2));
-                                nrChunksInsert += 3;
-                                AddedFile addedFile = new AddedFile(linesInsertArray, featureInteraction, featureMightBeAffected);
-                                changes.addAddedFiles(addedFile);
-                            }
-                            Map<String, List<String>> mapFile = new HashMap<>();
-                            mapFile.put(changedNode.getContainingFile().getFilePath(), linesFile);
-                            results.put(mapFile, changes);
+                        Map<String, List<String>> mapFile = new HashMap<>();
+                        for (Deltas delta : changedNode.getLineNumberInsertsAndDeletes()) {
+                            ArrayList<Integer> linesInsertArray = new ArrayList<>();
+                            linesInsertArray.add(delta.getLineFromAdd());
+                            linesInsertArray.add(delta.getLineToAdd());
+                            linesInsertArray.add(delta.getTotalLinesAdd());
+                            AddedFile addedFile = new AddedFile(linesInsertArray, featureInteraction, featureMightBeAffected);
+                            mapAux.addAddedFiles(addedFile);
                         }
+                        mapFile.put(changedNode.getContainingFile().getFilePath(), linesFile);
+                        results.put(mapFile, mapAux);
+
                     } else { //changed file
-                        if (mapExist) {
-                            nrChunksInsert = 0;
-                            nrChunksRemove = 0;
-                            while (nrChunksInsert < linesInsert.size() - 1) {
-                                Changes changes = mapAux;
-                                ArrayList<Integer> linesInsertAux = new ArrayList<>();
-                                ArrayList<Integer> linesRemovedAux = new ArrayList<>();
-                                linesInsertAux.add(linesInsert.get(nrChunksInsert) + 1);
-                                linesInsertAux.add(linesInsert.get(nrChunksInsert + 1) + 1);
-                                linesInsertAux.add(linesInsert.get(nrChunksInsert + 2));
-                                while (nrChunksRemove < linesRemoved.size() - 1) {
-                                    linesRemovedAux.add(linesRemoved.get(nrChunksRemove) + 1);
-                                    linesRemovedAux.add(linesRemoved.get(nrChunksRemove + 1) + 1);
-                                    linesRemovedAux.add(linesRemoved.get(nrChunksRemove + 2));
-                                    break;
-                                }
-                                nrChunksRemove += 3;
-                                nrChunksInsert += 3;
-                                addChange(changes, featureInteraction, featureMightBeAffected, linesInsertAux, linesRemovedAux, "change", results, changedNode);
+                        for (Deltas delta : changedNode.getLineNumberInsertsAndDeletes()) {
+                            ArrayList<Integer> linesInsertArray = new ArrayList<>();
+                            ArrayList<Integer> linesRemovedArray = new ArrayList<>();
+                            linesInsertArray.add(delta.getLineFromAdd());
+                            linesInsertArray.add(delta.getLineToAdd());
+                            linesInsertArray.add(delta.getTotalLinesAdd());
+                            if (delta.getLineFromRemov() != -1) {
+                                linesRemovedArray.add(delta.getLineFromRemov());
+                                linesRemovedArray.add(delta.getLineToRemov());
+                                linesRemovedArray.add(delta.getTotalLinesRemov());
                             }
-                        } else {
-                            nrChunksInsert = 0;
-                            nrChunksRemove = 0;
-                            Changes changes = new Changes();
-                            while (nrChunksInsert < linesInsert.size() - 1) {
-                                ArrayList<Integer> linesInsertArray = new ArrayList<>();
-                                ArrayList<Integer> linesRemovedArray = new ArrayList<>();
-                                linesInsertArray.add(linesInsert.get(nrChunksInsert) + 1);
-                                linesInsertArray.add(linesInsert.get(nrChunksInsert + 1) + 1);
-                                linesInsertArray.add(linesInsert.get(nrChunksInsert + 2));
-                                while (nrChunksRemove < linesRemoved.size() - 1) {
-                                    linesRemovedArray.add(linesRemoved.get(nrChunksRemove) + 1);
-                                    linesRemovedArray.add(linesRemoved.get(nrChunksRemove + 1) + 1);
-                                    linesRemovedArray.add(linesRemoved.get(nrChunksRemove + 2));
-                                    break;
-                                }
-                                nrChunksRemove += 3;
-                                nrChunksInsert += 3;
-                                for (int i = 0; i < changes.getChangedFiles().size(); i++) {
-                                    if (changes.getChangedFiles().get(i).getLinesInsert().equals(linesInsertArray)) {
-                                        changes.getChangedFiles().get(i).setPreviousLines(changedNode.getContainingPreviousFileLines());
-                                        break;
-                                    }
-                                }
-                                ChangedFile changedFile = new ChangedFile(linesInsertArray, linesRemovedArray, featureInteraction, featureMightBeAffected, changedNode.getContainingFileLines(), changedNode.getContainingPreviousFileLines());
-                                changes.addChangedFiles(changedFile);
-                            }
-                            Map<String, List<String>> mapFile = new HashMap<>();
-                            mapFile.put(changedNode.getContainingFile().getFilePath(), linesFile);
-                            results.put(mapFile, changes);
+                            int position = delta.getPosLinesAdd();
+                            if (position == -1)
+                                position = delta.getPosLinesRemov();
+                            ChangedFile changedFile = new ChangedFile(linesInsertArray, linesRemovedArray, position, featureInteraction, featureMightBeAffected, changedNode.getContainingFileLines(), changedNode.getContainingPreviousFileLines());
+                            changedFile.setPreviousLines(changedNode.getContainingPreviousFileLines());
+                            mapAux.addChangedFiles(changedFile);
                         }
+                        Map<String, List<String>> mapFile = new HashMap<>();
+                        mapFile.put(changedNode.getContainingFile().getFilePath(), linesFile);
+                        results.put(mapFile, mapAux);
                     }
 
                 }
-                int tanglingDegree = 0;
-                for (Map.Entry<Feature, Integer> feat : config.entrySet()) {
-                    if (featureNamesList.contains(feat.getKey().getName()))
-                        tanglingDegree++;
-                }
+                //int tanglingDegree = 0;
+                //for (Map.Entry<Feature, Integer> feat : config.entrySet()) {
+                //    if (featureNamesList.contains(feat.getKey().getName()))
+                //        tanglingDegree++;
+                //}
                 if (!changed.contains(base))
                     config.remove(base);
                 //map with the name of the feature and version and a boolean to set true when it is already incremented in the analysed commit
@@ -676,15 +638,15 @@ public class ChangeAnalysis {
                             eccoConfig += "," + configFeature.getKey().toString() + ".$$";
 
 
-                        ChangeCharacteristic changeCharacteristic;
+                       /* ChangeCharacteristic changeCharacteristic;
                         if (featureMap.get(configFeature.getKey()) == null) {
                             changeCharacteristic = new ChangeCharacteristic();
                             featureMap.put(configFeature.getKey(), new ChangeCharacteristic());
                         } else {
                             changeCharacteristic = featureMap.get(configFeature.getKey());
                         }
-                        int aux = 0;
-                        if (changedNode.getLineNumberInserts().size() > 0) {
+                        int aux = 0;*/
+                        /*if (changedNode.getLineNumberInserts().size() > 0) {
                             for (int i = 2; i < changedNode.getLineNumberInserts().size(); i += 3) {
                                 aux += changedNode.getLineNumberInserts().get(i);
                             }
@@ -701,34 +663,37 @@ public class ChangeAnalysis {
                         ChangeCharacteristic finalChangeCharacteristic = changeCharacteristic;
                         featureMap.computeIfAbsent(configFeature.getKey(), v -> finalChangeCharacteristic);
                         featureMap.computeIfPresent(configFeature.getKey(), (k, v) -> finalChangeCharacteristic);
+                    }*/
+                    }
+                    if (!eccoConfig.contains("BASE")) {
+                        eccoConfig += "," + "BASE.$$";
+                    }
+                    eccoConfig = eccoConfig.replaceFirst(",", "");
+
+                    if (configurations.contains(eccoConfig)) {
+                        //System.out.println("Config already used to generate a variant: " + eccoConfig);
+                        //don't need to generate variant and commit it again at the same commit of the project git repository
+                    } else {
+                        count++;
+                        //configuration that will be used to generate the variant of this changed node
+                        configsToGenerateVariant.put(config, eccoConfig);
+
+                        configurations.add(eccoConfig);
+                        //folder where the variant is stored
+                        File variantsrc = new File(eccoFolder, eccoConfig);
+                        String outputCSV = variantsrc.getParentFile().getParentFile().getAbsolutePath();
+                        final Path variant_dir = Paths.get(String.valueOf(variantsrc));
+
                     }
                 }
-                if (!eccoConfig.contains("BASE")) {
-                    eccoConfig += "," + "BASE.$$";
-                }
-                eccoConfig = eccoConfig.replaceFirst(",", "");
-
-                if (configurations.contains(eccoConfig)) {
-                    //System.out.println("Config already used to generate a variant: " + eccoConfig);
-                    //don't need to generate variant and commit it again at the same commit of the project git repository
-                } else {
-                    count++;
-                    //configuration that will be used to generate the variant of this changed node
-                    configsToGenerateVariant.put(config, eccoConfig);
-
-                    configurations.add(eccoConfig);
-                    //folder where the variant is stored
-                    File variantsrc = new File(eccoFolder, eccoConfig);
-                    String outputCSV = variantsrc.getParentFile().getParentFile().getAbsolutePath();
-                    final Path variant_dir = Paths.get(String.valueOf(variantsrc));
-
-                }
             }
+
         }
 
-        if (deletedNodes.size() != 0) {
+
+        if (deletedNodesAux.size() != 0) {
             String file = "";
-            for (ConditionalNode deletedNode : deletedNodes) {
+            for (ConditionalNode deletedNode : deletedNodesAux) {
                 file = deletedNode.getContainingFile().getFilePath();
                 //compute the config for the var gen
                 config = constraintComputer.computeConfig(deletedNode, gcPrevious.getTree());
@@ -752,9 +717,9 @@ public class ChangeAnalysis {
                         }
 
                         System.out.println("FILE: " + deletedNode.getContainingFile().getFilePath());
-                        System.out.println("lines removed " + deletedNode.getLineNumberDeleted());
+                        //System.out.println("lines removed " + deletedNode.getLineNumberDeleted());
                         System.out.println("Feature interactions: ");
-                        linesRemoved.addAll(deletedNode.getLineNumberDeleted());
+                        //linesRemoved.addAll(deletedNode.getLineNumberDeleted());
                         for (Feature fea : changed) {
                             if (!fea.equals(featpropagate)) {
                                 featureInteraction.add(fea.getName());
@@ -771,7 +736,7 @@ public class ChangeAnalysis {
                         }
                         List<String> linesFile = deletedNode.getContainingFileLines();
                         if (deletedNode.getContainingFile().getPreviousFileContent().size() == 0 && deletedNode.getContainingFile().getFileContent().size() == 0) {
-                            for (ConditionalNode changedNode : changedNodes) {
+                            for (ConditionalNode changedNode : changedNodesAux) {
                                 if (changedNode.getContainingFile().getFilePath().equals(deletedNode.getContainingFile().getFilePath()))
                                     linesFile = changedNode.getContainingFile().getPreviousFileContent();
                             }
@@ -782,7 +747,7 @@ public class ChangeAnalysis {
 
                         Boolean mapExist = false;
                         Changes mapAux = new Changes();
-                        ;
+
                         for (Map<String, List<String>> map : results.keySet()) {
                             if (map.get(deletedNode.getContainingFile().getFilePath()) != null) {
                                 mapExist = true;
@@ -792,97 +757,48 @@ public class ChangeAnalysis {
 
                         //new file
                         if (!changedFiles.contains(deletedNode.getContainingFile().getFilePath())) {
-                            if (mapExist) {
+                            for (Deltas delta : deletedNode.getLineNumberInsertsAndDeletes()) {
                                 ArrayList<Integer> linesRemoveArray = new ArrayList<>();
-                                linesRemoveArray.addAll(linesRemoved);
+                                linesRemoveArray.add(delta.getLineFromRemov());
+                                linesRemoveArray.add(delta.getLineToRemov());
+                                linesRemoveArray.add(delta.getTotalLinesRemov());
                                 AddedFile addedFile = new AddedFile(linesRemoveArray, featureInteraction, featureMightBeAffected);
-                                Changes changes = mapAux;
-                                if (!changes.getAddedFiles().contains(addedFile)) {
-                                    changes.addAddedFiles(addedFile);
-                                    Map<String, List<String>> mapFile = new HashMap<>();
-                                    for (Map<String, List<String>> mapresults : results.keySet()) {
-                                        if (mapresults.keySet().contains(deletedNode.getContainingFile().getFilePath())) {
-                                            mapFile = mapresults;
-                                        }
-                                    }
-                                    List<String> fileLines = deletedNode.getParent().getParent().getContainingFile().getFileContent();
-                                    mapFile.put(deletedNode.getContainingFile().getFilePath(), fileLines);
-                                    results.computeIfPresent(mapFile, (k, v) -> changes);
-                                }
-                            } else {
-                                ArrayList<Integer> linesRemoveArray = new ArrayList<>();
-                                linesRemoveArray.addAll(linesRemoved);
-                                AddedFile addedFile = new AddedFile(linesRemoveArray, featureInteraction, featureMightBeAffected);
-                                Changes changes = new Changes();
-                                changes.addAddedFiles(addedFile);
-                                Map<String, List<String>> mapFile = new HashMap<>();
-                                mapFile.put(deletedNode.getContainingFile().getFilePath(), linesFile);
-                                results.put(mapFile, changes);
+                                mapAux.addAddedFiles(addedFile);
                             }
+                            Map<String, List<String>> mapFile = new HashMap<>();
+                            mapFile.put(deletedNode.getContainingFile().getFilePath(), linesFile);
+                            results.put(mapFile, mapAux);
                         } else if (!changedFilesNext.contains(deletedNode.getContainingFile().getFilePath())) { //deleted file
-                            if (mapExist) {
-                                ArrayList<Integer> linesRemovedArray = new ArrayList<>();
-                                linesRemovedArray.addAll(linesRemoved);
-                                DeletedFile deletedFile = new DeletedFile(linesRemovedArray, featureInteraction, featureMightBeAffected);
-                                Changes changes = mapAux;
-                                if (!changes.getDeletedFiles().contains(deletedFile)) {
-                                    changes.addDeletedFiles(deletedFile);
-                                    Map<String, List<String>> mapFile = new HashMap<>();
-                                    for (Map<String, List<String>> mapresults : results.keySet()) {
-                                        if (mapresults.keySet().contains(deletedNode.getContainingFile().getFilePath())) {
-                                            mapFile = mapresults;
-                                        }
-                                    }
-                                    List<String> fileLines = deletedNode.getParent().getParent().getContainingFile().getFileContent();
-                                    mapFile.put(deletedNode.getContainingFile().getFilePath(), linesFile);
-                                    results.computeIfPresent(mapFile, (k, v) -> changes);
-                                }
-                            } else {
-                                ArrayList<Integer> linesRemovedArray = new ArrayList<>();
-                                linesRemovedArray.addAll(linesRemoved);
-                                DeletedFile deletedFile = new DeletedFile(linesRemovedArray, featureInteraction, featureMightBeAffected);
-                                Changes changes = new Changes();
-                                changes.addDeletedFiles(deletedFile);
-                                Map<String, List<String>> mapFile = new HashMap<>();
-                                mapFile.put(deletedNode.getContainingFile().getFilePath(), linesFile);
-                                results.put(mapFile, changes);
+                            for (Deltas delta : deletedNode.getLineNumberInsertsAndDeletes()) {
+                                ArrayList<Integer> linesRemoveArray = new ArrayList<>();
+                                linesRemoveArray.add(delta.getLineFromRemov());
+                                linesRemoveArray.add(delta.getLineToRemov());
+                                linesRemoveArray.add(delta.getTotalLinesRemov());
+                                DeletedFile deletedFile = new DeletedFile(linesRemoveArray, featureInteraction, featureMightBeAffected);
+                                mapAux.addDeletedFiles(deletedFile);
                             }
+                            Map<String, List<String>> mapFile = new HashMap<>();
+                            mapFile.put(deletedNode.getContainingFile().getFilePath(), linesFile);
+                            results.put(mapFile, mapAux);
                         } else {//changed file
-                            if (mapExist) {
-                                nrChunksInsert = 0;
-                                nrChunksRemove = 0;
-                                Boolean addRemovedLines = true;
-                                while (nrChunksInsert < linesRemoved.size() - 1) {
-                                    Changes changes = mapAux;
-                                    ArrayList<Integer> linesRemovedAux = new ArrayList<>();
-                                    linesRemovedAux.add(linesRemoved.get(nrChunksRemove) + 1);
-                                    linesRemovedAux.add(linesRemoved.get(nrChunksRemove + 1) + 1);
-                                    linesRemovedAux.add(linesRemoved.get(nrChunksRemove + 2));
-                                    for (int i = 0; i < changes.getChangedFiles().size(); i++) {
-                                        if (changes.getChangedFiles().get(i).getLinesRemoved().equals(linesRemovedAux)) {
-                                            addRemovedLines = false;
-                                            changes.getChangedFiles().get(i).setPreviousLines(deletedNode.getContainingPreviousFileLines());
-                                            break;
-                                        }
-                                    }
-                                    if(addRemovedLines)
-                                        addChange(changes, featureInteraction, featureMightBeAffected, new ArrayList<>(), linesRemovedAux, "change", results, deletedNode);
-                                    nrChunksRemove += 3;
-                                    nrChunksInsert += 3;
-                                }
-                            } else {
+                            for (Deltas delta : deletedNode.getLineNumberInsertsAndDeletes()) {
                                 ArrayList<Integer> linesInsertArray = new ArrayList<>();
-                                ArrayList<Integer> linesRemovedArray = new ArrayList<>();
-                                linesRemovedArray.add((linesRemoved.get(0))+1);
-                                linesRemovedArray.add((linesRemoved.get(1))+1);
-                                linesRemovedArray.add(linesRemoved.get(2));
-                                ChangedFile changedFile = new ChangedFile(linesInsertArray, linesRemovedArray, featureInteraction, featureMightBeAffected, deletedNode.getContainingFileLines(), deletedNode.getContainingPreviousFileLines());
-                                Changes changes = new Changes();
-                                changes.addChangedFiles(changedFile);
-                                Map<String, List<String>> mapFile = new HashMap<>();
-                                mapFile.put(deletedNode.getContainingFile().getFilePath(), linesFile);
-                                results.put(mapFile, changes);
+                                ArrayList<Integer> linesRemoveArray = new ArrayList<>();
+                                linesInsertArray.add(delta.getLineFromAdd());
+                                linesInsertArray.add(delta.getLineToAdd());
+                                linesInsertArray.add(delta.getTotalLinesAdd());
+                                int position = delta.getPosLinesAdd();
+                                if (position == -1)
+                                    position = delta.getPosLinesRemov();
+                                linesRemoveArray.add(delta.getLineFromRemov());
+                                linesRemoveArray.add(delta.getLineToRemov());
+                                linesRemoveArray.add(delta.getTotalLinesRemov());
+                                ChangedFile changedFile = new ChangedFile(linesInsertArray, linesRemoveArray, position, featureInteraction, featureMightBeAffected, deletedNode.getContainingFileLines(), deletedNode.getContainingPreviousFileLines());
+                                mapAux.addChangedFiles(changedFile);
                             }
+                            Map<String, List<String>> mapFile = new HashMap<>();
+                            mapFile.put(deletedNode.getContainingFile().getFilePath(), linesFile);
+                            results.put(mapFile, mapAux);
                         }
 
 
@@ -894,7 +810,7 @@ public class ChangeAnalysis {
                     }
                     if (!changed.contains(base))
                         config.remove(base);
-                    //map with the name of the feature and version and a boolean to set true when it is already incremented in the analysed commit
+                    //map with the name of the feature and version and a boolean to set true when it is already incremented in the analysed commit*/
                     String eccoConfig = "";
                     for (Map.Entry<Feature, Integer> configFeature : config.entrySet()) {
                         int version = 0;
@@ -919,6 +835,7 @@ public class ChangeAnalysis {
                             else
                                 eccoConfig += "," + configFeature.getKey().toString() + ".$$";
 
+                            /*
                             //RQ1. deleted lines
                             ChangeCharacteristic changeCharacteristic = featureMap.get(configFeature.getKey());
                             if (changeCharacteristic == null)
@@ -940,110 +857,68 @@ public class ChangeAnalysis {
                             ChangeCharacteristic finalChangeCharacteristic = changeCharacteristic;
                             featureMap.computeIfAbsent(configFeature.getKey(), v -> finalChangeCharacteristic);
                             featureMap.computeIfPresent(configFeature.getKey(), (k, v) -> finalChangeCharacteristic);
+                        }*/
+                        }
+                        if (!eccoConfig.contains("BASE")) {
+                            eccoConfig += "," + "BASE.$$";
+                        }
+                        eccoConfig = eccoConfig.replaceFirst(",", "");
+
+                        if (configurations.contains(eccoConfig)) {
+                            //System.out.println("Config already used to generate a variant: " + eccoConfig);
+                            //don't need to generate variant and commit it again at the same commit of the project git repository
+                        } else {
+                            count++;
+                            //configuration that will be used to generate the variant of this changed node
+                            configsToGenerateVariant.put(config, eccoConfig);
+
+                            configurations.add(eccoConfig);
+
+
                         }
                     }
-                    if (!eccoConfig.contains("BASE")) {
-                        eccoConfig += "," + "BASE.$$";
-                    }
-                    eccoConfig = eccoConfig.replaceFirst(",", "");
-
-                    if (configurations.contains(eccoConfig)) {
-                        //System.out.println("Config already used to generate a variant: " + eccoConfig);
-                        //don't need to generate variant and commit it again at the same commit of the project git repository
-                    } else {
-                        count++;
-                        //configuration that will be used to generate the variant of this changed node
-                        configsToGenerateVariant.put(config, eccoConfig);
-
-                        configurations.add(eccoConfig);
-
-
-                    }
                 }
             }
-        }
 
-        String baseVersion = "";
-        for (Map.Entry<Feature, Integer> configFeature : featureVersions.entrySet()) {
-            if (configFeature.getKey().equals(base))
-                baseVersion = configFeature.getValue().toString();
-        }
-
-        //generate the variant for this config
-        for (Map.Entry<Map<Feature, Integer>, String> variant : configsToGenerateVariant.entrySet()) {
-            String eccoConfig = variant.getValue().replace("$$", baseVersion);
-            //config that will be used to commit the variant generated with this changed node in ecco
-            configsToCommit.add(eccoConfig);
-        }
-
-
-        //appending to the config csv
-        try {
-
-            FileAppender csvWriter = new FileAppender(new File(changeFolder.getParent(), fileStoreConfig));
-
-            for (String configs : configsToCommit) {
-                List<List<String>> headerRows = Arrays.asList(
-                        Arrays.asList(Long.toString(gc2.getNumber()), gc2.getCommitName(), configs)
-                );
-                for (List<String> rowData : headerRows) {
-                    csvWriter.append(String.join(",", rowData));
-                }
+            String baseVersion = "";
+            for (Map.Entry<Feature, Integer> configFeature : featureVersions.entrySet()) {
+                if (configFeature.getKey().equals(base))
+                    baseVersion = configFeature.getValue().toString();
             }
-            csvWriter.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
 
-
-        //append results to the feature report csv
-        try {
-            FileAppender csvAppender = new FileAppender(new File(changeFolder.getParent(), fileReportFeature));
-            List<List<String>> contentRows = Arrays.asList(
-                    Arrays.asList(Long.toString(gc2.getNumber()), newFeatures.toString(), countFeaturesChanged.toString())
-            );
-            for (List<String> rowData : contentRows) {
-                csvAppender.append(String.join(",", rowData));
+            //generate the variant for this config
+            for (Map.Entry<Map<Feature, Integer>, String> variant : configsToGenerateVariant.entrySet()) {
+                String eccoConfig = variant.getValue().replace("$$", baseVersion);
+                //config that will be used to commit the variant generated with this changed node in ecco
+                configsToCommit.add(eccoConfig);
             }
-            csvAppender.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        //end append results to the feature report csv
-
-        for (Map.Entry<Feature, Integer> featureRevision : featureVersions.entrySet()) {
-            System.out.println(featureRevision.getKey() + "." + featureRevision.getValue());
-        }
 
 
-        for (Map.Entry<Feature, ChangeCharacteristic> changes : featureMap.entrySet()) {
-            ChangeCharacteristic changeCharacteristic = changes.getValue();
-            Collections.sort(changeCharacteristic.getTanglingDegree());
-            File featureCSV = new File(changeFolder, changes.getKey().getName() + ".csv");
-            if (!featureCSV.exists()) {
-                try {
-                    FileWriter csvWriter = new FileWriter(featureCSV);
+            //appending to the config csv
+            try {
+
+                FileAppender csvWriter = new FileAppender(new File(changeFolder.getParent(), fileStoreConfig));
+
+                for (String configs : configsToCommit) {
                     List<List<String>> headerRows = Arrays.asList(
-                            Arrays.asList("Commit Nr", "LOC A", "LOC R", "SD IF", "SD File", "TD IF")
+                            Arrays.asList(Long.toString(gc2.getNumber()), gc2.getCommitName(), configs)
                     );
                     for (List<String> rowData : headerRows) {
                         csvWriter.append(String.join(",", rowData));
-                        csvWriter.append("\n");
                     }
-                    csvWriter.flush();
-                    csvWriter.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
                 }
+                csvWriter.close();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
+
+
+            //append results to the feature report csv
             try {
-                FileAppender csvAppender = new FileAppender(featureCSV);
-                int tangling = 0;
-                if (changeCharacteristic.getTanglingDegree().size() > 0)
-                    tangling = changeCharacteristic.getTanglingDegree().get(changeCharacteristic.getTanglingDegree().size() - 1);
+                FileAppender csvAppender = new FileAppender(new File(changeFolder.getParent(), fileReportFeature));
                 List<List<String>> contentRows = Arrays.asList(
-                        Arrays.asList(Long.toString(gc2.getNumber()), String.valueOf(changeCharacteristic.getLinesOfCodeAdded()), String.valueOf(changeCharacteristic.getLinesOfCodeRemoved()), String.valueOf(changeCharacteristic.getScatteringDegreeIfs()), String.valueOf(changeCharacteristic.getScatteringDegreeFiles().size()),
-                                String.valueOf(tangling)));
+                        Arrays.asList(Long.toString(gc2.getNumber()), newFeatures.toString(), countFeaturesChanged.toString())
+                );
                 for (List<String> rowData : contentRows) {
                     csvAppender.append(String.join(",", rowData));
                 }
@@ -1051,15 +926,62 @@ public class ChangeAnalysis {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            //end append results to the feature report csv
+
+            for (Map.Entry<Feature, Integer> featureRevision : featureVersions.entrySet()) {
+                System.out.println(featureRevision.getKey() + "." + featureRevision.getValue());
+            }
+
+
+            for (Map.Entry<Feature, ChangeCharacteristic> changes : featureMap.entrySet()) {
+                ChangeCharacteristic changeCharacteristic = changes.getValue();
+                Collections.sort(changeCharacteristic.getTanglingDegree());
+                File featureCSV = new File(changeFolder, changes.getKey().getName() + ".csv");
+                if (!featureCSV.exists()) {
+                    try {
+                        FileWriter csvWriter = new FileWriter(featureCSV);
+                        List<List<String>> headerRows = Arrays.asList(
+                                Arrays.asList("Commit Nr", "LOC A", "LOC R", "SD IF", "SD File", "TD IF")
+                        );
+                        for (List<String> rowData : headerRows) {
+                            csvWriter.append(String.join(",", rowData));
+                            csvWriter.append("\n");
+                        }
+                        csvWriter.flush();
+                        csvWriter.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                try {
+                    FileAppender csvAppender = new FileAppender(featureCSV);
+                    int tangling = 0;
+                    if (changeCharacteristic.getTanglingDegree().size() > 0)
+                        tangling = changeCharacteristic.getTanglingDegree().get(changeCharacteristic.getTanglingDegree().size() - 1);
+                    List<List<String>> contentRows = Arrays.asList(
+                            Arrays.asList(Long.toString(gc2.getNumber()), String.valueOf(changeCharacteristic.getLinesOfCodeAdded()), String.valueOf(changeCharacteristic.getLinesOfCodeRemoved()), String.valueOf(changeCharacteristic.getScatteringDegreeIfs()), String.valueOf(changeCharacteristic.getScatteringDegreeFiles().size()),
+                                    String.valueOf(tangling)));
+                    for (List<String> rowData : contentRows) {
+                        csvAppender.append(String.join(",", rowData));
+                    }
+                    csvAppender.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            changedNodes.clear();
+            deletedNodes.clear();
+            deletedNodesAux.clear();
+            changedNodesAux.clear();
+            featureMap.clear();
+
         }
-
-        changedNodes.clear();
-        deletedNodes.clear();
-        featureMap.clear();
-
     }
 
-    public static void addChange(Changes changes, ArrayList<String> featureInteraction, ArrayList<String> featureMightBeAffected, ArrayList<Integer> linesAddArray, ArrayList<Integer> linesRemArray, String type, Map<Map<String, List<String>>, Changes> results, ConditionalNode changedNode) {
+
+
+   /* public static void addChange(Changes changes, ArrayList<String> featureInteraction, ArrayList<String> featureMightBeAffected, ArrayList<Integer> linesRemArray, String type, Map<Map<String, List<String>>, Changes> results, ConditionalNode changedNode) {
         if (type.equals("add")) {
             AddedFile addedFile = new AddedFile(linesAddArray, featureInteraction, featureMightBeAffected);
 
@@ -1074,7 +996,7 @@ public class ChangeAnalysis {
                 results.computeIfPresent(mapFile, (k, v) -> changes);
             }
         } else if (type.equals("change")) {
-            ChangedFile changedFile = new ChangedFile(linesAddArray, linesRemArray, featureInteraction, featureMightBeAffected,changedNode.getContainingFileLines(), changedNode.getContainingPreviousFileLines());
+            ChangedFile changedFile = new ChangedFile(linesAddArray, linesRemArray, changedNode.getLineNumberOldPosition(), featureInteraction, featureMightBeAffected, changedNode.getContainingFileLines(), changedNode.getContainingPreviousFileLines());
             if (!changes.getChangedFiles().contains(changedFile)) {
                 changes.addChangedFiles(changedFile);
                 Map<String, List<String>> mapFile = new HashMap<>();
@@ -1087,6 +1009,7 @@ public class ChangeAnalysis {
             }
         }
 
-    }
+    }*/
+
 
 }

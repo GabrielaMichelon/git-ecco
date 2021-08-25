@@ -2,6 +2,7 @@ package at.jku.isse.gitecco.core.tree.nodes;
 
 import at.jku.isse.gitecco.core.git.Change;
 
+import java.lang.reflect.Array;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -13,7 +14,8 @@ public abstract class ConditionalNode extends ConditionNode {
     private int lineFrom = -1;
     private int lineTo = -1;
     private ArrayList<Integer> lineNumberInserts;
-    private ArrayList<Integer> lineNumberDeletes;
+    private ArrayList<Integer> lineNumberDeleted;
+    private ArrayList<Deltas> lineNumberInsertsAndDeletes;
     private final List<ConditionBlockNode> children;
     private final ConditionBlockNode parent;
     private final List<NonConditionalNode> definesAndIncludes = new ArrayList<>();
@@ -23,20 +25,46 @@ public abstract class ConditionalNode extends ConditionNode {
     public ConditionalNode(ConditionBlockNode parent) {
         this.children = new ArrayList<ConditionBlockNode>();
         this.parent = parent;
-        this.lineNumberInserts =  new ArrayList<Integer>();
-        this.lineNumberDeletes =  new ArrayList<Integer>();
+        this.lineNumberInsertsAndDeletes = new ArrayList<Deltas>();
+        this.lineNumberInserts = new ArrayList<>();
+        this.lineNumberDeleted = new ArrayList<>();
     }
 
-    public void setLineNumberInserts(ArrayList<Integer> lineNumberInserts) {
-        this.lineNumberInserts = lineNumberInserts;
+
+    public ArrayList<Integer> getLineNumberInserts() {
+        return lineNumberInserts;
     }
 
-    public ArrayList<Integer> getLineNumberDeletes() {
-        return lineNumberDeletes;
+    public void addLineNumberInserts(int lineNumberInserts) {
+        this.lineNumberInserts.add(lineNumberInserts);
     }
 
-    public void setLineNumberDeletes(ArrayList<Integer> lineNumberDeletes) {
-        this.lineNumberDeletes = lineNumberDeletes;
+    public ArrayList<Integer> getLineNumberDeleted() {
+        return lineNumberDeleted;
+    }
+
+    public void addLineNumberDeleted(int lineNumberDeleted) {
+        this.lineNumberDeleted.add(lineNumberDeleted);
+    }
+
+    /**
+     * Sets the deltas containing the number of lines that were added and deleted in a block
+     * @param lineNumberInsertsAndDeletes
+     */
+    public void setLineNumberInsertsAndDeletes(ArrayList<Deltas> lineNumberInsertsAndDeletes) {
+        this.lineNumberInsertsAndDeletes = lineNumberInsertsAndDeletes;
+    }
+
+    public void addDeltas(Deltas deltas){
+        this.lineNumberInsertsAndDeletes.add(deltas);
+    }
+
+    /**
+     * Retrieves the deltas containing the number of lines that were added and deleted in a block
+     * @return
+     */
+    public ArrayList<Deltas> getLineNumberInsertsAndDeletes() {
+        return this.lineNumberInsertsAndDeletes;
     }
 
     /**
@@ -114,37 +142,6 @@ public abstract class ConditionalNode extends ConditionNode {
         return n;
     }
 
-    /**
-     * Sets the number of lines that were deleted in the block
-     * @param line
-     */
-    public void addLinesDeleted(Integer line) {
-        this.lineNumberDeletes.add(line);
-    }
-
-    /**
-     * Sets the number of lines that were added in the block
-     * @param line
-     */
-    public void addLinesInserted(Integer line) {
-        this.lineNumberInserts.add(line);
-    }
-
-    /**
-     * Retrieves the number of lines that were added in the block
-     * @return
-     */
-    public ArrayList<Integer> getLineNumberInserts() {
-        return this.lineNumberInserts;
-    }
-
-    /**
-     * Retrieves the number of lines that were deleted in the block
-     * @return
-     */
-    public ArrayList<Integer> getLineNumberDeleted() {
-        return this.lineNumberDeletes;
-    }
 
     /**
      * Sets the LineFrom info. This can only be performed once.
@@ -240,5 +237,25 @@ public abstract class ConditionalNode extends ConditionNode {
         while(!(n instanceof BaseNode)) n = n.getParent();
 
         return ((BaseNode) n).getFileNode().getPreviousFileContent();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ConditionalNode that = (ConditionalNode) o;
+        return lineFrom == that.lineFrom &&
+                lineTo == that.lineTo &&
+                Objects.equals(lineNumberInserts, that.lineNumberInserts) &&
+                Objects.equals(lineNumberDeleted, that.lineNumberDeleted) &&
+                Objects.equals(lineNumberInsertsAndDeletes, that.lineNumberInsertsAndDeletes) &&
+                Objects.equals(children, that.children) &&
+                Objects.equals(parent, that.parent) &&
+                Objects.equals(definesAndIncludes, that.definesAndIncludes);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(lineFrom, lineTo, lineNumberInserts, lineNumberDeleted, lineNumberInsertsAndDeletes, children, parent, definesAndIncludes);
     }
 }

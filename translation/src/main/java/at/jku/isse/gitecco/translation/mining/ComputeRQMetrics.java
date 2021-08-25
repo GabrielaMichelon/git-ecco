@@ -538,7 +538,7 @@ public class ComputeRQMetrics {
                 ArrayList<Integer> lines = new ArrayList<>();
                 lines.add(from);
                 lines.add(to);
-                Change changes = new Change(from, to, lines, new ArrayList(),null);
+                Change changes = new Change(from, to, lines, -1,null);
                 visitor.setChange(changes);
                 child.accept(visitor, null);
                 conditionalNodes.addAll(visitor.getConditionalNodes());

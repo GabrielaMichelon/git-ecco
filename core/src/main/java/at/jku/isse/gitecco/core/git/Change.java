@@ -14,7 +14,7 @@ public class Change {
     private final int from;
     private final int to;
     private final ArrayList<Integer> lines;
-    private final ArrayList<Integer> linesPrevious;
+    private int position = -1;
     private final String changeType;
 
 
@@ -24,11 +24,11 @@ public class Change {
      * @param from int value of the starting line number of the change.
      * @param cnt  int value which indicates how many lines are covered by this change.
      */
-    public Change(int from, int cnt, ArrayList<Integer> lines, ArrayList<Integer> linesPrevious, String changeType) {
+    public Change(int from, int cnt, ArrayList<Integer> lines, int position, String changeType) {
         this.from = from;
         this.to = cnt;
         this.lines = lines;
-        this.linesPrevious = linesPrevious;
+        this.position = position;
         this.changeType = changeType;
         //this.to = from+cnt;
     }
@@ -67,7 +67,15 @@ public class Change {
      * @return
      */
     public ArrayList<Integer> getLines() {
-        return lines;
+        return this.lines;
+    }
+
+    /**
+     * Gets number of lines of the change of the old version of the file
+     * @return
+     */
+    public int getPosition() {
+        return this.position;
     }
 
     /**

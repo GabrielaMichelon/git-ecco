@@ -46,11 +46,11 @@ public class ChangeAnalysisView extends BorderPane {
     private Label headerLabel = new Label();
     private ChangeAnalysis changeAnalysis;
     private final TableView<FileChange> table = new TableView<FileChange>();
-    private static TextField firstcommitTextField = new TextField("10920fc67816f8184499d83ca5786885730fa4b8");//Commit Hash");
-    private static TextField secondcommitTextField = new TextField("e0c969bb41008fc20871045b5d3e218ef5dda551");//Commit Hash");
-    private static TextField repositoryDirTextField = new TextField("C:\\Users\\gabil\\Desktop\\PHD\\New research\\ChangePropagation\\libssh");//Open the folder directory");
-    private static TextField featuresSystemTextField = new TextField("Select the file containing the features name of the system if it exists");
-    private static TextField featureTextField = new TextField("WITH_SFTP");//"Feature Name");
+    private static TextField firstcommitTextField = new TextField("bbd0649b425acf3d1e81919844b6718fb9c46a75"); //"10920fc67816f8184499d83ca5786885730fa4b8");//Commit Hash");
+    private static TextField secondcommitTextField = new TextField("b84a6b7e9ca809252e4611c2d0e3b6aa424a1c5d");//"e0c969bb41008fc20871045b5d3e218ef5dda551");//Commit Hash");
+    private static TextField repositoryDirTextField = new TextField("C:\\Users\\gabil\\Desktop\\PHD\\New research\\ChangePropagation\\sqlite\\sqlite");//Open the folder directory");
+    private static TextField featuresSystemTextField = new TextField("C:\\Users\\gabil\\Desktop\\PHD\\New research\\ChangePropagation\\sqlite\\features-version-3.9.0.txt");//new TextField("Select the file containing the features name of the system if it exists");
+    private static TextField featureTextField = new TextField("SQLITE_ENABLE_RTREE");//"WITH_SFTP");//"Feature Name");
     private GridPane gridPane = new GridPane();
     private ToolBar toolBar = new ToolBar();
     private TableColumn selectCol = new TableColumn("Propagate Changes");
@@ -174,7 +174,7 @@ public class ChangeAnalysisView extends BorderPane {
         row[0]++;
         gridPane.add(changeAnalysisButton, 0, row[0], 1, 1);
 
-        row[0]+=8;
+        row[0] += 8;
 
 
         selectCol.setCellValueFactory(new PropertyValueFactory<>("propagateChange"));
@@ -217,6 +217,7 @@ public class ChangeAnalysisView extends BorderPane {
         changeAnalysisButton.setOnAction(event -> {
             loadingLabel.setTextFill(Color.color(1, 0, 0));
             loadingLabel.setFont(new Font(15.0));
+            gridPane.getChildren().removeAll();
             gridPane.add(loadingLabel, 0, row[0], 2, 3);
 
             //StackPane root2 = new StackPane();
@@ -300,8 +301,10 @@ public class ChangeAnalysisView extends BorderPane {
                                 filesChanged.computeIfPresent(fileChange.getFileName(), (k, v) -> finalFileChangeAux);
                             } else {
                                 ArrayList<String> lines = new ArrayList<>();
+                                ArrayList<String> previousLines = new ArrayList<>();
                                 lines.add(fileChange.getLines());
-                                fileChangeAux = new at.jku.isse.gitecco.core.git.FileChange(lines, fileChange.getFileLines(), fileChange.getPreviousfileLines());
+                                previousLines.add(fileChange.getPreviousLines());
+                                fileChangeAux = new at.jku.isse.gitecco.core.git.FileChange(lines, previousLines, fileChange.getFileLines(), fileChange.getPreviousfileLines());
                                 filesChanged.put(fileChange.getFileName(), fileChangeAux);
                             }
                         }
@@ -434,53 +437,54 @@ public class ChangeAnalysisView extends BorderPane {
             }
         }
 
-        int count=0;
-        i=0;
+        int count = 0;
+        i = 0;
         if (data.getChangeType().equals("Changed File")) {
-            while (i<data.getFileLines().size()) {
+            while (i < data.getFileLines().size()) {
+                //for (int k = 0; k < data.getPreviousfileLines().size(); k++) {
                 //System.out.println("result.length "+result.getParagraphStyleForInsertionAt(i)+" i: "+i);
-                if (!linesremovedinit.equals("") && i >= (Integer.valueOf(linesremovedinit)) && i <= (Integer.valueOf(linesremovedend))) {
-                    if(!linesaddinit.equals("") && Integer.valueOf(linesaddinit)>Integer.valueOf(linesremovedinit)){
-                        count=i;
-                        int init=Integer.valueOf(linesremovedinit)-1;
-                        while(count<Integer.valueOf(linesaddend)){
-                            if(count>=(Integer.valueOf(linesaddinit)-1)) {
-                                while(init<Integer.valueOf(linesremovedend)){
-                                    result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: #ffdce0");
-                                    result.appendText((init+1)+" -\t" + data.getPreviousfileLines().get(init) + "\n");
-                                    init++;
-                                }
+                if (!linesremovedinit.equals("") && i >= (Integer.valueOf(linesremovedinit) + 1) && i <= (Integer.valueOf(linesremovedend) + 1)) {
+                    if (!linesaddinit.equals("") && Integer.valueOf(linesaddinit) > Integer.valueOf(linesremovedinit)) {
+                        count = i;
+                        int init = Integer.valueOf(linesremovedinit) - 1;
+                        while (count <= Integer.valueOf(linesaddend)-1) {
+                            while (init < Integer.valueOf(linesremovedend)) {
+                                result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: #ffdce0");
+                                result.appendText((init + 1) + " -\t" + data.getPreviousfileLines().get(init) + "\n");
+                                init++;
+                            }
+                            if (count >= (Integer.valueOf(linesaddinit)-1)) {
                                 result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: #dcffe4");
-                                result.appendText((count + 1) + " +\t" + data.getFileLines().get(count) + "\n");
-                            }else{
+                                result.appendText((count+1) + " +\t" + data.getFileLines().get(count) + "\n");
+                            } else {
                                 result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: transparent");
-                                result.appendText(count+1 + " \t" + data.getFileLines().get(count) + "\n");
+                                result.appendText(count + " \t" + data.getFileLines().get(count) + "\n");
                             }
                             count++;
                         }
-                        i=Integer.valueOf(linesaddend)-1;
-                    }else {
+                        i = Integer.valueOf(linesaddend) - 1;
+                    } else {
                         result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: #ffdce0");
-                        result.appendText((i+1) + " -\t" + data.getPreviousfileLines().get(i) + "\n");
+                        result.appendText((i + 1) + " -\t" + data.getPreviousfileLines().get(i) + "\n");
                     }
-                } else if (!linesaddinit.equals("") && linesremovedinit.equals("") && i >= (Integer.valueOf(linesaddinit) - 1) && i - 1 <= (Integer.valueOf(linesaddend) - 1)) {
+                } else if (!linesaddinit.equals("") && linesremovedinit.equals("") && i >= (Integer.valueOf(linesaddinit)-1) && i <= (Integer.valueOf(linesaddend))-1) {
                     result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: #dcffe4");
                     result.appendText((i+1) + " +\t" + data.getFileLines().get(i) + "\n");
-                }else if  (!linesaddinit.equals("") && i >= (Integer.valueOf(linesaddinit)) && i <= (Integer.valueOf(linesaddend)) && linesremovedinit.equals("")) {
+                } else if (!linesaddinit.equals("") && i >= (Integer.valueOf(linesaddinit) + 1) && i <= (Integer.valueOf(linesaddend) + 1) && linesremovedinit.equals("") && !(linesaddinit.equals(linesaddend))) {
                     result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: #dcffe4");
-                    result.appendText((i+1) + " +\t" + data.getFileLines().get(i) + "\n");
+                    result.appendText((i + 1) + " +\t" + data.getFileLines().get(i - 1) + "\n");
                 } else if (!linesaddinit.equals("") && i < (Integer.valueOf(linesaddinit))) {
                     result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: transparent");
-                    result.appendText((i+1) + " \t" + data.getFileLines().get(i) + "\n");
+                    result.appendText((i + 1) + " \t" + data.getFileLines().get(i) + "\n");
                 } else if (!linesremovedinit.equals("") && i < data.getFileLines().size() - 1 && i > (Integer.valueOf(linesremovedend))) {
                     result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: transparent");
-                    result.appendText((i+1) + " \t" + data.getFileLines().get(i) + "\n");
+                    result.appendText((i + 1) + " \t" + data.getFileLines().get(i) + "\n");
                 } else if (!linesremovedinit.equals("") && i < data.getFileLines().size() && i > (Integer.valueOf(linesremovedend))) {
                     //result.setStyle(Integer.valueOf(linesremovedend)+1, "-rtfx-background-color: transparent");
-                    result.appendText((i+1) + " \t" + data.getFileLines().get(i) + "\n");
+                    result.appendText((i + 1) + " \t" + data.getFileLines().get(i) + "\n");
                 } else {
                     result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: transparent");
-                    result.appendText((i+1) + " \t" + data.getFileLines().get(i) + "\n");
+                    result.appendText((i + 1) + " \t" + data.getFileLines().get(i) + "\n");
                 }
 
                 i++;
@@ -488,9 +492,9 @@ public class ChangeAnalysisView extends BorderPane {
         } else {
             for (String line : data.getFileLines()) {
                 if (i < data.getFileLines().size())
-                    result.appendText((i+1) + " " + signal + "\t" + line + "\n");
+                    result.appendText((i + 1) + " " + signal + "\t" + line + "\n");
                 else
-                    result.appendText((i+1) + " " + signal + "\t" + line);
+                    result.appendText((i + 1) + " " + signal + "\t" + line);
                 i++;
             }
         }
@@ -584,17 +588,19 @@ public class ChangeAnalysisView extends BorderPane {
         private final SimpleStringProperty fileName;
         private final SimpleStringProperty changeType;
         private final SimpleStringProperty lines;
+        private final SimpleStringProperty previousLines;
         private final SimpleStringProperty feati;
         private final SimpleStringProperty feata;
         private List<String> fileLines = new ArrayList<>();
         private List<String> previousfileLines = new ArrayList<>();
         private Button btnview;
 
-        private FileChange(boolean propagateChange, String fName, String changeType, String lines, String feati, String feata, List<String> fileLines, List<String> previousfileLines) {
+        private FileChange(boolean propagateChange, String fName, String changeType, String lines, String previousLines, String feati, String feata, List<String> fileLines, List<String> previousfileLines) {
             this.propagateChange.set(propagateChange);
             this.fileName = new SimpleStringProperty(fName);
             this.changeType = new SimpleStringProperty(changeType);
             this.lines = new SimpleStringProperty(lines);
+            this.previousLines = new SimpleStringProperty(previousLines);
             this.feati = new SimpleStringProperty(feati);
             this.feata = new SimpleStringProperty(feata);
             this.fileLines = fileLines;
@@ -642,12 +648,20 @@ public class ChangeAnalysisView extends BorderPane {
             return lines.get();
         }
 
+        public String getPreviousLines() {
+            return previousLines.get();
+        }
+
         public SimpleStringProperty linesProperty() {
             return lines;
         }
 
         public void setLines(String lines) {
             this.lines.set(lines);
+        }
+
+        public void setPreviousLines(String previousLines) {
+            this.previousLines.set(previousLines);
         }
 
         public String getFeati() {
@@ -732,7 +746,7 @@ public class ChangeAnalysisView extends BorderPane {
                         }
                         featurea = featurea.replaceFirst(", ", "");
                         List<String> previousfileLines = new ArrayList<>();
-                        FileChange fc = new FileChange(false, fileName, "New File", "Lines added: [" + String.valueOf(addf.getLinesInsert().get(0) + 1) + ", " + String.valueOf(addf.getLinesInsert().get(1) + 1) + ", " + String.valueOf(addf.getLinesInsert().get(2) + 1) + "]", featurei, featurea, fileLines, previousfileLines);
+                        FileChange fc = new FileChange(false, fileName, "New File", "Lines added: [" + String.valueOf(addf.getLinesInsert().get(0) + 1) + ", " + String.valueOf(addf.getLinesInsert().get(1) + 1) + ", " + String.valueOf(addf.getLinesInsert().get(2) + 1) + "]", "", featurei, featurea, fileLines, previousfileLines);
                         //FileChange fc = new FileChange(false, fileName, "New File", "Lines added: " + addf.getLinesInsert(), featurei, featurea, fileLines);
                         data.add(fc);
                     }
@@ -753,7 +767,7 @@ public class ChangeAnalysisView extends BorderPane {
                         featurea = featurea.replaceFirst(", ", "");
                         List<String> previousfileLines = new ArrayList<>();
                         //FileChange fc = new FileChange(false, fileName, "Changed File", "Lines deleted: [" + String.valueOf(changf.getLinesRemoved().get(0) + 1) + ", " + String.valueOf(changf.getLinesRemoved().get(1) + 1) + ", " + String.valueOf((changf.getLinesRemoved().get(2) + 1) / 2) + "]", featurei, featurea, fileLines);
-                        FileChange fc = new FileChange(false, fileName, "Changed File", "Lines added: " + changf.getLinesInsert() + " Lines removed: " + changf.getLinesRemoved(), featurei, featurea, fileLines, changf.getPreviousLines());
+                        FileChange fc = new FileChange(false, fileName, "Changed File", "Lines added: " + changf.getLinesInsert() + " Lines removed: " + changf.getLinesRemoved(), "" + changf.getOldFilePosition(), featurei, featurea, fileLines, changf.getPreviousLines());
                         dataAux.add(fc);
 
                     }
@@ -773,7 +787,7 @@ public class ChangeAnalysisView extends BorderPane {
                         }
                         featurea = featurea.replaceFirst(", ", "");
                         List<String> previousfileLines = new ArrayList<>();
-                        FileChange fc = new FileChange(false, fileName, "Removed File", "Lines removed: [" + String.valueOf(delf.getLinesRemoved().get(0) + 1) + ", " + String.valueOf(delf.getLinesRemoved().get(1) + 1) + ", " + String.valueOf(delf.getLinesRemoved().get(2) + 1) + "]", featurei, featurea, fileLines, previousfileLines);
+                        FileChange fc = new FileChange(false, fileName, "Removed File", "Lines removed: [" + String.valueOf(delf.getLinesRemoved().get(0) + 1) + ", " + String.valueOf(delf.getLinesRemoved().get(1) + 1) + ", " + String.valueOf(delf.getLinesRemoved().get(2) + 1) + "]", "", featurei, featurea, fileLines, previousfileLines);
                         //FileChange fc = new FileChange(false, fileName, "Removed File", "Lines removed: " + delf.getLinesRemoved(), featurei, featurea, fileLines);
                         data.add(fc);
                     }
@@ -806,9 +820,9 @@ public class ChangeAnalysisView extends BorderPane {
                     data.add(fc);
                 }
             }
-            if(table.getColumns().size()==0)
+            if (table.getColumns().size() == 0)
                 table.getColumns().addAll(selectCol, fileCol, changeCol, linesCol, featiCol, feataff, colBtn);
-            if(table.getItems().size()==0)
+            if (table.getItems().size() == 0)
                 toolBar.getItems().addAll(selectAllButton, unselectAllButton, propagateChangesButton);
             table.setItems(data);
 

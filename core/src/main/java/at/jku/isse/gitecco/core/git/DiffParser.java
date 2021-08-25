@@ -52,11 +52,11 @@ public class DiffParser {
                     String range1Start = smallMatcher.group(1);
                     String range1Count = (!smallMatcher.group(2).isEmpty()) ? smallMatcher.group(2) : "1";
                     ArrayList<Integer> lines = new ArrayList<>();
-                    minusChanges.add(new Change(Integer.valueOf(range1Start), Integer.valueOf(range1Count), lines, new ArrayList(),null));
+                    minusChanges.add(new Change(Integer.valueOf(range1Start), Integer.valueOf(range1Count), lines, -1,null));
 
                     String range2Start = smallMatcher.group(3);
                     String range2Count = (!smallMatcher.group(4).isEmpty()) ? smallMatcher.group(4) : "1";
-                    plusChanges.add(new Change(Integer.valueOf(range2Start), Integer.valueOf(range2Count),lines, new ArrayList(),null));
+                    plusChanges.add(new Change(Integer.valueOf(range2Start), Integer.valueOf(range2Count),lines, -1,null));
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
