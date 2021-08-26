@@ -76,7 +76,7 @@ public class GetNodesForChangeVisitor implements TreeVisitor {
                 int diff2 = change.getLines().get(3) - change.getLines().get(2);
                 if (diff2 == 0)
                     diff2 = 1;
-                Deltas deltas = new Deltas(change.getLines().get(0)+1, change.getLines().get(1)+1, diff, -1, change.getLines().get(2)+1, change.getLines().get(3)+1, diff2, -1);
+                Deltas deltas = new Deltas(change.getLines().get(0)+1, change.getLines().get(1)+1, diff, change.getLines().get(2)+1, change.getLines().get(2)+1, change.getLines().get(3)+1, diff2, change.getLines().get(2)+1);
                 c.addDeltas(deltas);
                 c.addLineNumberInserts(change.getLines().get(0));
                 c.addLineNumberInserts(change.getLines().get(1));
@@ -127,7 +127,7 @@ public class GetNodesForChangeVisitor implements TreeVisitor {
                 int diff2 = change.getLines().get(3) - change.getLines().get(2);
                 if (diff2 == 0)
                     diff2 = 1;
-                Deltas deltas = new Deltas(change.getLines().get(0)+1, change.getLines().get(1)+1, diff, -1, change.getLines().get(2)+1, change.getLines().get(3)+1, diff2, -1);
+                Deltas deltas = new Deltas(change.getLines().get(0)+1, change.getLines().get(1)+1, diff, change.getLines().get(2)+1, change.getLines().get(2)+1, change.getLines().get(3)+1, diff2, change.getLines().get(2)+1);
                 c.addDeltas(deltas);
                 c.addLineNumberInserts(change.getLines().get(0));
                 c.addLineNumberInserts(change.getLines().get(1));
@@ -176,7 +176,7 @@ public class GetNodesForChangeVisitor implements TreeVisitor {
                 int diff2 = change.getLines().get(3) - change.getLines().get(2);
                 if (diff2 == 0)
                     diff2 = 1;
-                Deltas deltas = new Deltas(change.getLines().get(0)+1, change.getLines().get(1)+1, diff, -1, change.getLines().get(2)+1, change.getLines().get(3)+1, diff2, -1);
+                Deltas deltas = new Deltas(change.getLines().get(0)+1, change.getLines().get(1)+1, diff, change.getLines().get(2)+1, change.getLines().get(2)+1, change.getLines().get(3)+1, diff2, change.getLines().get(2)+1);
                 c.addDeltas(deltas);
                 c.addLineNumberInserts(change.getLines().get(0));
                 c.addLineNumberInserts(change.getLines().get(1));
@@ -225,7 +225,7 @@ public class GetNodesForChangeVisitor implements TreeVisitor {
                 int diff2 = change.getLines().get(3) - change.getLines().get(2);
                 if (diff2 == 0)
                     diff2 = 1;
-                Deltas deltas = new Deltas(change.getLines().get(0)+1, change.getLines().get(1)+1, diff, -1, change.getLines().get(2)+1, change.getLines().get(3)+1, diff2, -1);
+                Deltas deltas = new Deltas(change.getLines().get(0)+1, change.getLines().get(1)+1, diff, change.getLines().get(2)+1, change.getLines().get(2)+1, change.getLines().get(3)+1, diff2, change.getLines().get(2)+1);
                 c.addDeltas(deltas);
                 c.addLineNumberInserts(change.getLines().get(0));
                 c.addLineNumberInserts(change.getLines().get(1));
@@ -274,7 +274,7 @@ public class GetNodesForChangeVisitor implements TreeVisitor {
                 int diff2 = change.getLines().get(3) - change.getLines().get(2);
                 if (diff2 == 0)
                     diff2 = 1;
-                Deltas deltas = new Deltas(change.getLines().get(0)+1, change.getLines().get(1)+1, diff, -1, change.getLines().get(2)+1, change.getLines().get(3)+1, diff2, -1);
+                Deltas deltas = new Deltas(change.getLines().get(0)+1, change.getLines().get(1)+1, diff, change.getLines().get(2)+1, change.getLines().get(2)+1, change.getLines().get(3)+1, diff2, change.getLines().get(2)+1);
                 c.addDeltas(deltas);
                 c.addLineNumberInserts(change.getLines().get(0));
                 c.addLineNumberInserts(change.getLines().get(1));
@@ -338,7 +338,7 @@ public class GetNodesForChangeVisitor implements TreeVisitor {
                 int diff2 = change.getLines().get(3) - change.getLines().get(2);
                 if (diff2 == 0)
                     diff2 = 1;
-                Deltas deltas = new Deltas(change.getLines().get(0), change.getLines().get(1), diff, -1, change.getLines().get(2), change.getLines().get(3), diff2, -1);
+                Deltas deltas = new Deltas(change.getLines().get(0), change.getLines().get(1), diff, change.getLines().get(2)+1, change.getLines().get(2), change.getLines().get(3), diff2, change.getLines().get(2)+1);
                 n.addDeltas(deltas);
                 n.addLineNumberInserts(change.getLines().get(0));
                 n.addLineNumberInserts(change.getLines().get(1));

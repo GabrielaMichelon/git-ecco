@@ -2,12 +2,9 @@ package at.jku.isse.gitecco.core.git;
 
 import at.jku.isse.gitecco.core.tree.nodes.BinaryFileNode;
 import at.jku.isse.gitecco.core.tree.nodes.FileNode;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
 import difflib.Delta;
 import difflib.DiffUtils;
 import difflib.Patch;
-import org.chocosolver.solver.constraints.nary.nvalue.amnv.mis.F;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.errors.CheckoutConflictException;
@@ -24,7 +21,6 @@ import org.eclipse.jgit.treewalk.AbstractTreeIterator;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.eclipse.jgit.treewalk.EmptyTreeIterator;
 import org.eclipse.jgit.treewalk.TreeWalk;
-import scala.util.parsing.combinator.testing.Str;
 
 
 import java.io.*;
@@ -34,9 +30,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static java.nio.file.Files.copy;
 
@@ -219,7 +213,7 @@ public class GitHelper {
                 List<String> linesFile = Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1);
                 filePath.setFileContent(linesFile);
             }
-            changes.add(new Change(0, Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size(), lines, -1, "DELETE"));
+            changes.add(new Change(0, Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size(), lines, 1, "DELETE"));
             git.stashCreate().setRef("HEAD").call();
             git.checkout().setName(newCommit.getCommitName()).call();
         } else {
@@ -255,7 +249,7 @@ public class GitHelper {
                             List<String> linesFile = Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1);
                             filePath.setFileContent(linesFile);
                         }
-                        changes.add(new Change(0, Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size(), lines, -1, "INSERT"));
+                        changes.add(new Change(0, Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size(), lines, 1, "INSERT"));
                     } else if (entry.getChangeType().toString().equals("MODIFY")) {
                         List<String> actual = new ArrayList<>();
                         List<String> old = new ArrayList<>();
@@ -316,7 +310,8 @@ public class GitHelper {
                                 ArrayList<Integer> lines = new ArrayList<>();
                                 lines.add(first);
                                 lines.add(last);
-                                changes.add(new Change(first, last, lines, -1, changeType));
+                                int position = delta.getOriginal().getPosition() + 1;
+                                changes.add(new Change(first, last, lines, position, changeType));
                             } else if (delta.getType().toString().equals("INSERT")) {
                                 changeType = delta.getType().toString();
                                 first = delta.getRevised().getPosition();
@@ -324,7 +319,7 @@ public class GitHelper {
                                 ArrayList<Integer> lines = new ArrayList<>();
                                 lines.add(first);
                                 lines.add(last - 1);
-                                int position = delta.getOriginal().getPosition()+1;
+                                int position = delta.getOriginal().getPosition() + 1;
                                 changes.add(new Change(first, last, lines, position, changeType));
                             } else if (delta.getType().toString().equals("CHANGE")) {
                                 first = delta.getRevised().getPosition();
@@ -333,7 +328,7 @@ public class GitHelper {
                                 lines.add(first);
                                 lines.add(last - 1);
                                 //changes.add(new Change(first, last, lines, "CHANGE"));
-                                int position = delta.getOriginal().getPosition()+1;
+                                int position = delta.getOriginal().getPosition() + 1;
                                 //changes.add(new Change(first, last, lines, previousLines, "INSERT"));
                                 first = delta.getOriginal().getPosition();
                                 last = delta.getOriginal().getPosition() + delta.getOriginal().getLines().size();
@@ -424,7 +419,7 @@ public class GitHelper {
             ArrayList<Integer> lines = new ArrayList<>();
             lines.add(0);
             lines.add(Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size() - 1);
-            changes.add(new Change(0, Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size(), lines, -1, "DELETE"));
+            changes.add(new Change(0, Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size(), lines, 1, "DELETE"));
             git.stashCreate().setRef("HEAD").call();
             git.checkout().setName(newCommit.getCommitName()).call();
         } else {
@@ -465,7 +460,7 @@ public class GitHelper {
                         ArrayList<Integer> lines = new ArrayList<>();
                         lines.add(0);
                         lines.add(Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size() - 1);
-                        changes.add(new Change(0, Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size(), lines, -1, "INSERT"));
+                        changes.add(new Change(0, Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size(), lines, 1, "INSERT"));
                     } else if (entry.getChangeType().toString().equals("MODIFY")) {
                         List<String> actual = new ArrayList<>();
                         List<String> old = new ArrayList<>();
@@ -514,7 +509,7 @@ public class GitHelper {
                                 ArrayList<Integer> lines = new ArrayList<>();
                                 lines.add(first);
                                 lines.add(last);
-                                changes.add(new Change(first, last, lines, -1, changeType));
+                                changes.add(new Change(first, last, lines, delta.getOriginal().getPosition() + 1, changeType));
                             } else if (delta.getType().toString().equals("INSERT")) {
                                 changeType = delta.getType().toString();
                                 first = delta.getRevised().getPosition();
@@ -522,21 +517,23 @@ public class GitHelper {
                                 ArrayList<Integer> lines = new ArrayList<>();
                                 lines.add(first);
                                 lines.add(last - 1);
-                                changes.add(new Change(first, last, lines, -1, changeType));
+                                changes.add(new Change(first, last, lines, delta.getOriginal().getPosition() + 1, changeType));
                             } else if (delta.getType().toString().equals("CHANGE")) {
                                 first = delta.getRevised().getPosition();
                                 ArrayList<Integer> lines = new ArrayList<>();
                                 last = delta.getRevised().getPosition() + delta.getRevised().getLines().size();
                                 lines.add(first);
                                 lines.add(last - 1);
-                                changes.add(new Change(first, last, lines, -1, "CHANGE"));
-                                //changes.add(new Change(first, last, lines, "INSERT"));
-                                last = delta.getRevised().getPosition() + delta.getOriginal().getLines().size();
-                                lines = new ArrayList<>();
+                                //changes.add(new Change(first, last, lines, "CHANGE"));
+                                int position = delta.getOriginal().getPosition() + 1;
+                                //changes.add(new Change(first, last, lines, previousLines, "INSERT"));
+                                first = delta.getOriginal().getPosition();
+                                last = delta.getOriginal().getPosition() + delta.getOriginal().getLines().size();
+                                //lines = new ArrayList<>();
                                 lines.add(first);
                                 lines.add(last - 1);
+                                changes.add(new Change(first, last, lines, position, "CHANGE"));
                                 //changes.add(new Change(first, last, lines, "DELETE"));
-
                             }
                         }
 
@@ -1066,7 +1063,7 @@ public class GitHelper {
         }
     }
 
-    public static void copyFolder(File source, File destination, ArrayList<String> filesRemoved, Map<String, FileChange> filesChanged) {
+    public static void copyFolder(File source, File destination, ArrayList<String> filesRemoved, Map<String, Map<Integer, FileChange>> filesChanged) {
         if (source.isDirectory()) {
             if (!destination.exists()) {
                 destination.mkdirs();
@@ -1113,7 +1110,7 @@ public class GitHelper {
         }
     }
 
-    public static void copyNewFiles(File source, File destination, ArrayList<String> filesAdded, Map<String, FileChange> filesChanged) {
+    public static void copyNewFiles(File source, File destination, ArrayList<String> filesAdded, Map<String, Map<Integer, FileChange>> filesChanged) {
         if (source.isDirectory()) {
             String files[] = source.list();
 
@@ -1165,13 +1162,11 @@ public class GitHelper {
      * @return true
      * @throws Exception
      */
-    public static Boolean changePropagation(File mergeDir, String gitDir, String firstCommit, String secondCommit, ArrayList<String> filesAdded, ArrayList<String> filesRemoved, Map<String, FileChange> filesChanged) throws Exception {
+    public static Boolean changePropagation(File mergeDir, String gitDir, String firstCommit, String secondCommit, ArrayList<String> filesAdded, ArrayList<String> filesRemoved, Map<String, Map<Integer, FileChange>> filesChanged) throws Exception {
 
         long measure = System.currentTimeMillis();
         File gitDirectory = new File(gitDir);
         Map<String, ArrayList<String>> filesToWrite = new HashMap<>();
-        List<String> fileLines = new ArrayList<>();
-        List<String> previousLines = new ArrayList<>();
 
         git.stashCreate().setRef("HEAD").call();
         git.checkout().setName(secondCommit).call();
@@ -1182,145 +1177,87 @@ public class GitHelper {
         //Files.copy(gitDirectory, mergeDir, StandardCopyOption.REPLACE_EXISTING);
         copyFolder(gitDirectory, mergeDir, filesRemoved, filesChanged);
 
-        String linesaddinit = "";
-        String linesaddend = "";
-        String linesremovedinit = "";
-        String linesremovedend = "";
-        for (Map.Entry<String, FileChange> change : filesChanged.entrySet()) {
-            ArrayList<String> lines = change.getValue().getLines();
-            fileLines = change.getValue().getFileLines();
-            previousLines = change.getValue().getPreviousContent();
-            ArrayList<Integer> linesaddinitArray = new ArrayList<>();
-            ArrayList<Integer> linesaddendArray = new ArrayList<>();
-            ArrayList<Integer> linesremovedinitArray = new ArrayList<>();
-            ArrayList<Integer> linesremovedendArray = new ArrayList<>();
+        for (Map.Entry<String, Map<Integer, FileChange>> change : filesChanged.entrySet()) {
+            List<String> fileLines = new ArrayList<>();
+            List<String> previousLines = new ArrayList<>();
+            Map<Integer, FileChange> mapSorted = new TreeMap<Integer, FileChange>(change.getValue());
             List<String> linesToWrite = new ArrayList<>();
+            int k = 1;
+            int last = 0;
+            int removed = 0;
+            int oldPositionInit = 0;
+            for (Map.Entry<Integer, FileChange> entry: mapSorted.entrySet()) {
+                FileChange fileChange = entry.getValue();
+                String[] lines = fileChange.getLines().split(",");
+                String linesaddinit = "";
+                String linesaddend = "";
+                String linesremovedinit = "";
+                String linesremovedend = "";
+                String linestotaladd = "0";
+                String linestotalremov = "0";
+                if (!fileChange.getLines().contains("added: []")) {
+                    linesaddinit = lines[0].substring(lines[0].indexOf("added: [") + 8).replaceAll(" ", "");
+                    linesaddend = lines[1].replaceAll(" ", "");
+                    linestotaladd = lines[2].substring(0,lines[2].indexOf("]")).replaceAll(" ","");
+                    if (!fileChange.getLines().contains("removed: []")) {
+                        linesremovedinit = lines[2].substring(lines[2].indexOf("removed: [") + 10).replaceAll(" ", "");
+                        linesremovedend = lines[3].replaceAll(" ", "");
+                        linestotalremov = lines[4].substring(0,lines[4].indexOf("]")).replaceAll(" ","");;
+                    }
+                } else if (!fileChange.getLines().contains("removed: []")) {
+                    linesremovedinit = lines[0].substring(lines[0].indexOf("removed: [") + 10).replaceAll(" ", "");
+                    linesremovedend = lines[1].replaceAll(" ", "");
+                    linestotalremov = lines[2].substring(0,lines[2].indexOf("]")).replaceAll(" ","");;
+                }
+                if (previousLines.size() == 0)
+                    previousLines = fileChange.getPreviousContent();
+                if(fileLines.size() == 0)
+                    fileLines = fileChange.getFileLines();
 
-            int i = 0;
-            Multimap<String, String> multimap = ArrayListMultimap.create();
-            int posLineArray = 0;
-            for (String lineChanges : lines) {
-                String[] index = lineChanges.split(",");
-                if (!lineChanges.contains("added: []")) {
-                    linesaddinit = index[0].substring(index[0].indexOf("added: [") + 8).replaceAll(" ", "");
-                    linesaddend = index[1].replaceAll(" ", "");
-                    if (!lineChanges.contains("removed: []")) {
-                        linesremovedinit = index[2].substring(index[2].indexOf("removed: [") + 10).replaceAll(" ", "");
-                        linesremovedend = index[3].replaceAll(" ", "");
-                        linesremovedinitArray.add(Integer.valueOf(linesremovedinit));
-                        linesremovedendArray.add(Integer.valueOf(linesremovedend));
-                        if (Integer.valueOf(linesremovedinit) < Integer.valueOf(linesaddinit)) {
-                            multimap.put(linesremovedinit, linesaddinit);
-                            multimap.put(linesremovedinit, linesaddend);
-                        } else {
-                            linesaddinitArray.add(Integer.valueOf(linesaddinit));
-                            linesaddendArray.add(Integer.valueOf(linesaddend));
+                oldPositionInit = entry.getKey();
+                last += Integer.valueOf(linestotaladd) - Integer.valueOf(linestotalremov);
+                removed += Integer.valueOf(linestotalremov);
+                while (k <= oldPositionInit) {
+                    if (k == oldPositionInit) {
+                        if (!linesremovedend.equals("") && !linesaddinit.equals("")) {
+                            for (int j = 0; j <= (Integer.valueOf(linesaddend) - Integer.valueOf(linesaddinit)); j++) {
+                                System.out.println("add: " + fileLines.get((Integer.valueOf(linesaddinit) - 1 + j)));
+                                linesToWrite.add(fileLines.get((Integer.valueOf(linesaddinit) - 1 + j)));
+                            }
+                            k += ((Integer.valueOf(linesremovedend)) - Integer.valueOf(linesremovedinit)) + 1;
+                            break;
+                        } else if (!linesremovedend.equals("")) {
+                            k += ((Integer.valueOf(linesremovedend) - Integer.valueOf(linesremovedinit)));
+                            break;
+                        } else if (!linesaddinit.equals("")) {
+                            for (int j = 0; j <= (Integer.valueOf(linesaddend) - Integer.valueOf(linesaddinit)); j++) {
+                                System.out.println("add: " + fileLines.get((Integer.valueOf(linesaddinit) - 1 + j)));
+                                linesToWrite.add(fileLines.get((Integer.valueOf(linesaddinit) - 1 + j)));
+                            }
+                            linesToWrite.add(previousLines.get(k-1));
+                            k++;
+                            break;
+                            //System.out.println(previousLines.get(k));
                         }
                     } else {
-                        linesaddinitArray.add(Integer.valueOf(linesaddinit));
-                        linesaddendArray.add(Integer.valueOf(linesaddend));
-                    }
-                } else if (!lineChanges.contains("removed: []")) {
-                    linesremovedinit = index[0].substring(index[0].indexOf("removed: [") + 10).replaceAll(" ", "");
-                    linesremovedend = index[1].replaceAll(" ", "");
-                    linesremovedinitArray.add(Integer.valueOf(linesremovedinit));
-                    linesremovedendArray.add(Integer.valueOf(linesremovedend));
-                }
-            }
-            ArrayList<Integer> linesaddinitArrayAux = new ArrayList<>();
-            ArrayList<Integer> linesaddendArrayAux = new ArrayList<>();
-            ArrayList<Integer> linesremovedinitArrayAux = new ArrayList<>();
-            ArrayList<Integer> linesremovedendArrayAux = new ArrayList<>();
-
-            int index = 0;
-            for (Integer value : linesaddinitArray) {
-                if (!value.equals("")) {
-                    linesaddinitArrayAux.add(value);
-                    linesaddendArrayAux.add(linesaddendArray.get(index));
-                }
-                index++;
-            }
-            index = 0;
-            for (Integer value : linesremovedinitArray) {
-                if (!value.equals("")) {
-                    linesremovedinitArrayAux.add(value);
-                    linesremovedendArrayAux.add(linesremovedendArray.get(index));
-                }
-                index++;
-            }
-
-            if (linesaddinitArrayAux.size() > 0) {
-                linesaddinit = String.valueOf(linesaddinitArrayAux.remove(0));
-                linesaddend = String.valueOf(linesaddendArrayAux.remove(0));
-            }
-            if (linesremovedinitArrayAux.size() > 0) {
-                linesremovedinit = String.valueOf(linesremovedinitArray.remove(0));
-                linesremovedend = String.valueOf(linesremovedendArray.remove(0));
-            }
-
-            if (previousLines == null)
-                previousLines = fileLines;
-
-            int oldPositionInit = 0;
-            if(!change.getValue().getPreviousLines().get(0).equals("[]"))
-                oldPositionInit = Integer.parseInt(change.getValue().getPreviousLines().get(0).substring(1,change.getValue().getPreviousLines().get(0).indexOf(",")));
-
-            for (int k = 0; k < previousLines.size(); k++) {
-                if (k == oldPositionInit-1 || oldPositionInit == 0) {
-                    if (!linesremovedend.equals("") && !linesaddinit.equals("")) {
-                        for (int j = 0; j <= (Integer.valueOf(linesaddend) - Integer.valueOf(linesaddinit)); j++) {
-                            System.out.println("add: " + fileLines.get((Integer.valueOf(linesaddinit) - 1 + j)));
-                            linesToWrite.add(fileLines.get((Integer.valueOf(linesaddinit) - 1 + j)));
-                        }
-                        if (linesaddinitArrayAux.size() > 0) {
-                            linesaddinit = String.valueOf(linesaddinitArrayAux.remove(0));
-                            linesaddend = String.valueOf(linesaddendArrayAux.remove(0));
-                        } else {
-                            linesaddinit = "";
-                        }
-                        if (linesremovedinitArrayAux.size() > 0) {
-                            linesremovedinit = String.valueOf(linesremovedinitArrayAux.remove(0));
-                            linesremovedend = String.valueOf(linesremovedendArrayAux.remove(0));
-                        } else {
-                            linesremovedend = "";
-                        }
-                        k += ((Integer.valueOf(linesremovedend)) - Integer.valueOf(linesremovedinit)) + 1;
-                    } else if (!linesremovedend.equals("")) {
-                        k += ((Integer.valueOf(linesremovedend) - Integer.valueOf(linesremovedinit)));
-                        multimap.removeAll(linesremovedinit);
-                        if (linesremovedinitArrayAux.size() > 0) {
-                            linesremovedinit = String.valueOf(linesremovedinitArrayAux.remove(0));
-                            linesremovedend = String.valueOf(linesremovedendArrayAux.remove(0));
-                        } else {
-                            linesremovedend = "";
-                        }
-                    } else if (!linesaddinit.equals("")) {
-                        for (int j = 0; j <= (Integer.valueOf(linesaddend) - Integer.valueOf(linesaddinit)); j++) {
-                            System.out.println("add: " + fileLines.get((Integer.valueOf(linesaddinit) - 1 + j)));
-                            linesToWrite.add(fileLines.get((Integer.valueOf(linesaddinit) - 1 + j)));
-                        }
-                        if (linesaddinitArrayAux.size() > 0) {
-                            linesaddinit = String.valueOf(linesaddinitArrayAux.remove(0));
-                            linesaddend = String.valueOf(linesaddendArrayAux.remove(0));
-                        } else {
-                            linesaddinit = "";
-                        }
-                        linesToWrite.add(previousLines.get(k));
                         //System.out.println(previousLines.get(k));
+                        linesToWrite.add(previousLines.get(k-1));
+                        k++;
                     }
-                } else {
-                    //System.out.println(previousLines.get(k));
-                    linesToWrite.add(previousLines.get(k));
                 }
-
-
-                Files.write(Paths.get(mergeDir + File.separator + change.getKey()), linesToWrite, Charset.defaultCharset());
             }
+            if(last == 0)
+                last = 1;
+            k=oldPositionInit+last;
+            while(k<=(previousLines.size())) {
+                linesToWrite.add(previousLines.get(k-1));
+                k++;
+            }
+            Files.write(Paths.get(mergeDir + File.separator + change.getKey()), linesToWrite, Charset.defaultCharset());
         }
 
         Long timeAfter = System.currentTimeMillis();
         measure = timeAfter - measure;
-        //Files.write(Paths.get("c:/output.txt"), content.getBytes());
         Files.write(Paths.get(mergeDir + File.separator + "time.txt"), String.valueOf(measure).getBytes());
         return true;
     }

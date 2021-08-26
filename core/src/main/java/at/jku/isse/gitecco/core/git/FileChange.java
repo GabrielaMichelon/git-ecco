@@ -4,32 +4,32 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FileChange {
-    private ArrayList<String> lines;
-    private ArrayList<String> previousLines;
+    private String lines;
+    private String position;
     private List<String> fileLines;
     private List<String> previousContent;
 
-    public FileChange(ArrayList<String> lines, ArrayList<String> previousLines,List<String> fileLines, List<String> previousContent) {
+    public FileChange(String lines, String position,List<String> fileLines, List<String> previousContent) {
         this.lines = lines;
-        this.previousLines = previousLines;
+        this.position = position;
         this.fileLines = fileLines;
         this.previousContent = previousContent;
     }
 
-    public ArrayList<String> getLines() {
+    public String getLines() {
         return this.lines;
     }
 
-    public void setLines(ArrayList<String> lines) {
+    public void setLines(String lines) {
         this.lines = lines;
     }
 
-    public ArrayList<String> getPreviousLines() {
-        return this.previousLines;
+    public String getPosition() {
+        return this.position;
     }
 
-    public void setPreviousLines(ArrayList<String> previousLines) {
-        this.previousLines = previousLines;
+    public void setPosition(String position) {
+        this.position = position;
     }
 
     public List<String> getFileLines() {

@@ -26,7 +26,7 @@ public class DirectoryView extends OperationView {
 
     private SplitPane splitPane;
 
-    public DirectoryView(File mergeDir, String gitDir, String firstCommit, String secondCommit, ArrayList<String> filesAdded, ArrayList<String> filesRemoved, Map<String, FileChange> filesChanged) {
+    public DirectoryView(File mergeDir, String gitDir, String firstCommit, String secondCommit, ArrayList<String> filesAdded, ArrayList<String> filesRemoved, Map<String, Map<Integer,FileChange>> filesChanged) {
         super();
 
         // split pane
@@ -39,7 +39,7 @@ public class DirectoryView extends OperationView {
     /**
      * Base directory and configuration string.
      */
-    private void step1(File mergeDir, String gitDir, String firstCommit, String secondCommit, ArrayList<String> filesAdded, ArrayList<String> filesRemoved, Map<String, FileChange> filesChanged) {
+    private void step1(File mergeDir, String gitDir, String firstCommit, String secondCommit, ArrayList<String> filesAdded, ArrayList<String> filesRemoved, Map<String, Map<Integer,FileChange>> filesChanged) {
         Button cancelButton = new Button("Cancel");
         cancelButton.setOnAction(event -> ((Stage) this.getScene().getWindow()).close());
         this.leftButtons.getChildren().setAll(cancelButton);

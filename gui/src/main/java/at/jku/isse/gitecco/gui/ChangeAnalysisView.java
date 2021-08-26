@@ -1,5 +1,6 @@
 package at.jku.isse.gitecco.gui;
 
+import at.jku.isse.gitecco.core.git.FileChange;
 import at.jku.isse.gitecco.translation.changepropagation.*;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
@@ -46,9 +47,9 @@ public class ChangeAnalysisView extends BorderPane {
     private Label headerLabel = new Label();
     private ChangeAnalysis changeAnalysis;
     private final TableView<FileChange> table = new TableView<FileChange>();
-    private static TextField firstcommitTextField = new TextField("bbd0649b425acf3d1e81919844b6718fb9c46a75"); //"10920fc67816f8184499d83ca5786885730fa4b8");//Commit Hash");
-    private static TextField secondcommitTextField = new TextField("b84a6b7e9ca809252e4611c2d0e3b6aa424a1c5d");//"e0c969bb41008fc20871045b5d3e218ef5dda551");//Commit Hash");
-    private static TextField repositoryDirTextField = new TextField("C:\\Users\\gabil\\Desktop\\PHD\\New research\\ChangePropagation\\sqlite\\sqlite");//Open the folder directory");
+    private static TextField firstcommitTextField = new TextField("9d075242542122ec0e205b9b6069bdc6307ee7f9"); //"10920fc67816f8184499d83ca5786885730fa4b8");//Commit Hash");
+    private static TextField secondcommitTextField = new TextField("bed87f1619b0eb86fc399f03aa0e9bc5f6d00672");//"e0c969bb41008fc20871045b5d3e218ef5dda551");//Commit Hash");
+    private static TextField repositoryDirTextField = new TextField("C:\\Users\\gabil\\Desktop\\PHD\\New research\\ChangePropagation\\test_sqlite\\sqlite");//Open the folder directory");
     private static TextField featuresSystemTextField = new TextField("C:\\Users\\gabil\\Desktop\\PHD\\New research\\ChangePropagation\\sqlite\\features-version-3.9.0.txt");//new TextField("Select the file containing the features name of the system if it exists");
     private static TextField featureTextField = new TextField("SQLITE_ENABLE_RTREE");//"WITH_SFTP");//"Feature Name");
     private GridPane gridPane = new GridPane();
@@ -279,13 +280,13 @@ public class ChangeAnalysisView extends BorderPane {
                 }
 
                 if (!selectedChanges.isEmpty()) {
-                    Map<String, at.jku.isse.gitecco.core.git.FileChange> filesChanged = new HashMap<>();
+                    Map<String, Map<Integer, at.jku.isse.gitecco.core.git.FileChange>> filesChanged = new HashMap<>();
                     ArrayList<String> filesAdded = new ArrayList<>();
                     ArrayList<String> filesRemoved = new ArrayList<>();
                     Path baseDir = Paths.get(repositoryDirTextField.getText());
                     File mergeDir = new File(baseDir.getParent() + File.separator + "merge");
                     File mergeFolder = new File(String.valueOf(mergeDir));
-                    at.jku.isse.gitecco.core.git.FileChange fileChangeAux;
+                    at.jku.isse.gitecco.core.git.FileChange fileChangeAux = null;
                     if (!mergeFolder.exists())
                         mergeFolder.mkdir();
                     for (FileChange fileChange : selectedChanges) {
@@ -295,17 +296,15 @@ public class ChangeAnalysisView extends BorderPane {
                             filesAdded.add(fileChange.getFileName());
                         } else {
                             if (filesChanged.get(fileChange.getFileName()) != null) {
-                                fileChangeAux = filesChanged.get(fileChange.getFileName());
-                                fileChangeAux.getLines().add(fileChange.getLines());
-                                at.jku.isse.gitecco.core.git.FileChange finalFileChangeAux = fileChangeAux;
+                                fileChangeAux = new at.jku.isse.gitecco.core.git.FileChange(fileChange.getLines(), fileChange.getPosition(), fileChange.getFileLines(), fileChange.getPreviousfileLines());
+                                Map<Integer, at.jku.isse.gitecco.core.git.FileChange> finalFileChangeAux = filesChanged.get(fileChange.getFileName());
+                                finalFileChangeAux.put(Integer.valueOf(fileChange.getPosition()),fileChangeAux);
                                 filesChanged.computeIfPresent(fileChange.getFileName(), (k, v) -> finalFileChangeAux);
                             } else {
-                                ArrayList<String> lines = new ArrayList<>();
-                                ArrayList<String> previousLines = new ArrayList<>();
-                                lines.add(fileChange.getLines());
-                                previousLines.add(fileChange.getPreviousLines());
-                                fileChangeAux = new at.jku.isse.gitecco.core.git.FileChange(lines, previousLines, fileChange.getFileLines(), fileChange.getPreviousfileLines());
-                                filesChanged.put(fileChange.getFileName(), fileChangeAux);
+                                fileChangeAux = new at.jku.isse.gitecco.core.git.FileChange(fileChange.getLines(), fileChange.getPosition(), fileChange.getFileLines(), fileChange.getPreviousfileLines());
+                                Map<Integer, at.jku.isse.gitecco.core.git.FileChange> finalFileChangeAux = new HashMap<>();
+                                finalFileChangeAux.put(Integer.valueOf(fileChange.getPosition()),fileChangeAux);
+                                filesChanged.put(fileChange.getFileName(), finalFileChangeAux);
                             }
                         }
                     }
@@ -588,19 +587,19 @@ public class ChangeAnalysisView extends BorderPane {
         private final SimpleStringProperty fileName;
         private final SimpleStringProperty changeType;
         private final SimpleStringProperty lines;
-        private final SimpleStringProperty previousLines;
+        private final SimpleStringProperty position;
         private final SimpleStringProperty feati;
         private final SimpleStringProperty feata;
         private List<String> fileLines = new ArrayList<>();
         private List<String> previousfileLines = new ArrayList<>();
         private Button btnview;
 
-        private FileChange(boolean propagateChange, String fName, String changeType, String lines, String previousLines, String feati, String feata, List<String> fileLines, List<String> previousfileLines) {
+        private FileChange(boolean propagateChange, String fName, String changeType, String lines, String position, String feati, String feata, List<String> fileLines, List<String> previousfileLines) {
             this.propagateChange.set(propagateChange);
             this.fileName = new SimpleStringProperty(fName);
             this.changeType = new SimpleStringProperty(changeType);
             this.lines = new SimpleStringProperty(lines);
-            this.previousLines = new SimpleStringProperty(previousLines);
+            this.position = new SimpleStringProperty(position);
             this.feati = new SimpleStringProperty(feati);
             this.feata = new SimpleStringProperty(feata);
             this.fileLines = fileLines;
@@ -648,8 +647,8 @@ public class ChangeAnalysisView extends BorderPane {
             return lines.get();
         }
 
-        public String getPreviousLines() {
-            return previousLines.get();
+        public String getPosition() {
+            return position.get();
         }
 
         public SimpleStringProperty linesProperty() {
@@ -660,8 +659,8 @@ public class ChangeAnalysisView extends BorderPane {
             this.lines.set(lines);
         }
 
-        public void setPreviousLines(String previousLines) {
-            this.previousLines.set(previousLines);
+        public void setPosition(String position) {
+            this.position.set(position);
         }
 
         public String getFeati() {
