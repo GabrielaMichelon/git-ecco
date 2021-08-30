@@ -73,6 +73,7 @@ public class Feature implements Comparable<Feature> {
 			condition.replace("]","");
 		if(condition.contains("["))
 			condition.replace("[","");
+		//System.out.println(condition);
 		FeatureExpressionParser fep = new FeatureExpressionParser(condition);
 		FeatureExpression root = fep.parse();
 

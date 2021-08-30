@@ -57,8 +57,9 @@ public class FeatureExpressionParser {
             scan();
         } else if(la.getText().contains("b4_location_if")|| la.getText().contains("<eof>")|| la.getText().contains("b4_api_PREFIX")) {
             System.out.println("!!!!!!");
-        }else
+        }else {
             error("Expected " + type + " but was: " + la);
+        }
     }
 
     private void error(String msg) {

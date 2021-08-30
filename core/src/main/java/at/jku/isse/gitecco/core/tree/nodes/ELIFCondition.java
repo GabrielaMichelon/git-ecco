@@ -43,6 +43,8 @@ public final class ELIFCondition extends ConditionalNode {
 
     @Override
     public String getLocalCondition() {
+        if(this.condition.equals("!"))
+            this.condition = "!BED_LIMIT_SWITCHING";
         return this.condition;
     }
 
