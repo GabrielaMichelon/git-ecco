@@ -14,14 +14,13 @@ import java.util.Map;
 
 public class MiningStatistics {
 
-    //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\Ready\\Bison\\Mining";
+    private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\Ready\\Bison\\Mining";
     //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\Ready\\SQLite";
     //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\Ready\\LibSSH\\Mining";
     //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\LOC_fix\\Irssi\\Mining";
-    private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\LOC_fix\\LibSSH\\Mining";
     //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\LOC_fix\\SQLite-ready";
     //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\LOC_fix\\Bison\\Mining";
-    //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\Ready\\Irssi\\Mining\\Mining";
+    //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\LOC_fix\\LibSSH\\Mining";
     //private final String releasePath = "D:\\Mining\\Test_statistics";
 
 	@Test
@@ -547,6 +546,9 @@ public class MiningStatistics {
         int nrCommitsFeaturesChanged = 0;
         int nrCommitsFeaturesAdded = 0;
         int nrCommitsFeaturesDeleted = 0;
+        int nrTotalCommitsFeatruresAdded = 0;
+        int nrTotalCommitsFeatruresChanged = 0;
+        int nrTotalCommitsFeatruresAddedAndChangedTogether = 0;
 
         for (File directory : releasesDirectories) {
             int nrTotalCommitsRelease = 0;
@@ -595,6 +597,15 @@ public class MiningStatistics {
                             nrCommitsFeaturesAddedRelease += Integer.valueOf(cols[1]);
                             nrCommitsFeaturesChanged += Integer.valueOf(cols[2]);
                             nrCommitsFeaturesChangedRelease += Integer.valueOf(cols[2]);
+                            if(!Integer.valueOf(cols[1]).equals(0)){
+                                nrTotalCommitsFeatruresAdded++;
+                            }
+                            if(!Integer.valueOf(cols[2]).equals(0)){
+                                nrTotalCommitsFeatruresChanged++;
+                            }
+                            if(!(Integer.valueOf(cols[1]).equals(0)) && Integer.valueOf(cols[2]).equals(0)) {
+                                nrTotalCommitsFeatruresAddedAndChangedTogether++;
+                            }
 
                         }
                     }
@@ -618,7 +629,7 @@ public class MiningStatistics {
             }
             System.out.println(directory.getName() + "," + nrTotalCommitsRelease + "," + nrCommitsFeaturesAddedRelease + "," + nrCommitsFeaturesChangedRelease + "," + nrCommitsFeaturesDeletedRelease);
         }
-        System.out.println("TotalCommits," + nrTotalCommits + "\nNewFeatures," + nrCommitsFeaturesAdded + "\nChangedFeatures," + nrCommitsFeaturesChanged + "\nDeletedFeatures," + nrCommitsFeaturesDeleted);
+        System.out.println("TotalCommits," + nrTotalCommits + "\nTotalCommitsAddedAndChangedFeaturesTogether, " + nrTotalCommitsFeatruresAddedAndChangedTogether+ "\nTotalCommitsAddedFeatures, " + nrTotalCommitsFeatruresAdded +"\nTotalCommitsChangedFeatures, " + nrTotalCommitsFeatruresChanged+ "\nNewFeatures," + nrCommitsFeaturesAdded + "\nChangedFeatures," + nrCommitsFeaturesChanged + "\nDeletedFeatures," + nrCommitsFeaturesDeleted);
     }
 
     @Test
@@ -1048,20 +1059,21 @@ public class MiningStatistics {
                         String[] cols = line.split(" Changed");
                         at.jku.isse.gitecco.core.type.Feature feat = new Feature(cols[0]);
                         if (changeEachFeature.get(feat) == null) {
-                            changeEachFeature.put(feat, Integer.valueOf(cols[1].substring(1, cols[1].indexOf(" times"))));
-                        } else {
-                            changeEachFeature.put(feat, changeEachFeature.get(feat) + Integer.valueOf(cols[1].substring(1, cols[1].indexOf(" times"))));
+                            if (changeEachFeature.get(feat) == null) {
+                                changeEachFeature.put(feat, Integer.valueOf(cols[1].substring(1, cols[1].indexOf(" times"))));
+                            } else {
+                                changeEachFeature.put(feat, changeEachFeature.get(feat) + Integer.valueOf(cols[1].substring(1, cols[1].indexOf(" times"))));
+                            }
+                            //}
                         }
-                        //}
                     }
                 }
             }
-        }
-        for (Map.Entry<Feature, Integer> map : changeEachFeature.entrySet()) {
-            System.out.println(map.getKey().getName() + "," + map.getValue());
+            for (Map.Entry<Feature, Integer> map : changeEachFeature.entrySet()) {
+                System.out.println(map.getKey().getName() + "," + map.getValue());
+            }
         }
     }
-
 
     @Test
     public void correlationChanges() throws IOException {

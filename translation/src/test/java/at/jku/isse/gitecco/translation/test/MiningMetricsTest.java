@@ -36,8 +36,8 @@ public class MiningMetricsTest {
     private final static int EVERY_NTH_COMMIT = 1;
     private final static ArrayList<Feature> featureList = new ArrayList<>();
     private final static ArrayList<String> featureNamesList = new ArrayList<String>();
-    private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\Willian\\libssh-mirror";
-    private final static String FEATURES_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\Willian";
+    private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\GPCE\\running example\\repo";
+    private final static String FEATURES_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\GPCE\\running example";
     String fileReportFeature = "features_report_each_project_commit.csv";
     String fileStoreConfig = "configurations.csv";
     List<String> changedFiles = new ArrayList<>();
@@ -47,6 +47,34 @@ public class MiningMetricsTest {
     List<String> configurations = new ArrayList<>();
     Map<Feature, Integer> featureVersions = new HashMap<>();
     String feats;
+
+
+    @Test
+    public void runtimePerformance() throws FileNotFoundException {
+        FileReader ler = new FileReader("C:\\Users\\gabil\\Desktop\\PHD\\GPCE\\runtime_SQLite.txt");
+        BufferedReader reader = new BufferedReader(ler);
+
+        String linha = null;
+        char c = '.';
+        float sum = 0;
+        float count = 0;
+        while (true) {
+            try {
+                if (!((linha = reader.readLine()) != null)) break;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            if(linha.indexOf(c) == -1) {
+                count++;
+                System.out.println(linha);
+                sum+=Float.valueOf(linha);
+            }else {
+                System.out.println("Não execute");
+            }
+        }
+        System.out.println("average: "+sum/count);
+        System.out.println("total: "+sum);
+    }
 
     @Test
     public void identification() throws Exception {
