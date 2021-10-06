@@ -6,12 +6,19 @@ import difflib.Delta;
 import difflib.DiffUtils;
 import difflib.Patch;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.ListBranchCommand;
 import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.InvalidRemoteException;
+import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.diff.DiffEntry;
+import org.eclipse.jgit.diff.DiffFormatter;
+import org.eclipse.jgit.diff.Edit;
 import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.patch.FileHeader;
+import org.eclipse.jgit.patch.HunkHeader;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevSort;
 import org.eclipse.jgit.revwalk.RevTree;
@@ -21,6 +28,7 @@ import org.eclipse.jgit.treewalk.AbstractTreeIterator;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.eclipse.jgit.treewalk.EmptyTreeIterator;
 import org.eclipse.jgit.treewalk.TreeWalk;
+import org.eclipse.jgit.util.io.DisabledOutputStream;
 
 
 import java.io.*;
@@ -883,6 +891,230 @@ public class GitHelper {
     }
 
 
+    public static List<String> fetchGitBranches(String gitUrl) {
+        Collection<Ref> refs;
+        List<String> branches = new ArrayList<String>();
+        try {
+            refs = Git.lsRemoteRepository()
+                    .setHeads(true)
+                    .setRemote(gitUrl)
+                    .call();
+            for (Ref ref : refs) {
+                branches.add(ref.getName().substring(ref.getName().lastIndexOf("/") + 1, ref.getName().length()));
+            }
+            Collections.sort(branches);
+        } catch (InvalidRemoteException e) {
+            e.printStackTrace();
+        } catch (TransportException e) {
+            e.printStackTrace();
+        } catch (GitAPIException e) {
+            e.printStackTrace();
+        }
+        return branches;
+    }
+
+
+    /**
+     * Method to retrieve every nth commit message from a repository and put it to a GitCommitList.
+     * starts with a certain commit number and ends with a certain commit number
+     *
+     * @param commits the GitCommitList to which the commits are saved to.
+     * @return The GitCommitList which was passed to the method.
+     * @throws GitAPIException
+     * @throws IOException
+     */
+    public GitCommitList getEveryNthCommitMessage(GitCommitList commits, String firstDiff, int startcommit, int endcommit, int n) throws Exception {
+        final Repository repository = git.getRepository();
+        //List<Ref> tags = new Git(repository).branchList().setListMode(ListBranchCommand.ListMode.ALL).call();//new ArrayList<Ref>(repository.getTags().values());
+        //RevWalk revWalk = new RevWalk(repository);
+        ArrayList<String> commitsMessage = new ArrayList<>();
+        ArrayList<String> commitsDiff = new ArrayList<>();
+        Iterable<RevCommit> commits2 = git.log().all().call();
+        int countTotalCommits = 0;
+        int countCherryPicks = 0;
+        for (RevCommit commit : commits2) {
+            if (commit.getFullMessage().toLowerCase().contains("cherry")) {
+                //RevCommit commitAux;
+                //try (RevWalk walk = new RevWalk(repository)) {
+                //    commitAux = walk.parseCommit(repository.resolve(commit.getName()));
+                //}
+                //getDiffOfCommit(git, repository,commitAux, commitsDiff);
+                //countCherryPicks++;
+                //String branch = getBranchOfCommit(commit.getName());
+                //System.out.println("\nCommit: " + commit.getName()+ " branch: "+branch);// + " Message: " + commit.getFullMessage()
+                commits.add(new GitCommit(commit.getName(), countTotalCommits, commit.getParent(0).getName(), repository.getBranch(), commit, commit.getFullMessage()));
+                //if(commits.size() > 1)
+                  //  break;
+            }
+            //System.out.println("LogCommit: " + commit);
+            countTotalCommits++;
+        }
+       //for (String msg:commitsMessage) {
+       //     System.out.println(msg+"\n---------------------------------------------------------");
+       // }
+
+        //System.out.println("Total number of commits: "+countTotalCommits);
+        //System.out.println("Total number of cherrypicked commits: "+countCherryPicks);
+        /*
+        //revWalk.setRetainBody(false);
+        revWalk.sort(RevSort.REVERSE, true);
+        ObjectId lastCommitId = repository.resolve(Constants.HEAD);
+        revWalk.markStart(revWalk.parseCommit(lastCommitId));
+        //revWalk.setRevFilter(RevFilter.NO_MERGES);
+        //revWalk.setRetainBody(false);
+
+        //for (Ref ref : tags) {
+            //if (ref.getName().equals(release)|| ref.getName().equals("refs/remotes/origin/branch-3.19")) {
+            //revWalk.markStart(revWalk.parseCommit(tags.get(0).getObjectId()));
+
+            //    break;
+            //}
+            //}
+            long number = 0;
+            String parent = firstDiff;
+            boolean enter = false;
+            if (startcommit != 0)
+                startcommit -= 1;
+            for (RevCommit rc : revWalk) {
+                if (number > endcommit) break;
+
+                if (number >= startcommit) {
+                    String branch = getBranchOfCommit(rc.getName());
+
+                    if (parent == null || enter) {
+                        try {
+                            parent = rc.getParent(0).getName();
+                            enter = true;
+                        } catch (ArrayIndexOutOfBoundsException e) {
+                            parent = "NULLCOMMIT";
+                            enter = true;
+                        }
+                    } else {
+                        enter = true;
+                    }
+                    if (rc.getFullMessage().toLowerCase().contains("cherrypick")) {
+                        System.out.println("\nCommit: " + rc.getName() + " Message: " + rc.getFullMessage());
+                        commits.add(new GitCommit(rc.getName(), number, parent, branch, rc, rc.getFullMessage()));
+                    }
+
+                }
+
+                number += number < startcommit ? 1 : n;
+            }
+        //}*/
+
+        return commits;
+    }
+
+
+    //Helper gets the diff as a string.
+    private void getDiffOfCommit(Git git,Repository repository,RevCommit newCommit, ArrayList<String> commitsDiff) throws IOException, GitAPIException {
+
+        //Get commit that is previous to the current one.
+        RevCommit oldCommit = getPrevHash(repository, newCommit);
+        if(oldCommit == null){
+
+        }else {
+            listDiff(repository, git, oldCommit.getName(), newCommit.getName(), commitsDiff);
+        }
+
+
+    }
+
+    private static void listDiff(Repository repository, Git git, String oldCommit, String newCommit, ArrayList<String> commitsDiff) throws GitAPIException, IOException {
+        final List<DiffEntry> diffs = git.diff()
+                .setOldTree(prepareTreeParserAux(repository, oldCommit))
+                .setNewTree(prepareTreeParserAux(repository, newCommit))
+                .call();
+
+        //System.out.println("Found: " + diffs.size() + " changed files");
+        int addedLines=0;
+        int deletedLines=0;
+        for (DiffEntry diff : diffs) {
+            //System.out.println("Diff: " + diff.getChangeType() + ": " +
+            //        (diff.getOldPath().equals(diff.getNewPath()) ? diff.getNewPath() : diff.getOldPath() + " -> " + diff.getNewPath()));
+           // System.out.println("Showing diff of " + diff.getNewPath());
+            DiffFormatter diffFormatter = new DiffFormatter( DisabledOutputStream.INSTANCE );
+            diffFormatter.setRepository( git.getRepository() );
+            diffFormatter.setContext( 0 );
+            FileHeader fileHeader = diffFormatter.toFileHeader(diff);
+            List<? extends HunkHeader> hunks = fileHeader.getHunks();
+            for( HunkHeader hunk : hunks ) {
+                for (Edit edit : hunk.toEditList()) {
+                    if (edit.getType() == Edit.Type.INSERT) {
+                        addedLines += edit.getLengthB();
+                    } else if (edit.getType() == Edit.Type.DELETE) {
+                        deletedLines += edit.getLengthA();
+                    } else if (edit.getType() == Edit.Type.REPLACE) {
+                        deletedLines += edit.getLengthA();
+                        addedLines += edit.getLengthB();
+                    }
+                }
+            }
+            //try (DiffFormatter formatter = new DiffFormatter(System.out)) {
+            //    formatter.setRepository(repository);
+             //   formatter.format(diff);
+            //}
+        }
+        if(!commitsDiff.contains("Files: "+ diffs.size()+" Added: "+addedLines+" Deleted: "+deletedLines)) {
+            commitsDiff.add("Files: "+ diffs.size()+" Added: "+addedLines+" Deleted: "+deletedLines);
+            System.out.println("Commit: " + newCommit + " Files: " + diffs.size() + " Added: " + addedLines + " Deleted: " + deletedLines);
+        }else{
+            System.out.println("DUPLICATED CHERRYPICK: **************");
+            System.out.println("Commit: " + newCommit + " Files: " + diffs.size() + " Added: " + addedLines + " Deleted: " + deletedLines);
+        }
+    }
+
+
+    private static AbstractTreeIterator prepareTreeParserAux(Repository repository, String objectId) throws IOException {
+        // from the commit we can build the tree which allows us to construct the TreeParser
+        //noinspection Duplicates
+        try (RevWalk walk = new RevWalk(repository)) {
+            RevCommit commit = walk.parseCommit(repository.resolve(objectId));
+            RevTree tree = walk.parseTree(commit.getTree().getId());
+
+            CanonicalTreeParser treeParser = new CanonicalTreeParser();
+            try (ObjectReader reader = repository.newObjectReader()) {
+                treeParser.reset(reader, tree.getId());
+            }
+
+            walk.dispose();
+
+            return treeParser;
+        }
+    }
+
+    //Helper function to get the previous commit.
+    public RevCommit getPrevHash(Repository repository, RevCommit commit)  throws  IOException {
+
+        try (RevWalk walk = new RevWalk(repository)) {
+            // Starting point
+            walk.markStart(commit);
+            int count = 0;
+            for (RevCommit rev : walk) {
+                // got the previous commit.
+                if (count == 1) {
+                    return rev;
+                }
+                count++;
+            }
+            walk.dispose();
+        }
+        //Reached end and no previous commits.
+        return null;
+    }
+    //Helper function to get the tree of the changes in a commit. Written by Rüdiger Herrmann
+    private AbstractTreeIterator getCanonicalTreeParser(ObjectId commitId) throws IOException {
+        try (RevWalk walk = new RevWalk(git.getRepository())) {
+            RevCommit commit = walk.parseCommit(commitId);
+            ObjectId treeId = commit.getTree().getId();
+            try (ObjectReader reader = git.getRepository().newObjectReader()) {
+                return new CanonicalTreeParser(null, reader, treeId);
+            }
+        }
+    }
+
+
     /**
      * Method to retrieve every nth commit from a repository and put it to a GitCommitList.
      * starts with a certain commit number and ends with a certain commit number
@@ -1186,7 +1418,7 @@ public class GitHelper {
             int last = 0;
             int removed = 0;
             int oldPositionInit = 0;
-            for (Map.Entry<Integer, FileChange> entry: mapSorted.entrySet()) {
+            for (Map.Entry<Integer, FileChange> entry : mapSorted.entrySet()) {
                 FileChange fileChange = entry.getValue();
                 String[] lines = fileChange.getLines().split(",");
                 String linesaddinit = "";
@@ -1198,20 +1430,22 @@ public class GitHelper {
                 if (!fileChange.getLines().contains("added: []")) {
                     linesaddinit = lines[0].substring(lines[0].indexOf("added: [") + 8).replaceAll(" ", "");
                     linesaddend = lines[1].replaceAll(" ", "");
-                    linestotaladd = lines[2].substring(0,lines[2].indexOf("]")).replaceAll(" ","");
+                    linestotaladd = lines[2].substring(0, lines[2].indexOf("]")).replaceAll(" ", "");
                     if (!fileChange.getLines().contains("removed: []")) {
                         linesremovedinit = lines[2].substring(lines[2].indexOf("removed: [") + 10).replaceAll(" ", "");
                         linesremovedend = lines[3].replaceAll(" ", "");
-                        linestotalremov = lines[4].substring(0,lines[4].indexOf("]")).replaceAll(" ","");;
+                        linestotalremov = lines[4].substring(0, lines[4].indexOf("]")).replaceAll(" ", "");
+                        ;
                     }
                 } else if (!fileChange.getLines().contains("removed: []")) {
                     linesremovedinit = lines[0].substring(lines[0].indexOf("removed: [") + 10).replaceAll(" ", "");
                     linesremovedend = lines[1].replaceAll(" ", "");
-                    linestotalremov = lines[2].substring(0,lines[2].indexOf("]")).replaceAll(" ","");;
+                    linestotalremov = lines[2].substring(0, lines[2].indexOf("]")).replaceAll(" ", "");
+                    ;
                 }
                 if (previousLines.size() == 0)
                     previousLines = fileChange.getPreviousContent();
-                if(fileLines.size() == 0)
+                if (fileLines.size() == 0)
                     fileLines = fileChange.getFileLines();
 
                 oldPositionInit = entry.getKey();
@@ -1234,23 +1468,23 @@ public class GitHelper {
                                 System.out.println("add: " + fileLines.get((Integer.valueOf(linesaddinit) - 1 + j)));
                                 linesToWrite.add(fileLines.get((Integer.valueOf(linesaddinit) - 1 + j)));
                             }
-                            linesToWrite.add(previousLines.get(k-1));
+                            linesToWrite.add(previousLines.get(k - 1));
                             k++;
                             break;
                             //System.out.println(previousLines.get(k));
                         }
                     } else {
                         //System.out.println(previousLines.get(k));
-                        linesToWrite.add(previousLines.get(k-1));
+                        linesToWrite.add(previousLines.get(k - 1));
                         k++;
                     }
                 }
             }
-            if(last == 0)
+            if (last == 0)
                 last = 1;
-            k=oldPositionInit+last;
-            while(k<=(previousLines.size())) {
-                linesToWrite.add(previousLines.get(k-1));
+            k = oldPositionInit + last;
+            while (k <= (previousLines.size())) {
+                linesToWrite.add(previousLines.get(k - 1));
                 k++;
             }
             Files.write(Paths.get(mergeDir + File.separator + change.getKey()), linesToWrite, Charset.defaultCharset());

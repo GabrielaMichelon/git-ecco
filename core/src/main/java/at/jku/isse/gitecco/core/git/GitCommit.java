@@ -14,6 +14,25 @@ public class GitCommit {
     private final String branch;
     private final RevCommit revCommit;
     private final long number;
+    private String commitMessage="";
+
+    /**
+     * Creates a new GitCommit
+     * @param commitName
+     * @param number
+     * @param diffCommit
+     * @param branch
+     * @param rc
+     * @param commitMessage
+     */
+    public GitCommit(String commitName, long number,String diffCommit, String branch, RevCommit rc, String commitMessage) {
+        this.commitName = commitName;
+        this.branch = branch;
+        this.diffCommit = diffCommit;
+        this.revCommit = rc;
+        this.number = number;
+        this.commitMessage = commitMessage;
+    }
 
     /**
      * Creates a new GitCommit
@@ -88,5 +107,9 @@ public class GitCommit {
 
     public RevCommit getRevCommit() {
         return revCommit;
+    }
+
+    public String getCommitMessage() {
+        return commitMessage;
     }
 }

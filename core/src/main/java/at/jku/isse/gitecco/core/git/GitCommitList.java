@@ -151,7 +151,7 @@ public class GitCommitList extends ArrayList<GitCommit> {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println("commit nr.:"+gitCommit.getNumber()+" branch: "+gitCommit.getBranch() + " hash: "+gitCommit.getCommitName());
+        System.out.println("commit nr.:"+gitCommit.getNumber()+" branch: "+gitCommit.getBranch() + " hash: "+gitCommit.getCommitName() + " message: "+gitCommit.getCommitMessage());
         return super.add(gitCommit);
     }
 
