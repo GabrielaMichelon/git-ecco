@@ -29,8 +29,9 @@ public class MineCherryPickTest {
 
     private final static boolean EVERYCOMMIT = false;
     private final static int EVERY_NTH_COMMIT = 1;
-    private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\New research\\ChangePropagation\\libssh";//"C:\\Users\\gabil\\Desktop\\PHD\\New research\\ChangePropagation\\sqlite\\sqlite";//"C:\\Users\\gabil\\Desktop\\PHD\\Mining\\CaseStudies\\Irssi\\irssi";//"C:\\Users\\gabil\\Desktop\\PHD\\New research\\ChangePropagation\\sqlite\\sqlite";
-    private final static String FEATURES_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\New research\\cherrypick-results\\cherry-pick-libssh";
+    private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\ChangePropagation\\libssh";//"C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\ChangePropagation\\libssh";//"C:\\Users\\gabil\\Desktop\\PHD\\Mining\\CaseStudies\\Irssi\\irssi";//"C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\ChangePropagation\\sqlite\\sqlite";
+    private final static String FEATURES_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\cherrypick-results\\sqlite";
+    int commitsAnalyze = 6918;//sqlite 25167 -irssi 6503  libssh 6918
     GitCommit gcPrevious = null;
     Boolean previous = true;
     List<String> configurations = new ArrayList<>();
@@ -68,7 +69,7 @@ public class MineCherryPickTest {
             //System.out.println("TAG: " + releases.getValue());
             //if (releases.getValue().contains("version-3.18.1") || analyze) {
             //    analyze = true;
-            gitHelper.getEveryNthCommitMessage(commitList, null, i, 6918, EVERY_NTH_COMMIT);//sqlite 25167 -irssi 6503  libssh 6918
+            gitHelper.getEveryNthCommitMessage(commitList, null, i, commitsAnalyze, EVERY_NTH_COMMIT);
             //i = Math.toIntExact(releases.getKey()) + 1;
             //File file = new File(FEATURES_PATH, releases.getValue().substring(releases.getValue().lastIndexOf("/") + 1));
             //if (!file.exists())

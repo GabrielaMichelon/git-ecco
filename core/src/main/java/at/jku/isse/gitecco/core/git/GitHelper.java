@@ -934,15 +934,15 @@ public class GitHelper {
         int countCherryPicks = 0;
         for (RevCommit commit : commits2) {
             if (commit.getFullMessage().toLowerCase().contains("cherry")) {
-                //RevCommit commitAux;
-                //try (RevWalk walk = new RevWalk(repository)) {
-                //    commitAux = walk.parseCommit(repository.resolve(commit.getName()));
-                //}
-                //getDiffOfCommit(git, repository,commitAux, commitsDiff);
-                //countCherryPicks++;
+                RevCommit commitAux;
+                try (RevWalk walk = new RevWalk(repository)) {
+                    commitAux = walk.parseCommit(repository.resolve(commit.getName()));
+                }
+                getDiffOfCommit(git, repository,commitAux, commitsDiff);
+                countCherryPicks++;
                 //String branch = getBranchOfCommit(commit.getName());
-                //System.out.println("\nCommit: " + commit.getName()+ " branch: "+branch);// + " Message: " + commit.getFullMessage()
-                commits.add(new GitCommit(commit.getName(), countTotalCommits, commit.getParent(0).getName(), repository.getBranch(), commit, commit.getFullMessage()));
+                //System.out.println("\nCommit: " + commit.getName()+ "\nCommit: " + commit.getName()+ commit.getFullMessage().replaceAll("\n","")+);// + " Message: " + commit.getFullMessage()
+                //commits.add(new GitCommit(commit.getName(), countTotalCommits, commit.getParent(0).getName(), repository.getBranch(), commit, commit.getFullMessage()));
                 //if(commits.size() > 1)
                   //  break;
             }
@@ -953,8 +953,8 @@ public class GitHelper {
        //     System.out.println(msg+"\n---------------------------------------------------------");
        // }
 
-        //System.out.println("Total number of commits: "+countTotalCommits);
-        //System.out.println("Total number of cherrypicked commits: "+countCherryPicks);
+        System.out.println("Total number of commits: "+countTotalCommits);
+        System.out.println("Total number of cherrypicked commits: "+countCherryPicks);
         /*
         //revWalk.setRetainBody(false);
         revWalk.sort(RevSort.REVERSE, true);
@@ -1015,13 +1015,13 @@ public class GitHelper {
         if(oldCommit == null){
 
         }else {
-            listDiff(repository, git, oldCommit.getName(), newCommit.getName(), commitsDiff);
+            listDiff(repository, git, oldCommit.getName(), newCommit.getName(), commitsDiff, newCommit);
         }
 
 
     }
 
-    private static void listDiff(Repository repository, Git git, String oldCommit, String newCommit, ArrayList<String> commitsDiff) throws GitAPIException, IOException {
+    private static void listDiff(Repository repository, Git git, String oldCommit, String newCommit, ArrayList<String> commitsDiff, RevCommit commit) throws GitAPIException, IOException {
         final List<DiffEntry> diffs = git.diff()
                 .setOldTree(prepareTreeParserAux(repository, oldCommit))
                 .setNewTree(prepareTreeParserAux(repository, newCommit))
@@ -1056,12 +1056,18 @@ public class GitHelper {
              //   formatter.format(diff);
             //}
         }
-        if(!commitsDiff.contains("Files: "+ diffs.size()+" Added: "+addedLines+" Deleted: "+deletedLines)) {
-            commitsDiff.add("Files: "+ diffs.size()+" Added: "+addedLines+" Deleted: "+deletedLines);
-            System.out.println("Commit: " + newCommit + " Files: " + diffs.size() + " Added: " + addedLines + " Deleted: " + deletedLines);
+        String commitorigin = "-";
+        if(commit.getFullMessage().contains("cherry picked from commit ")){
+            commitorigin = commit.getFullMessage().substring(commit.getFullMessage().indexOf("cherry picked from commit ")+26, commit.getFullMessage().indexOf("cherry picked from commit ")+66);
+        }
+        if(!commitsDiff.contains(commitorigin)) {
+            commitsDiff.add(commitorigin);
+            System.out.println(commitorigin+"ßß"+commit.getName()+"ßß"+ commit.getFullMessage().replaceAll("\n","")+"ßß"+diffs.size() +"ßß"+addedLines + "ßß"+ deletedLines);// + " Message: " + commit.getFullMessage()
+            //System.out.println("Commit: " + newCommit + " Files: " + diffs.size() + " Added: " + addedLines + " Deleted: " + deletedLines);
         }else{
             System.out.println("DUPLICATED CHERRYPICK: **************");
-            System.out.println("Commit: " + newCommit + " Files: " + diffs.size() + " Added: " + addedLines + " Deleted: " + deletedLines);
+            System.out.println(commitorigin+"ßß"+commit.getName()+"ßß"+ commit.getFullMessage().replaceAll("\n","")+"ßß"+diffs.size() +"ßß"+addedLines + "ßß"+ deletedLines);
+            //System.out.println("Commit: " + newCommit + " Files: " + diffs.size() + " Added: " + addedLines + " Deleted: " + deletedLines);
         }
     }
 

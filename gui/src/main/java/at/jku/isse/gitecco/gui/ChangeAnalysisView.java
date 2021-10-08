@@ -48,9 +48,9 @@ public class ChangeAnalysisView extends BorderPane {
     private ChangeAnalysis changeAnalysis;
     private final TableView<FileChange> table = new TableView<FileChange>();
     private static TextField firstcommitTextField = new TextField("9d075242542122ec0e205b9b6069bdc6307ee7f9"); //"10920fc67816f8184499d83ca5786885730fa4b8");//Commit Hash");
-    private static TextField secondcommitTextField = new TextField("bed87f1619b0eb86fc399f03aa0e9bc5f6d00672");//"e0c969bb41008fc20871045b5d3e218ef5dda551");//Commit Hash");
-    private static TextField repositoryDirTextField = new TextField("C:\\Users\\gabil\\Desktop\\PHD\\New research\\ChangePropagation\\test_sqlite\\sqlite");//Open the folder directory");
-    private static TextField featuresSystemTextField = new TextField("C:\\Users\\gabil\\Desktop\\PHD\\New research\\ChangePropagation\\sqlite\\features-version-3.9.0.txt");//new TextField("Select the file containing the features name of the system if it exists");
+    private static TextField secondcommitTextField = new TextField("80d5f0b54693ec90a7fe32ad7edd7b47ab472582");//"e0c969bb41008fc20871045b5d3e218ef5dda551");//Commit Hash");
+    private static TextField repositoryDirTextField = new TextField("C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\ChangePropagation\\test_sqlite\\sqlite");//Open the folder directory");
+    private static TextField featuresSystemTextField = new TextField("C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\ChangePropagation\\sqlite\\features-version-3.9.0.txt");//new TextField("Select the file containing the features name of the system if it exists");
     private static TextField featureTextField = new TextField("SQLITE_ENABLE_RTREE");//"WITH_SFTP");//"Feature Name");
     private GridPane gridPane = new GridPane();
     private ToolBar toolBar = new ToolBar();
@@ -60,6 +60,7 @@ public class ChangeAnalysisView extends BorderPane {
     private TableColumn linesCol = new TableColumn("Lines");
     private TableColumn featiCol = new TableColumn("Feature interactions");
     private TableColumn feataff = new TableColumn("Feature might be affected");
+    private TableColumn featurechanged = new TableColumn("Feature changed/touched");
     private TableColumn colBtn = new TableColumn("File Diff");
     private Button selectAllButton = new Button("Select All");
     private Button unselectAllButton = new Button("Unselect All");
@@ -166,7 +167,7 @@ public class ChangeAnalysisView extends BorderPane {
 
         row[0]++;
 
-        Label featureLabel = new Label("Feature Name: ");
+        Label featureLabel = new Label("Feature(s) Name: ");
         gridPane.add(featureLabel, 0, row[0], 1, 1);
 
         featureTextField.setDisable(false);
@@ -199,6 +200,9 @@ public class ChangeAnalysisView extends BorderPane {
 
         feataff.setCellValueFactory(new PropertyValueFactory<>("feata"));
         feataff.setMinWidth(200);
+
+        featurechanged.setCellValueFactory(new PropertyValueFactory<>("featureName"));
+        featurechanged.setMinWidth(200);
 
         colBtn.setCellValueFactory(new PropertyValueFactory<>("btnview"));
         colBtn.setMinWidth(200);
@@ -593,8 +597,9 @@ public class ChangeAnalysisView extends BorderPane {
         private List<String> fileLines = new ArrayList<>();
         private List<String> previousfileLines = new ArrayList<>();
         private Button btnview;
+        private final SimpleStringProperty featureName;
 
-        private FileChange(boolean propagateChange, String fName, String changeType, String lines, String position, String feati, String feata, List<String> fileLines, List<String> previousfileLines) {
+        private FileChange(boolean propagateChange, String fName, String changeType, String lines, String position, String feati, String feata, List<String> fileLines, List<String> previousfileLines, String featureName) {
             this.propagateChange.set(propagateChange);
             this.fileName = new SimpleStringProperty(fName);
             this.changeType = new SimpleStringProperty(changeType);
@@ -605,6 +610,7 @@ public class ChangeAnalysisView extends BorderPane {
             this.fileLines = fileLines;
             this.previousfileLines = previousfileLines;
             this.btnview = new Button("View");
+            this.featureName = new SimpleStringProperty(featureName);
         }
 
         public boolean isPropagateChange() {
@@ -710,6 +716,18 @@ public class ChangeAnalysisView extends BorderPane {
         public void setBtnview(Button btnview) {
             this.btnview = btnview;
         }
+
+        public String getFeatureName() {
+            return featureName.get();
+        }
+
+        public SimpleStringProperty featureNameProperty() {
+            return featureName;
+        }
+
+        public void setFeatureName(String featureName) {
+            this.featureName.set(featureName);
+        }
     }
 
     public void changeAnalysisMethod(int[] rowaux) {
@@ -745,7 +763,7 @@ public class ChangeAnalysisView extends BorderPane {
                         }
                         featurea = featurea.replaceFirst(", ", "");
                         List<String> previousfileLines = new ArrayList<>();
-                        FileChange fc = new FileChange(false, fileName, "New File", "Lines added: [" + String.valueOf(addf.getLinesInsert().get(0) + 1) + ", " + String.valueOf(addf.getLinesInsert().get(1) + 1) + ", " + String.valueOf(addf.getLinesInsert().get(2) + 1) + "]", "", featurei, featurea, fileLines, previousfileLines);
+                        FileChange fc = new FileChange(false, fileName, "New File", "Lines added: [" + String.valueOf(addf.getLinesInsert().get(0) + 1) + ", " + String.valueOf(addf.getLinesInsert().get(1) + 1) + ", " + String.valueOf(addf.getLinesInsert().get(2) + 1) + "]", "", featurei, featurea, fileLines, previousfileLines, addf.getFeature().getName());
                         //FileChange fc = new FileChange(false, fileName, "New File", "Lines added: " + addf.getLinesInsert(), featurei, featurea, fileLines);
                         data.add(fc);
                     }
@@ -766,7 +784,7 @@ public class ChangeAnalysisView extends BorderPane {
                         featurea = featurea.replaceFirst(", ", "");
                         List<String> previousfileLines = new ArrayList<>();
                         //FileChange fc = new FileChange(false, fileName, "Changed File", "Lines deleted: [" + String.valueOf(changf.getLinesRemoved().get(0) + 1) + ", " + String.valueOf(changf.getLinesRemoved().get(1) + 1) + ", " + String.valueOf((changf.getLinesRemoved().get(2) + 1) / 2) + "]", featurei, featurea, fileLines);
-                        FileChange fc = new FileChange(false, fileName, "Changed File", "Lines added: " + changf.getLinesInsert() + " Lines removed: " + changf.getLinesRemoved(), "" + changf.getOldFilePosition(), featurei, featurea, fileLines, changf.getPreviousLines());
+                        FileChange fc = new FileChange(false, fileName, "Changed File", "Lines added: " + changf.getLinesInsert() + " Lines removed: " + changf.getLinesRemoved(), "" + changf.getOldFilePosition(), featurei, featurea, fileLines, changf.getPreviousLines(), changf.getFeature().getName());
                         dataAux.add(fc);
 
                     }
@@ -786,7 +804,7 @@ public class ChangeAnalysisView extends BorderPane {
                         }
                         featurea = featurea.replaceFirst(", ", "");
                         List<String> previousfileLines = new ArrayList<>();
-                        FileChange fc = new FileChange(false, fileName, "Removed File", "Lines removed: [" + String.valueOf(delf.getLinesRemoved().get(0) + 1) + ", " + String.valueOf(delf.getLinesRemoved().get(1) + 1) + ", " + String.valueOf(delf.getLinesRemoved().get(2) + 1) + "]", "", featurei, featurea, fileLines, previousfileLines);
+                        FileChange fc = new FileChange(false, fileName, "Removed File", "Lines removed: [" + String.valueOf(delf.getLinesRemoved().get(0) + 1) + ", " + String.valueOf(delf.getLinesRemoved().get(1) + 1) + ", " + String.valueOf(delf.getLinesRemoved().get(2) + 1) + "]", "", featurei, featurea, fileLines, previousfileLines, delf.getFeature().getName());
                         //FileChange fc = new FileChange(false, fileName, "Removed File", "Lines removed: " + delf.getLinesRemoved(), featurei, featurea, fileLines);
                         data.add(fc);
                     }
@@ -820,7 +838,7 @@ public class ChangeAnalysisView extends BorderPane {
                 }
             }
             if (table.getColumns().size() == 0)
-                table.getColumns().addAll(selectCol, fileCol, changeCol, linesCol, featiCol, feataff, colBtn);
+                table.getColumns().addAll(selectCol, fileCol, changeCol, linesCol, featiCol, feataff, featurechanged, colBtn);
             if (table.getItems().size() == 0)
                 toolBar.getItems().addAll(selectAllButton, unselectAllButton, propagateChangesButton);
             table.setItems(data);

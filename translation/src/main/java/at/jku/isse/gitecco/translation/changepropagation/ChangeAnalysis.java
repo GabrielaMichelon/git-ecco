@@ -32,8 +32,8 @@ public class ChangeAnalysis {
     private static ArrayList<Feature> featureList = new ArrayList<>();
     private static ArrayList<String> featureNamesList = new ArrayList<String>();
     //private static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\New research\\ChangePropagation\\runningexample";
-    private static String FEATURES_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\New research\\ChangePropagation";
-    private static String FEATURES_TXT = "C:\\Users\\gabil\\Desktop\\PHD\\New research\\ChangePropagation\\runningexample.txt";//features-release-0-3-1.txt";
+    private static String FEATURES_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\ChangePropagation";
+    private static String FEATURES_TXT = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\ChangePropagation\\runningexample.txt";//features-release-0-3-1.txt";
     static String fileReportFeature = "features_report_each_project_commit.csv";
     static String fileStoreConfig = "configurations.csv";
     static List<String> changedFiles = new ArrayList<>();
@@ -50,8 +50,8 @@ public class ChangeAnalysis {
     //private static String secondcommit = "1d42a8d2bfa46c4f0874cdae2e9d8757e33b5da6";//"101bf21d414afab092caafcdb83cf035b0d8966b";
     //private static String featpropagatename = "featA";
     //private static Feature featpropagate = new Feature(featpropagatename);
-    private static String mergeResult = "C:\\Users\\gabil\\Desktop\\PHD\\New research\\ChangePropagation\\merge";
-    private static String backup = "C:\\Users\\gabil\\Desktop\\PHD\\New research\\ChangePropagation\\backup";
+    private static String mergeResult = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\ChangePropagation\\merge";
+    private static String backup = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\ChangePropagation\\backup";
 
 
     public static Map<Map<String, List<String>>, Changes> identification(String featuresRepo, String REPO_PATH, String firstcommit, String secondcommit, String featpropagatename) throws Exception {
@@ -74,8 +74,13 @@ public class ChangeAnalysis {
             featuresRepo.replaceAll("\\\\", File.separator);
         }
         FEATURES_TXT = featuresRepo;
-
-        Feature featpropagate = new Feature(featpropagatename);
+        String[] featspropagate = featpropagatename.split(",");
+        ArrayList<Feature> featurespropagate = new ArrayList<>();
+        for (String feature : featspropagate) {
+            Feature featpropagate = new Feature(feature);
+            featurespropagate.add(featpropagate);
+        }
+        // Feature featpropagate = new Feature(featpropagatename);
         Map<Map<String, List<String>>, Changes> results = new HashMap<>();
 
         long measure = System.currentTimeMillis();
@@ -124,7 +129,7 @@ public class ChangeAnalysis {
             //for (GitCommit commits : commitList) {
             //ComputeRQMetrics.characteristicsFeature(folder, commits.getNumber(), commits.getTree(), featureNamesList);
             configurations.clear();
-            characteristicsChange(gitHelper, changeFolder, commitList, featureNamesList, featpropagate, results);
+            characteristicsChange(gitHelper, changeFolder, commitList, featureNamesList, featurespropagate, results);
             //dispose tree if it is not needed -> for memory saving reasons.
             //commits.disposeTree();
             //}
@@ -369,7 +374,7 @@ public class ChangeAnalysis {
     }
 
     //RQ1
-    public static void characteristicsChange(GitHelper gitHelper, File changeFolder, GitCommitList gcs, ArrayList<String> featureNamesList, Feature featpropagate, Map<Map<String, List<String>>, Changes> results) throws Exception {
+    public static void characteristicsChange(GitHelper gitHelper, File changeFolder, GitCommitList gcs, ArrayList<String> featureNamesList, ArrayList<Feature> featurespropagate, Map<Map<String, List<String>>, Changes> results) throws Exception {
 
         final File gitFolder = new File(gitHelper.getPath());
         final File eccoFolder = new File(gitFolder.getParent(), "ecco");
@@ -508,95 +513,98 @@ public class ChangeAnalysis {
             if (config != null && !config.isEmpty()) {
                 //compute the marked as changed features.
                 changed = constraintComputer.computeChangedFeatures(changedNode, config);
-                if (changed.contains(featpropagate)) {
-                    propagateChangedNodes.add(changedNode);
-                    System.out.println("CHANGED NODE CONTAINS FEATURE: " + featpropagate);
-                    ArrayList<Integer> linesInsert = new ArrayList<>();
-                    ArrayList<Integer> linesRemoved = new ArrayList<>();
-                    ArrayList<String> featureInteraction = new ArrayList<>();
-                    ArrayList<String> featureMightBeAffected = new ArrayList<>();
-                    if (!changedFiles.contains(changedNode.getContainingFile().getFilePath())) {
-                        System.out.println("NEW FILE: " + changedNode.getContainingFile().getFilePath());
-                        //linesInsert.addAll(changedNode.getLineNumberInserts());
-                        //System.out.println("Line numbers insert: " + changedNode.getLineNumberInserts());
-                        if (!changedFilesPropagate.contains(changedNode.getContainingFile().getFilePath()))
-                            changedFilesPropagate.add(changedNode.getContainingFile().getFilePath());
-                    } else {
-                        if (!changedFilesPropagate.contains(changedNode.getContainingFile().getFilePath()))
-                            changedFilesPropagate.add(changedNode.getContainingFile().getFilePath());
-                        System.out.println("CHANGED FILE: " + changedNode.getContainingFile().getFilePath());
-                        //linesInsert.addAll(changedNode.getLineNumberInserts());
-                        //linesRemoved.addAll(changedNode.getLineNumberDeleted());
-                        //System.out.println("Line numbers insert: " + changedNode.getLineNumberInserts() + " Line numbers removed: " + changedNode.getLineNumberDeleted());
-                    }
-
-                    System.out.println("Feature interactions: ");
-                    for (Feature fea : changed) {
-                        if (!fea.equals(featpropagate)) {
-                            featureInteraction.add(fea.getName());
-                            System.out.println(fea.getName());
+                for (Feature feature : featurespropagate) {
+                    if (changed.contains(feature)) {
+                        //if (changed.contains(featpropagate)) {
+                        propagateChangedNodes.add(changedNode);
+                        System.out.println("CHANGED NODE CONTAINS FEATURE: " + feature.getName());
+                        ArrayList<Integer> linesInsert = new ArrayList<>();
+                        ArrayList<Integer> linesRemoved = new ArrayList<>();
+                        ArrayList<String> featureInteraction = new ArrayList<>();
+                        ArrayList<String> featureMightBeAffected = new ArrayList<>();
+                        if (!changedFiles.contains(changedNode.getContainingFile().getFilePath())) {
+                            System.out.println("NEW FILE: " + changedNode.getContainingFile().getFilePath());
+                            //linesInsert.addAll(changedNode.getLineNumberInserts());
+                            //System.out.println("Line numbers insert: " + changedNode.getLineNumberInserts());
+                            if (!changedFilesPropagate.contains(changedNode.getContainingFile().getFilePath()))
+                                changedFilesPropagate.add(changedNode.getContainingFile().getFilePath());
+                        } else {
+                            if (!changedFilesPropagate.contains(changedNode.getContainingFile().getFilePath()))
+                                changedFilesPropagate.add(changedNode.getContainingFile().getFilePath());
+                            System.out.println("CHANGED FILE: " + changedNode.getContainingFile().getFilePath());
+                            //linesInsert.addAll(changedNode.getLineNumberInserts());
+                            //linesRemoved.addAll(changedNode.getLineNumberDeleted());
+                            //System.out.println("Line numbers insert: " + changedNode.getLineNumberInserts() + " Line numbers removed: " + changedNode.getLineNumberDeleted());
                         }
-                    }
 
-
-                    System.out.println("Feature might be affected: ");
-                    for (Map.Entry<Feature, Integer> fea : config.entrySet()) {
-                        if (!changed.contains(fea.getKey())) {
-                            featureMightBeAffected.add(fea.getKey().getName());
-                            System.out.println(fea.getKey().getName());
-                        }
-                    }
-
-                    List<String> linesFile = changedNode.getContainingFileLines();
-
-                    Boolean mapExist = false;
-                    Changes mapAux = new Changes();
-
-                    for (Map<String, List<String>> map : results.keySet()) {
-                        if (map.get(changedNode.getContainingFile().getFilePath()) != null) {
-                            mapExist = true;
-                            mapAux = results.get(map);
-                        }
-                    }
-
-                    //new file
-                    if (!changedFiles.contains(changedNode.getContainingFile().getFilePath())) {
-                        Map<String, List<String>> mapFile = new HashMap<>();
-                        for (Deltas delta : changedNode.getLineNumberInsertsAndDeletes()) {
-                            ArrayList<Integer> linesInsertArray = new ArrayList<>();
-                            linesInsertArray.add(delta.getLineFromAdd());
-                            linesInsertArray.add(delta.getLineToAdd());
-                            linesInsertArray.add(delta.getTotalLinesAdd());
-                            AddedFile addedFile = new AddedFile(linesInsertArray, featureInteraction, featureMightBeAffected);
-                            mapAux.addAddedFiles(addedFile);
-                        }
-                        mapFile.put(changedNode.getContainingFile().getFilePath(), linesFile);
-                        results.put(mapFile, mapAux);
-
-                    } else { //changed file
-                        for (Deltas delta : changedNode.getLineNumberInsertsAndDeletes()) {
-                            ArrayList<Integer> linesInsertArray = new ArrayList<>();
-                            ArrayList<Integer> linesRemovedArray = new ArrayList<>();
-                            linesInsertArray.add(delta.getLineFromAdd());
-                            linesInsertArray.add(delta.getLineToAdd());
-                            linesInsertArray.add(delta.getTotalLinesAdd());
-                            if (delta.getLineFromRemov() != -1) {
-                                linesRemovedArray.add(delta.getLineFromRemov());
-                                linesRemovedArray.add(delta.getLineToRemov());
-                                linesRemovedArray.add(delta.getTotalLinesRemov());
+                        System.out.println("Feature interactions: ");
+                        for (Feature fea : changed) {
+                            if (!fea.equals(feature)) {
+                                featureInteraction.add(fea.getName());
+                                System.out.println(fea.getName());
                             }
-                            int position = delta.getPosLinesAdd();
-                            if (position == -1)
-                                position = delta.getPosLinesRemov();
-                            ChangedFile changedFile = new ChangedFile(linesInsertArray, linesRemovedArray, position, featureInteraction, featureMightBeAffected, changedNode.getContainingFileLines(), changedNode.getContainingPreviousFileLines());
-                            changedFile.setPreviousLines(changedNode.getContainingPreviousFileLines());
-                            mapAux.addChangedFiles(changedFile);
                         }
-                        Map<String, List<String>> mapFile = new HashMap<>();
-                        mapFile.put(changedNode.getContainingFile().getFilePath(), linesFile);
-                        results.put(mapFile, mapAux);
-                    }
 
+
+                        System.out.println("Feature might be affected: ");
+                        for (Map.Entry<Feature, Integer> fea : config.entrySet()) {
+                            if (!changed.contains(fea.getKey())) {
+                                featureMightBeAffected.add(fea.getKey().getName());
+                                System.out.println(fea.getKey().getName());
+                            }
+                        }
+
+                        List<String> linesFile = changedNode.getContainingFileLines();
+
+                        Boolean mapExist = false;
+                        Changes mapAux = new Changes();
+
+                        for (Map<String, List<String>> map : results.keySet()) {
+                            if (map.get(changedNode.getContainingFile().getFilePath()) != null) {
+                                mapExist = true;
+                                mapAux = results.get(map);
+                            }
+                        }
+
+                        //new file
+                        if (!changedFiles.contains(changedNode.getContainingFile().getFilePath())) {
+                            Map<String, List<String>> mapFile = new HashMap<>();
+                            for (Deltas delta : changedNode.getLineNumberInsertsAndDeletes()) {
+                                ArrayList<Integer> linesInsertArray = new ArrayList<>();
+                                linesInsertArray.add(delta.getLineFromAdd());
+                                linesInsertArray.add(delta.getLineToAdd());
+                                linesInsertArray.add(delta.getTotalLinesAdd());
+                                AddedFile addedFile = new AddedFile(linesInsertArray, featureInteraction, featureMightBeAffected, feature);
+                                mapAux.addAddedFiles(addedFile);
+                            }
+                            mapFile.put(changedNode.getContainingFile().getFilePath(), linesFile);
+                            results.put(mapFile, mapAux);
+
+                        } else { //changed file
+                            for (Deltas delta : changedNode.getLineNumberInsertsAndDeletes()) {
+                                ArrayList<Integer> linesInsertArray = new ArrayList<>();
+                                ArrayList<Integer> linesRemovedArray = new ArrayList<>();
+                                linesInsertArray.add(delta.getLineFromAdd());
+                                linesInsertArray.add(delta.getLineToAdd());
+                                linesInsertArray.add(delta.getTotalLinesAdd());
+                                if (delta.getLineFromRemov() != -1) {
+                                    linesRemovedArray.add(delta.getLineFromRemov());
+                                    linesRemovedArray.add(delta.getLineToRemov());
+                                    linesRemovedArray.add(delta.getTotalLinesRemov());
+                                }
+                                int position = delta.getPosLinesAdd();
+                                if (position == -1)
+                                    position = delta.getPosLinesRemov();
+                                ChangedFile changedFile = new ChangedFile(linesInsertArray, linesRemovedArray, position, featureInteraction, featureMightBeAffected, changedNode.getContainingFileLines(), changedNode.getContainingPreviousFileLines(), feature);
+                                changedFile.setPreviousLines(changedNode.getContainingPreviousFileLines());
+                                mapAux.addChangedFiles(changedFile);
+                            }
+                            Map<String, List<String>> mapFile = new HashMap<>();
+                            mapFile.put(changedNode.getContainingFile().getFilePath(), linesFile);
+                            results.put(mapFile, mapAux);
+                        }
+
+                    }
                 }
                 //int tanglingDegree = 0;
                 //for (Map.Entry<Feature, Integer> feat : config.entrySet()) {
@@ -700,108 +708,111 @@ public class ChangeAnalysis {
                 if (config != null && !config.isEmpty()) {
                     //compute the marked as changed features.
                     changed = constraintComputer.computeChangedFeatures(deletedNode, config);
-                    if (changed.contains(featpropagate)) {
-                        propagateDeletedNodes.add(deletedNode);
-                        System.out.println("DELETED NODE CONTAINS FEATURE: " + featpropagate);
-                        ArrayList<String> featureInteraction = new ArrayList<>();
-                        ArrayList<String> featureMightBeAffected = new ArrayList<>();
-                        ArrayList<Integer> linesRemoved = new ArrayList<>();
-                        if (!changedFilesPropagate.contains(deletedNode.getContainingFile().getFilePath()))
-                            changedFilesPropagate.add(deletedNode.getContainingFile().getFilePath());
-                        if (!changedFiles.contains(deletedNode.getContainingFile().getFilePath())) {
-                            System.out.println("NEW FILE: " + deletedNode.getContainingFile().getFilePath());
-                        } else if (!changedFilesNext.contains(deletedNode.getContainingFile().getFilePath())) {
-                            System.out.println("DELETED FILE: " + deletedNode.getContainingFile().getFilePath());
-                        } else {
-                            System.out.println("CHANGED FILE: " + deletedNode.getContainingFile().getFilePath());
+                    for (Feature feature : featurespropagate) {
+                        if (changed.contains(feature)) {
+                            //if (changed.contains(featpropagate)) {
+                            propagateDeletedNodes.add(deletedNode);
+                            System.out.println("DELETED NODE CONTAINS FEATURE: " + feature.getName());
+                            ArrayList<String> featureInteraction = new ArrayList<>();
+                            ArrayList<String> featureMightBeAffected = new ArrayList<>();
+                            ArrayList<Integer> linesRemoved = new ArrayList<>();
+                            if (!changedFilesPropagate.contains(deletedNode.getContainingFile().getFilePath()))
+                                changedFilesPropagate.add(deletedNode.getContainingFile().getFilePath());
+                            if (!changedFiles.contains(deletedNode.getContainingFile().getFilePath())) {
+                                System.out.println("NEW FILE: " + deletedNode.getContainingFile().getFilePath());
+                            } else if (!changedFilesNext.contains(deletedNode.getContainingFile().getFilePath())) {
+                                System.out.println("DELETED FILE: " + deletedNode.getContainingFile().getFilePath());
+                            } else {
+                                System.out.println("CHANGED FILE: " + deletedNode.getContainingFile().getFilePath());
+                            }
+
+                            System.out.println("FILE: " + deletedNode.getContainingFile().getFilePath());
+                            //System.out.println("lines removed " + deletedNode.getLineNumberDeleted());
+                            System.out.println("Feature interactions: ");
+                            //linesRemoved.addAll(deletedNode.getLineNumberDeleted());
+                            for (Feature fea : changed) {
+                                if (!fea.equals(feature)) {
+                                    featureInteraction.add(fea.getName());
+                                    System.out.println(fea.getName());
+                                }
+                            }
+
+                            System.out.println("Feature might be affected: ");
+                            for (Map.Entry<Feature, Integer> fea : config.entrySet()) {
+                                if (!changed.contains(fea.getKey())) {
+                                    featureMightBeAffected.add(fea.getKey().getName());
+                                    System.out.println(fea.getKey().getName());
+                                }
+                            }
+                            List<String> linesFile = deletedNode.getContainingFileLines();
+                            if (deletedNode.getContainingFile().getPreviousFileContent().size() == 0 && deletedNode.getContainingFile().getFileContent().size() == 0) {
+                                for (ConditionalNode changedNode : changedNodesAux) {
+                                    if (changedNode.getContainingFile().getFilePath().equals(deletedNode.getContainingFile().getFilePath()))
+                                        linesFile = changedNode.getContainingFile().getPreviousFileContent();
+                                }
+                            } else {
+                                linesFile = deletedNode.getContainingPreviousFileLines();
+                            }
+
+
+                            Boolean mapExist = false;
+                            Changes mapAux = new Changes();
+
+                            for (Map<String, List<String>> map : results.keySet()) {
+                                if (map.get(deletedNode.getContainingFile().getFilePath()) != null) {
+                                    mapExist = true;
+                                    mapAux = results.get(map);
+                                }
+                            }
+
+                            //new file
+                            if (!changedFiles.contains(deletedNode.getContainingFile().getFilePath())) {
+                                for (Deltas delta : deletedNode.getLineNumberInsertsAndDeletes()) {
+                                    ArrayList<Integer> linesRemoveArray = new ArrayList<>();
+                                    linesRemoveArray.add(delta.getLineFromRemov());
+                                    linesRemoveArray.add(delta.getLineToRemov());
+                                    linesRemoveArray.add(delta.getTotalLinesRemov());
+                                    AddedFile addedFile = new AddedFile(linesRemoveArray, featureInteraction, featureMightBeAffected, feature);
+                                    mapAux.addAddedFiles(addedFile);
+                                }
+                                Map<String, List<String>> mapFile = new HashMap<>();
+                                mapFile.put(deletedNode.getContainingFile().getFilePath(), linesFile);
+                                results.put(mapFile, mapAux);
+                            } else if (!changedFilesNext.contains(deletedNode.getContainingFile().getFilePath())) { //deleted file
+                                for (Deltas delta : deletedNode.getLineNumberInsertsAndDeletes()) {
+                                    ArrayList<Integer> linesRemoveArray = new ArrayList<>();
+                                    linesRemoveArray.add(delta.getLineFromRemov());
+                                    linesRemoveArray.add(delta.getLineToRemov());
+                                    linesRemoveArray.add(delta.getTotalLinesRemov());
+                                    DeletedFile deletedFile = new DeletedFile(linesRemoveArray, featureInteraction, featureMightBeAffected, feature);
+                                    mapAux.addDeletedFiles(deletedFile);
+                                }
+                                Map<String, List<String>> mapFile = new HashMap<>();
+                                mapFile.put(deletedNode.getContainingFile().getFilePath(), linesFile);
+                                results.put(mapFile, mapAux);
+                            } else {//changed file
+                                for (Deltas delta : deletedNode.getLineNumberInsertsAndDeletes()) {
+                                    ArrayList<Integer> linesInsertArray = new ArrayList<>();
+                                    ArrayList<Integer> linesRemoveArray = new ArrayList<>();
+                                    linesInsertArray.add(delta.getLineFromAdd());
+                                    linesInsertArray.add(delta.getLineToAdd());
+                                    linesInsertArray.add(delta.getTotalLinesAdd());
+                                    int position = delta.getPosLinesAdd();
+                                    if (position == -1)
+                                        position = delta.getPosLinesRemov();
+                                    linesRemoveArray.add(delta.getLineFromRemov());
+                                    linesRemoveArray.add(delta.getLineToRemov());
+                                    linesRemoveArray.add(delta.getTotalLinesRemov());
+                                    ChangedFile changedFile = new ChangedFile(linesInsertArray, linesRemoveArray, position, featureInteraction, featureMightBeAffected, deletedNode.getContainingFileLines(), deletedNode.getContainingPreviousFileLines(), feature);
+                                    mapAux.addChangedFiles(changedFile);
+                                }
+                                Map<String, List<String>> mapFile = new HashMap<>();
+                                mapFile.put(deletedNode.getContainingFile().getFilePath(), linesFile);
+                                results.put(mapFile, mapAux);
+                            }
+
+
                         }
-
-                        System.out.println("FILE: " + deletedNode.getContainingFile().getFilePath());
-                        //System.out.println("lines removed " + deletedNode.getLineNumberDeleted());
-                        System.out.println("Feature interactions: ");
-                        //linesRemoved.addAll(deletedNode.getLineNumberDeleted());
-                        for (Feature fea : changed) {
-                            if (!fea.equals(featpropagate)) {
-                                featureInteraction.add(fea.getName());
-                                System.out.println(fea.getName());
-                            }
-                        }
-
-                        System.out.println("Feature might be affected: ");
-                        for (Map.Entry<Feature, Integer> fea : config.entrySet()) {
-                            if (!changed.contains(fea.getKey())) {
-                                featureMightBeAffected.add(fea.getKey().getName());
-                                System.out.println(fea.getKey().getName());
-                            }
-                        }
-                        List<String> linesFile = deletedNode.getContainingFileLines();
-                        if (deletedNode.getContainingFile().getPreviousFileContent().size() == 0 && deletedNode.getContainingFile().getFileContent().size() == 0) {
-                            for (ConditionalNode changedNode : changedNodesAux) {
-                                if (changedNode.getContainingFile().getFilePath().equals(deletedNode.getContainingFile().getFilePath()))
-                                    linesFile = changedNode.getContainingFile().getPreviousFileContent();
-                            }
-                        } else {
-                            linesFile = deletedNode.getContainingPreviousFileLines();
-                        }
-
-
-                        Boolean mapExist = false;
-                        Changes mapAux = new Changes();
-
-                        for (Map<String, List<String>> map : results.keySet()) {
-                            if (map.get(deletedNode.getContainingFile().getFilePath()) != null) {
-                                mapExist = true;
-                                mapAux = results.get(map);
-                            }
-                        }
-
-                        //new file
-                        if (!changedFiles.contains(deletedNode.getContainingFile().getFilePath())) {
-                            for (Deltas delta : deletedNode.getLineNumberInsertsAndDeletes()) {
-                                ArrayList<Integer> linesRemoveArray = new ArrayList<>();
-                                linesRemoveArray.add(delta.getLineFromRemov());
-                                linesRemoveArray.add(delta.getLineToRemov());
-                                linesRemoveArray.add(delta.getTotalLinesRemov());
-                                AddedFile addedFile = new AddedFile(linesRemoveArray, featureInteraction, featureMightBeAffected);
-                                mapAux.addAddedFiles(addedFile);
-                            }
-                            Map<String, List<String>> mapFile = new HashMap<>();
-                            mapFile.put(deletedNode.getContainingFile().getFilePath(), linesFile);
-                            results.put(mapFile, mapAux);
-                        } else if (!changedFilesNext.contains(deletedNode.getContainingFile().getFilePath())) { //deleted file
-                            for (Deltas delta : deletedNode.getLineNumberInsertsAndDeletes()) {
-                                ArrayList<Integer> linesRemoveArray = new ArrayList<>();
-                                linesRemoveArray.add(delta.getLineFromRemov());
-                                linesRemoveArray.add(delta.getLineToRemov());
-                                linesRemoveArray.add(delta.getTotalLinesRemov());
-                                DeletedFile deletedFile = new DeletedFile(linesRemoveArray, featureInteraction, featureMightBeAffected);
-                                mapAux.addDeletedFiles(deletedFile);
-                            }
-                            Map<String, List<String>> mapFile = new HashMap<>();
-                            mapFile.put(deletedNode.getContainingFile().getFilePath(), linesFile);
-                            results.put(mapFile, mapAux);
-                        } else {//changed file
-                            for (Deltas delta : deletedNode.getLineNumberInsertsAndDeletes()) {
-                                ArrayList<Integer> linesInsertArray = new ArrayList<>();
-                                ArrayList<Integer> linesRemoveArray = new ArrayList<>();
-                                linesInsertArray.add(delta.getLineFromAdd());
-                                linesInsertArray.add(delta.getLineToAdd());
-                                linesInsertArray.add(delta.getTotalLinesAdd());
-                                int position = delta.getPosLinesAdd();
-                                if (position == -1)
-                                    position = delta.getPosLinesRemov();
-                                linesRemoveArray.add(delta.getLineFromRemov());
-                                linesRemoveArray.add(delta.getLineToRemov());
-                                linesRemoveArray.add(delta.getTotalLinesRemov());
-                                ChangedFile changedFile = new ChangedFile(linesInsertArray, linesRemoveArray, position, featureInteraction, featureMightBeAffected, deletedNode.getContainingFileLines(), deletedNode.getContainingPreviousFileLines());
-                                mapAux.addChangedFiles(changedFile);
-                            }
-                            Map<String, List<String>> mapFile = new HashMap<>();
-                            mapFile.put(deletedNode.getContainingFile().getFilePath(), linesFile);
-                            results.put(mapFile, mapAux);
-                        }
-
-
                     }
                     int tanglingDegree = 0;
                     for (Map.Entry<Feature, Integer> feat : config.entrySet()) {

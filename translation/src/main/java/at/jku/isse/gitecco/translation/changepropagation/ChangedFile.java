@@ -1,5 +1,7 @@
 package at.jku.isse.gitecco.translation.changepropagation;
 
+import at.jku.isse.gitecco.core.type.Feature;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,8 +13,9 @@ public class ChangedFile {
     private ArrayList<String> featureMightAffected;
     private List<String> currentLines;
     private List<String> previousLines;
+    private Feature feature;
 
-    public ChangedFile(ArrayList<Integer> linesInsert, ArrayList<Integer> linesRemoved, int  oldFilePosition, ArrayList<String> featureInteractions, ArrayList<String> featureMightAffected, List<String> currentLines, List<String> previousLines) {
+    public ChangedFile(ArrayList<Integer> linesInsert, ArrayList<Integer> linesRemoved, int  oldFilePosition, ArrayList<String> featureInteractions, ArrayList<String> featureMightAffected, List<String> currentLines, List<String> previousLines, Feature feature) {
         this.linesInsert = linesInsert;
         this.linesRemoved = linesRemoved;
         this.oldFilePosition = oldFilePosition;
@@ -20,6 +23,7 @@ public class ChangedFile {
         this.featureMightAffected = featureMightAffected;
         this.currentLines = currentLines;
         this.previousLines = previousLines;
+        this.feature = feature;
     }
 
     public ArrayList<Integer> getLinesInsert() {
@@ -76,5 +80,13 @@ public class ChangedFile {
 
     public void setCurrentLines(List<String> currentLines) {
         this.currentLines = currentLines;
+    }
+
+    public Feature getFeature() {
+        return feature;
+    }
+
+    public void setFeature(Feature feature) {
+        this.feature = feature;
     }
 }
