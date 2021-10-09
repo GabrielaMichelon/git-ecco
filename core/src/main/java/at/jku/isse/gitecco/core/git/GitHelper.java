@@ -1441,13 +1441,11 @@ public class GitHelper {
                         linesremovedinit = lines[2].substring(lines[2].indexOf("removed: [") + 10).replaceAll(" ", "");
                         linesremovedend = lines[3].replaceAll(" ", "");
                         linestotalremov = lines[4].substring(0, lines[4].indexOf("]")).replaceAll(" ", "");
-                        ;
                     }
                 } else if (!fileChange.getLines().contains("removed: []")) {
                     linesremovedinit = lines[0].substring(lines[0].indexOf("removed: [") + 10).replaceAll(" ", "");
                     linesremovedend = lines[1].replaceAll(" ", "");
                     linestotalremov = lines[2].substring(0, lines[2].indexOf("]")).replaceAll(" ", "");
-                    ;
                 }
                 if (previousLines.size() == 0)
                     previousLines = fileChange.getPreviousContent();
@@ -1455,7 +1453,11 @@ public class GitHelper {
                     fileLines = fileChange.getFileLines();
 
                 oldPositionInit = entry.getKey();
-                last += Integer.valueOf(linestotaladd) - Integer.valueOf(linestotalremov);
+                if(Integer.valueOf(linestotaladd) > Integer.valueOf(linestotalremov)){
+                    last += Integer.valueOf(linestotaladd) - Integer.valueOf(linestotalremov)-1;
+                }else {
+                    last += Integer.valueOf(linestotaladd) - Integer.valueOf(linestotalremov);
+                }
                 removed += Integer.valueOf(linestotalremov);
                 while (k <= oldPositionInit) {
                     if (k == oldPositionInit) {

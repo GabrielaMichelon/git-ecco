@@ -302,12 +302,12 @@ public class ChangeAnalysisView extends BorderPane {
                             if (filesChanged.get(fileChange.getFileName()) != null) {
                                 fileChangeAux = new at.jku.isse.gitecco.core.git.FileChange(fileChange.getLines(), fileChange.getPosition(), fileChange.getFileLines(), fileChange.getPreviousfileLines());
                                 Map<Integer, at.jku.isse.gitecco.core.git.FileChange> finalFileChangeAux = filesChanged.get(fileChange.getFileName());
-                                finalFileChangeAux.put(Integer.valueOf(fileChange.getPosition()),fileChangeAux);
+                                finalFileChangeAux.put(Integer.valueOf(fileChange.getPosition()), fileChangeAux);
                                 filesChanged.computeIfPresent(fileChange.getFileName(), (k, v) -> finalFileChangeAux);
                             } else {
                                 fileChangeAux = new at.jku.isse.gitecco.core.git.FileChange(fileChange.getLines(), fileChange.getPosition(), fileChange.getFileLines(), fileChange.getPreviousfileLines());
                                 Map<Integer, at.jku.isse.gitecco.core.git.FileChange> finalFileChangeAux = new HashMap<>();
-                                finalFileChangeAux.put(Integer.valueOf(fileChange.getPosition()),fileChangeAux);
+                                finalFileChangeAux.put(Integer.valueOf(fileChange.getPosition()), fileChangeAux);
                                 filesChanged.put(fileChange.getFileName(), finalFileChangeAux);
                             }
                         }
@@ -450,15 +450,15 @@ public class ChangeAnalysisView extends BorderPane {
                     if (!linesaddinit.equals("") && Integer.valueOf(linesaddinit) > Integer.valueOf(linesremovedinit)) {
                         count = i;
                         int init = Integer.valueOf(linesremovedinit) - 1;
-                        while (count <= Integer.valueOf(linesaddend)-1) {
+                        while (count <= Integer.valueOf(linesaddend) - 1) {
                             while (init < Integer.valueOf(linesremovedend)) {
                                 result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: #ffdce0");
                                 result.appendText((init + 1) + " -\t" + data.getPreviousfileLines().get(init) + "\n");
                                 init++;
                             }
-                            if (count >= (Integer.valueOf(linesaddinit)-1)) {
+                            if (count >= (Integer.valueOf(linesaddinit) - 1)) {
                                 result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: #dcffe4");
-                                result.appendText((count+1) + " +\t" + data.getFileLines().get(count) + "\n");
+                                result.appendText((count + 1) + " +\t" + data.getFileLines().get(count) + "\n");
                             } else {
                                 result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: transparent");
                                 result.appendText(count + " \t" + data.getFileLines().get(count) + "\n");
@@ -470,9 +470,23 @@ public class ChangeAnalysisView extends BorderPane {
                         result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: #ffdce0");
                         result.appendText((i + 1) + " -\t" + data.getPreviousfileLines().get(i) + "\n");
                     }
-                } else if (!linesaddinit.equals("") && linesremovedinit.equals("") && i >= (Integer.valueOf(linesaddinit)-1) && i <= (Integer.valueOf(linesaddend))-1) {
+                } else if (!linesaddinit.equals("") && !linesremovedinit.equals("") && linesaddinit.equals(linesremovedinit) && i >= (Integer.valueOf(linesaddinit) - 1) && i <= (Integer.valueOf(linesremovedend) + 1)) {
+                    count = i;
+                    int init = Integer.valueOf(linesaddinit) - 1;
+                    while (init < Integer.valueOf(linesremovedend)) {
+                        result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: #ffdce0");
+                        result.appendText((init + 1) + " -\t" + data.getPreviousfileLines().get(init) + "\n");
+                        init++;
+                    }
+                    while (count <= Integer.valueOf(linesaddend) - 1) {
+                        result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: #dcffe4");
+                        result.appendText((count + 1) + " +\t" + data.getFileLines().get(count) + "\n");
+                        count++;
+                    }
+                    i = Integer.valueOf(linesaddend)-1;
+                } else if (!linesaddinit.equals("") && linesremovedinit.equals("") && i >= (Integer.valueOf(linesaddinit) - 1) && i <= (Integer.valueOf(linesaddend)) - 1) {
                     result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: #dcffe4");
-                    result.appendText((i+1) + " +\t" + data.getFileLines().get(i) + "\n");
+                    result.appendText((i + 1) + " +\t" + data.getFileLines().get(i) + "\n");
                 } else if (!linesaddinit.equals("") && i >= (Integer.valueOf(linesaddinit) + 1) && i <= (Integer.valueOf(linesaddend) + 1) && linesremovedinit.equals("") && !(linesaddinit.equals(linesaddend))) {
                     result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: #dcffe4");
                     result.appendText((i + 1) + " +\t" + data.getFileLines().get(i - 1) + "\n");
