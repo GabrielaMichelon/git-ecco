@@ -74,7 +74,7 @@ public class ChangeAnalysis {
             featuresRepo.replaceAll("\\\\", File.separator);
         }
         FEATURES_TXT = featuresRepo;
-        String[] featspropagate = featpropagatename.split(",");
+        String[] featspropagate = featpropagatename.replaceAll(" ","").split(",");
         ArrayList<Feature> featurespropagate = new ArrayList<>();
         for (String feature : featspropagate) {
             Feature featpropagate = new Feature(feature);
