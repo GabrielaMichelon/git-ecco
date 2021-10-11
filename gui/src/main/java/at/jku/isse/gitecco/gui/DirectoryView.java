@@ -105,7 +105,7 @@ public class DirectoryView extends OperationView {
                 public Boolean call() {
                     try {
                         File mergeDir = new File(baseDirTextField.getText());
-                        return GitHelper.changePropagation(mergeDir, gitDir, firstCommit, secondCommit, filesAdded, filesRemoved, filesChanged);
+                        return GitHelper.changePropagation(mergeDir, gitDir, firstCommit, secondCommit, filesAdded, filesRemoved, filesChanged, mergeDir.getAbsolutePath());
                     } catch (Exception e) {
                         e.printStackTrace();
                     }

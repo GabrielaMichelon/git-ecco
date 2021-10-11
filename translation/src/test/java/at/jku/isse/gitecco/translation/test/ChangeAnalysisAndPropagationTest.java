@@ -32,7 +32,7 @@ public class ChangeAnalysisAndPropagationTest {
 
     private List<String> fileTypes = new LinkedList<String>();
     private static String RESULTS_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\automated_evaluation\\results";
-    //static String fileReportFeature = "features_report_each_project_commit.csv";
+    static String fileReportFeature = "report_each_commit.csv";
     static String fileStoreConfig = "configurations.csv";
     static List<String> configurations = new ArrayList<>();
     private static ArrayList<String> featureNamesList = new ArrayList<String>();
@@ -55,17 +55,34 @@ public class ChangeAnalysisAndPropagationTest {
             CSVReader reader = new CSVReader(new FileReader(strFile));
             String[] nextLine;
             int lineNumber = 0;
-            //while ((nextLine = reader.readNext()) != null && lineNumber < 2) {
-            //    if (lineNumber == 0) {
-            //       lineNumber++;
-            //   } else {
-            //       lineNumber++;
-            //       System.out.println("Line # " + lineNumber);
-            //   System.out.println(nextLine[1]);
-            // identification(repoFeatures, repoGit,"ed7974dee54cbd608de2fd6303924aaf7bfa8b91", nextLine[1], nextLine[6]);
-            // }
-            //}
+            try {
+                FileWriter csvWriter = new FileWriter(RESULTS_PATH + File.separator + fileReportFeature);
+                List<List<String>> headerRows = Arrays.asList(
+                        Arrays.asList("CommitHash", "NFeatures", "NFiles", "NLinesAdded", "NLinesRemoved")
+                );
+                for (List<String> rowData : headerRows) {
+                    csvWriter.append(String.join(",", rowData));
+                    csvWriter.append("\n");
+                }
+                csvWriter.flush();
+                csvWriter.close();
+            } catch (
+                    IOException e) {
+                e.printStackTrace();
+            }
+           /* while ((nextLine = reader.readNext()) != null) {
+                if (lineNumber == 0) {
+                    lineNumber++;
+                } else {
+                    lineNumber++;
+                    System.out.println("Line # " + lineNumber);
+                    System.out.println(nextLine[1]);
+                    if (!nextLine[6].equals("BASE"))
+                        identification(repoFeatures, repoGit, nextLine[1], nextLine[6]);
+                }
+            }*/
             identification(repoFeatures, repoGit, "80d5f0b54693ec90a7fe32ad7edd7b47ab472582", "SQLITE_ENABLE_RTREE,BASE");
+            identification(repoFeatures, repoGit, "bed87f1619b0eb86fc399f03aa0e9bc5f6d00672", "SQLITE_ENABLE_RTREE");
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (Exception e) {
@@ -81,6 +98,7 @@ public class ChangeAnalysisAndPropagationTest {
             Feature featpropagate = new Feature(feature);
             featurespropagate.add(featpropagate);
         }
+
         // Feature featpropagate = new Feature(featpropagatename);
         Map<Map<String, List<String>>, Changes> results = new HashMap<>();
 
@@ -665,9 +683,9 @@ public class ChangeAnalysisAndPropagationTest {
                             featureVersions.put(configFeature.getKey(), version);
                         }
                         if (!configFeature.getKey().toString().equals("BASE"))
-                            eccoConfig += "," + configFeature.getKey().toString() + "." + version;
+                            eccoConfig += "," + configFeature.getKey().toString();
                         else
-                            eccoConfig += "," + configFeature.getKey().toString() + ".$$";
+                            eccoConfig += "," + configFeature.getKey().toString();
 
 
                        /* ChangeCharacteristic changeCharacteristic;
@@ -880,9 +898,9 @@ public class ChangeAnalysisAndPropagationTest {
                                 featureVersions.put(configFeature.getKey(), version);
                             }
                             if (!configFeature.getKey().toString().equals("BASE"))
-                                eccoConfig += "," + configFeature.getKey().toString() + "." + version;
+                                eccoConfig += "," + configFeature.getKey().toString();
                             else
-                                eccoConfig += "," + configFeature.getKey().toString() + ".$$";
+                                eccoConfig += "," + configFeature.getKey().toString();
 
                             /*
                             //RQ1. deleted lines
@@ -929,15 +947,10 @@ public class ChangeAnalysisAndPropagationTest {
                 }
             }
 
-            String baseVersion = "";
-            for (Map.Entry<Feature, Integer> configFeature : featureVersions.entrySet()) {
-                if (configFeature.getKey().equals(base))
-                    baseVersion = configFeature.getValue().toString();
-            }
 
             //generate the variant for this config
             for (Map.Entry<Map<Feature, Integer>, String> variant : configsToGenerateVariant.entrySet()) {
-                String eccoConfig = variant.getValue().replace("$$", baseVersion);
+                String eccoConfig = variant.getValue();
                 //config that will be used to commit the variant generated with this changed node in ecco
                 configsToCommit.add(eccoConfig);
             }
@@ -1020,7 +1033,7 @@ public class ChangeAnalysisAndPropagationTest {
                 }
             }*/
         }
-        GitHelper.changePropagation(featurescheckout, gitFolder.getAbsolutePath(), gc1.getCommitName(), gc2.getCommitName(), filesAdded, filesRemoved, filesChanged);
+        GitHelper.changePropagation(featurescheckout, gitFolder.getAbsolutePath(), gc1.getCommitName(), gc2.getCommitName(), filesAdded, filesRemoved, filesChanged, RESULTS_PATH);
         changedNodes.clear();
         deletedNodes.clear();
         deletedNodesAux.clear();

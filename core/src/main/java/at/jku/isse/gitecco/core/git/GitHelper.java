@@ -29,6 +29,7 @@ import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.eclipse.jgit.treewalk.EmptyTreeIterator;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.util.io.DisabledOutputStream;
+import org.glassfish.grizzly.http.server.accesslog.FileAppender;
 
 
 import java.io.*;
@@ -1477,7 +1478,7 @@ public class GitHelper {
      * @return true
      * @throws Exception
      */
-    public static Boolean changePropagation(File mergeDir, String gitDir, String firstCommit, String secondCommit, ArrayList<String> filesAdded, ArrayList<String> filesRemoved, Map<String, Map<Integer, FileChange>> filesChanged) throws Exception {
+    public static Boolean changePropagation(File mergeDir, String gitDir, String firstCommit, String secondCommit, ArrayList<String> filesAdded, ArrayList<String> filesRemoved, Map<String, Map<Integer, FileChange>> filesChanged, String resultsRepo) throws Exception {
 
         long measure = System.currentTimeMillis();
         File gitDirectory = new File(gitDir);
@@ -1491,6 +1492,9 @@ public class GitHelper {
         git.checkout().setName(firstCommit).call();
         //Files.copy(gitDirectory, mergeDir, StandardCopyOption.REPLACE_EXISTING);
         copyFolder(gitDirectory, mergeDir, filesRemoved, filesChanged);
+
+        int totalLinesremoved = 0;
+        int totalLinesAdded = 0;
 
         for (Map.Entry<String, Map<Integer, FileChange>> change : filesChanged.entrySet()) {
             List<String> fileLines = new ArrayList<>();
@@ -1515,15 +1519,18 @@ public class GitHelper {
                     linesaddinit = lines[0].substring(lines[0].indexOf("added: [") + 8).replaceAll(" ", "");
                     linesaddend = lines[1].replaceAll(" ", "");
                     linestotaladd = lines[2].substring(0, lines[2].indexOf("]")).replaceAll(" ", "");
+                    totalLinesAdded+=Integer.valueOf(linestotaladd);
                     if (!fileChange.getLines().contains("removed: []")) {
                         linesremovedinit = lines[2].substring(lines[2].indexOf("removed: [") + 10).replaceAll(" ", "");
                         linesremovedend = lines[3].replaceAll(" ", "");
                         linestotalremov = lines[4].substring(0, lines[4].indexOf("]")).replaceAll(" ", "");
+                        totalLinesremoved += Integer.valueOf(linestotalremov);
                     }
                 } else if (!fileChange.getLines().contains("removed: []")) {
                     linesremovedinit = lines[0].substring(lines[0].indexOf("removed: [") + 10).replaceAll(" ", "");
                     linesremovedend = lines[1].replaceAll(" ", "");
                     linestotalremov = lines[2].substring(0, lines[2].indexOf("]")).replaceAll(" ", "");
+                    totalLinesremoved += Integer.valueOf(linestotalremov);
                 }
                 if (previousLines.size() == 0)
                     previousLines = fileChange.getPreviousContent();
@@ -1579,6 +1586,23 @@ public class GitHelper {
         Long timeAfter = System.currentTimeMillis();
         measure = timeAfter - measure;
         Files.write(Paths.get(mergeDir + File.separator + "time.txt"), String.valueOf(measure).getBytes());
+
+        String[] features = mergeDir.getName().split(",");
+        System.out.println("Total number of features: "+features.length);
+        System.out.println("Total Lines added: "+totalLinesAdded+ " Total Lines removed: "+totalLinesremoved);
+        System.out.println("Number files propagated: "+filesChanged.size());
+        try {
+            FileAppender csvAppender = new FileAppender(new File(resultsRepo,"report_each_commit.csv"));
+            List<List<String>> contentRows = Arrays.asList(
+                    Arrays.asList(secondCommit, String.valueOf(features.length), String.valueOf(filesChanged.size()), String.valueOf(totalLinesAdded), String.valueOf(totalLinesremoved)));
+            for (List<String> rowData : contentRows) {
+                csvAppender.append(String.join(",", rowData));
+            }
+            csvAppender.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         return true;
     }
 
