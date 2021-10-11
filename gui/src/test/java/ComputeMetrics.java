@@ -14,7 +14,7 @@ import java.util.*;
 
 public class ComputeMetrics {
     //directory where you have the folder with the artifacts of the target systyem
-    public final String resultsCSVs_path = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\ChangePropagation\\results\\d7986f29cba2ec38454126b497b378ddd1e424de";
+    public final String resultsCSVs_path = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\ChangePropagation\\results\\sqlite\\c4c1a518e5676f3401e7fec3a727d10a66fdc364";
     //directory where you have the folder with the artifacts of Marlin target systyem
     public final String systemFolder = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\ChangePropagation\\results\\sqlite";
     public final String libsshFolder = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\ChangePropagation\\results\\libssh";

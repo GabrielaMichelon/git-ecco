@@ -668,6 +668,49 @@ public class GitHelper {
         return git;
     }
 
+
+    public static void copyCommitFilesToAFolder(String srcpathFiles, File destpathFiles, String commitHash) throws IOException {
+        Path sourcepath = Paths.get(srcpathFiles);
+        Path dest = Paths.get(destpathFiles.getAbsolutePath());
+        if (destpathFiles.exists()) {
+            //Files.setAttribute(dest, "dos:readonly", false);
+            for (File path : destpathFiles.listFiles()) {
+                if (path.isDirectory() && path.getName().equals(".git")) {
+
+                } else {
+                    GitCommitList.recursiveDelete(path.toPath());
+                }
+            }
+        } else {
+            destpathFiles.mkdir();
+            //Files.setAttribute(dest, "dos:readonly", false);
+        }
+
+        //checkout of the specif commit of the original git project to copy the files that we need to simulate the GIT commit with the variant
+        File srcPath = new File(srcpathFiles);
+        try {
+            Ref git = Git.open(srcPath)
+                    .checkout()
+                    .setName(commitHash)
+                    .call();
+        } catch (GitAPIException e) {
+            e.printStackTrace();
+        }
+
+        //end checkout of the specif commit of the original git project to copy the files that we need to simulate the GIT commit with the variant
+        Path pathGit = Paths.get(sourcepath + File.separator + ".git");
+
+        Files.walk(sourcepath)
+                .forEach(source -> {
+                    try {
+                        if (!source.equals(pathGit))
+                            copy(source, dest.resolve(sourcepath.relativize(source)));
+                    } catch (IOException e) {
+
+                    }
+                });
+    }
+
     /**
      * Lists all the Diffs between two Commits.
      *
@@ -793,6 +836,40 @@ public class GitHelper {
         return commits;
     }
 
+
+
+    public GitCommitList getCommitAndItsPattern(GitCommitList commits, String secondcommit) throws Exception {
+        final Repository repository = git.getRepository();
+        RevWalk revWalk = new RevWalk(repository);
+        revWalk.setRetainBody(false);
+        revWalk.sort(RevSort.REVERSE, true);
+        ObjectId id = repository.resolve(secondcommit);
+        RevCommit rc = revWalk.parseCommit(id);
+        String parent;
+        //System.out.println(rc.getName());
+        String branch = getBranchOfCommit(rc.getName());
+        //commit before cherry-pick
+        id = repository.resolve(rc.getParent(0).getName());
+        rc = revWalk.parseCommit(id);
+        try {
+            parent = rc.getParent(0).getName();
+        } catch (ArrayIndexOutOfBoundsException e) {
+            parent = "NULLCOMMIT";
+        }
+        commits.add(new GitCommit(rc.getName(), 1, parent, branch, rc));
+
+        //commit after cherry-pick
+        id = repository.resolve(secondcommit);
+        rc = revWalk.parseCommit(id);
+        try {
+            parent = rc.getParent(0).getName();
+        } catch (ArrayIndexOutOfBoundsException e) {
+            parent = "NULLCOMMIT";
+        }
+        commits.add(new GitCommit(rc.getName(), 2, parent, branch, rc));
+
+        return commits;
+    }
 
     /**
      * Method to retrieve the diff of two commits from a repository and put it to a GitCommitList.
@@ -1425,6 +1502,7 @@ public class GitHelper {
             int removed = 0;
             int oldPositionInit = 0;
             for (Map.Entry<Integer, FileChange> entry : mapSorted.entrySet()) {
+                System.out.println("File: "+change.getKey());
                 FileChange fileChange = entry.getValue();
                 String[] lines = fileChange.getLines().split(",");
                 String linesaddinit = "";
