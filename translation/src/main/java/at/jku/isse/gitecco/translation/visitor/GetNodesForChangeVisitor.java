@@ -3,9 +3,9 @@ package at.jku.isse.gitecco.translation.visitor;
 import at.jku.isse.gitecco.core.git.Change;
 import at.jku.isse.gitecco.core.tree.nodes.*;
 import at.jku.isse.gitecco.core.tree.visitor.TreeVisitor;
-import org.glassfish.grizzly.utils.ArraySet;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
 
 public class GetNodesForChangeVisitor implements TreeVisitor {
     private Change change;
@@ -64,7 +64,7 @@ public class GetNodesForChangeVisitor implements TreeVisitor {
             if (change.getChangeType().equals("INSERT")) {
                 if (change.getPosition() != -1)
                     position = change.getPosition();
-                Deltas deltas = new Deltas(change.getLines().get(0)+1, change.getLines().get(1)+1, lines, position, -1, -1, -1, -1);
+                Deltas deltas = new Deltas(change.getLines().get(0) + 1, change.getLines().get(1) + 1, lines, position, -1, -1, -1, -1);
                 c.addDeltas(deltas);
                 c.addLineNumberInserts(change.getLines().get(0));
                 c.addLineNumberInserts(change.getLines().get(1));
@@ -76,7 +76,7 @@ public class GetNodesForChangeVisitor implements TreeVisitor {
                 int diff2 = change.getLines().get(3) - change.getLines().get(2);
                 if (diff2 == 0)
                     diff2 = 1;
-                Deltas deltas = new Deltas(change.getLines().get(0)+1, change.getLines().get(1)+1, diff, change.getLines().get(2)+1, change.getLines().get(2)+1, change.getLines().get(3)+1, diff2, change.getLines().get(2)+1);
+                Deltas deltas = new Deltas(change.getLines().get(0) + 1, change.getLines().get(1) + 1, diff, change.getLines().get(2) + 1, change.getLines().get(2) + 1, change.getLines().get(3) + 1, diff2, change.getLines().get(2) + 1);
                 c.addDeltas(deltas);
                 c.addLineNumberInserts(change.getLines().get(0));
                 c.addLineNumberInserts(change.getLines().get(1));
@@ -87,7 +87,7 @@ public class GetNodesForChangeVisitor implements TreeVisitor {
             } else {
                 if (change.getPosition() != -1)
                     position = change.getPosition();
-                Deltas deltas = new Deltas(-1, -1, -1, -1, change.getLines().get(0)+1, change.getLines().get(1)+1, lines, position);
+                Deltas deltas = new Deltas(-1, -1, -1, -1, change.getLines().get(0) + 1, change.getLines().get(1) + 1, lines, position);
                 c.addDeltas(deltas);
                 c.addLineNumberDeleted(change.getLines().get(0));
                 c.addLineNumberDeleted(change.getLines().get(1));
@@ -115,7 +115,7 @@ public class GetNodesForChangeVisitor implements TreeVisitor {
             if (change.getChangeType().equals("INSERT")) {
                 if (change.getPosition() != -1)
                     position = change.getPosition();
-                Deltas deltas = new Deltas(change.getLines().get(0)+1, change.getLines().get(1)+1, lines, position, -1, -1, -1, -1);
+                Deltas deltas = new Deltas(change.getLines().get(0) + 1, change.getLines().get(1) + 1, lines, position, -1, -1, -1, -1);
                 c.addDeltas(deltas);
                 c.addLineNumberInserts(change.getLines().get(0));
                 c.addLineNumberInserts(change.getLines().get(1));
@@ -127,7 +127,7 @@ public class GetNodesForChangeVisitor implements TreeVisitor {
                 int diff2 = change.getLines().get(3) - change.getLines().get(2);
                 if (diff2 == 0)
                     diff2 = 1;
-                Deltas deltas = new Deltas(change.getLines().get(0)+1, change.getLines().get(1)+1, diff, change.getLines().get(2)+1, change.getLines().get(2)+1, change.getLines().get(3)+1, diff2, change.getLines().get(2)+1);
+                Deltas deltas = new Deltas(change.getLines().get(0) + 1, change.getLines().get(1) + 1, diff, change.getLines().get(2) + 1, change.getLines().get(2) + 1, change.getLines().get(3) + 1, diff2, change.getLines().get(2) + 1);
                 c.addDeltas(deltas);
                 c.addLineNumberInserts(change.getLines().get(0));
                 c.addLineNumberInserts(change.getLines().get(1));
@@ -138,7 +138,7 @@ public class GetNodesForChangeVisitor implements TreeVisitor {
             } else {
                 if (change.getPosition() != -1)
                     position = change.getPosition();
-                Deltas deltas = new Deltas(-1, -1, -1, -1, change.getLines().get(0)+1, change.getLines().get(1)+1, lines, position);
+                Deltas deltas = new Deltas(-1, -1, -1, -1, change.getLines().get(0) + 1, change.getLines().get(1) + 1, lines, position);
                 c.addDeltas(deltas);
                 c.addLineNumberDeleted(change.getLines().get(0));
                 c.addLineNumberDeleted(change.getLines().get(1));
@@ -164,7 +164,7 @@ public class GetNodesForChangeVisitor implements TreeVisitor {
             if (change.getChangeType().equals("INSERT")) {
                 if (change.getPosition() != -1)
                     position = change.getPosition();
-                Deltas deltas = new Deltas(change.getLines().get(0)+1, change.getLines().get(1)+1, lines, position, -1, -1, -1, -1);
+                Deltas deltas = new Deltas(change.getLines().get(0) + 1, change.getLines().get(1) + 1, lines, position, -1, -1, -1, -1);
                 c.addDeltas(deltas);
                 c.addLineNumberInserts(change.getLines().get(0));
                 c.addLineNumberInserts(change.getLines().get(1));
@@ -176,7 +176,7 @@ public class GetNodesForChangeVisitor implements TreeVisitor {
                 int diff2 = change.getLines().get(3) - change.getLines().get(2);
                 if (diff2 == 0)
                     diff2 = 1;
-                Deltas deltas = new Deltas(change.getLines().get(0)+1, change.getLines().get(1)+1, diff, change.getLines().get(2)+1, change.getLines().get(2)+1, change.getLines().get(3)+1, diff2, change.getLines().get(2)+1);
+                Deltas deltas = new Deltas(change.getLines().get(0) + 1, change.getLines().get(1) + 1, diff, change.getLines().get(2) + 1, change.getLines().get(2) + 1, change.getLines().get(3) + 1, diff2, change.getLines().get(2) + 1);
                 c.addDeltas(deltas);
                 c.addLineNumberInserts(change.getLines().get(0));
                 c.addLineNumberInserts(change.getLines().get(1));
@@ -187,7 +187,7 @@ public class GetNodesForChangeVisitor implements TreeVisitor {
             } else {
                 if (change.getPosition() != -1)
                     position = change.getPosition();
-                Deltas deltas = new Deltas(-1, -1, -1, -1, change.getLines().get(0)+1, change.getLines().get(1)+1, lines, position);
+                Deltas deltas = new Deltas(-1, -1, -1, -1, change.getLines().get(0) + 1, change.getLines().get(1) + 1, lines, position);
                 c.addDeltas(deltas);
                 c.addLineNumberDeleted(change.getLines().get(0));
                 c.addLineNumberDeleted(change.getLines().get(1));
@@ -213,7 +213,7 @@ public class GetNodesForChangeVisitor implements TreeVisitor {
             if (change.getChangeType().equals("INSERT")) {
                 if (change.getPosition() != -1)
                     position = change.getPosition();
-                Deltas deltas = new Deltas(change.getLines().get(0)+1, change.getLines().get(1)+1, lines, position, -1, -1, -1, -1);
+                Deltas deltas = new Deltas(change.getLines().get(0) + 1, change.getLines().get(1) + 1, lines, position, -1, -1, -1, -1);
                 c.addDeltas(deltas);
                 c.addLineNumberInserts(change.getLines().get(0));
                 c.addLineNumberInserts(change.getLines().get(1));
@@ -225,7 +225,7 @@ public class GetNodesForChangeVisitor implements TreeVisitor {
                 int diff2 = change.getLines().get(3) - change.getLines().get(2);
                 if (diff2 == 0)
                     diff2 = 1;
-                Deltas deltas = new Deltas(change.getLines().get(0)+1, change.getLines().get(1)+1, diff, change.getLines().get(2)+1, change.getLines().get(2)+1, change.getLines().get(3)+1, diff2, change.getLines().get(2)+1);
+                Deltas deltas = new Deltas(change.getLines().get(0) + 1, change.getLines().get(1) + 1, diff, change.getLines().get(2) + 1, change.getLines().get(2) + 1, change.getLines().get(3) + 1, diff2, change.getLines().get(2) + 1);
                 c.addDeltas(deltas);
                 c.addLineNumberInserts(change.getLines().get(0));
                 c.addLineNumberInserts(change.getLines().get(1));
@@ -236,7 +236,7 @@ public class GetNodesForChangeVisitor implements TreeVisitor {
             } else {
                 if (change.getPosition() != -1)
                     position = change.getPosition();
-                Deltas deltas = new Deltas(-1, -1, -1, -1, change.getLines().get(0)+1, change.getLines().get(1)+1, lines, position);
+                Deltas deltas = new Deltas(-1, -1, -1, -1, change.getLines().get(0) + 1, change.getLines().get(1) + 1, lines, position);
                 c.addDeltas(deltas);
                 c.addLineNumberDeleted(change.getLines().get(0));
                 c.addLineNumberDeleted(change.getLines().get(1));
@@ -262,7 +262,7 @@ public class GetNodesForChangeVisitor implements TreeVisitor {
             if (change.getChangeType().equals("INSERT")) {
                 if (change.getPosition() != -1)
                     position = change.getPosition();
-                Deltas deltas = new Deltas(change.getLines().get(0)+1, change.getLines().get(1)+1, lines, position, -1, -1, -1, -1);
+                Deltas deltas = new Deltas(change.getLines().get(0) + 1, change.getLines().get(1) + 1, lines, position, -1, -1, -1, -1);
                 c.addDeltas(deltas);
                 c.addLineNumberInserts(change.getLines().get(0));
                 c.addLineNumberInserts(change.getLines().get(1));
@@ -274,7 +274,7 @@ public class GetNodesForChangeVisitor implements TreeVisitor {
                 int diff2 = change.getLines().get(3) - change.getLines().get(2);
                 if (diff2 == 0)
                     diff2 = 1;
-                Deltas deltas = new Deltas(change.getLines().get(0)+1, change.getLines().get(1)+1, diff, change.getLines().get(2)+1, change.getLines().get(2)+1, change.getLines().get(3)+1, diff2, change.getLines().get(2)+1);
+                Deltas deltas = new Deltas(change.getLines().get(0) + 1, change.getLines().get(1) + 1, diff, change.getLines().get(2) + 1, change.getLines().get(2) + 1, change.getLines().get(3) + 1, diff2, change.getLines().get(2) + 1);
                 c.addDeltas(deltas);
                 c.addLineNumberInserts(change.getLines().get(0));
                 c.addLineNumberInserts(change.getLines().get(1));
@@ -285,7 +285,7 @@ public class GetNodesForChangeVisitor implements TreeVisitor {
             } else {
                 if (change.getPosition() != -1)
                     position = change.getPosition();
-                Deltas deltas = new Deltas(-1, -1, -1, -1, change.getLines().get(0)+1, change.getLines().get(1)+1, lines, position);
+                Deltas deltas = new Deltas(-1, -1, -1, -1, change.getLines().get(0) + 1, change.getLines().get(1) + 1, lines, position);
                 c.addDeltas(deltas);
                 c.addLineNumberDeleted(change.getLines().get(0));
                 c.addLineNumberDeleted(change.getLines().get(1));
@@ -326,7 +326,7 @@ public class GetNodesForChangeVisitor implements TreeVisitor {
             if (change.getChangeType().equals("INSERT")) {
                 if (change.getPosition() != -1)
                     position = change.getPosition();
-                Deltas deltas = new Deltas(change.getLines().get(0)+1, change.getLines().get(1)+1, lines, position, -1, -1, -1, -1);
+                Deltas deltas = new Deltas(change.getLines().get(0) + 1, change.getLines().get(1) + 1, lines, position, -1, -1, -1, -1);
                 n.addDeltas(deltas);
                 n.addLineNumberInserts(change.getLines().get(0));
                 n.addLineNumberInserts(change.getLines().get(1));
@@ -338,7 +338,7 @@ public class GetNodesForChangeVisitor implements TreeVisitor {
                 int diff2 = change.getLines().get(3) - change.getLines().get(2);
                 if (diff2 == 0)
                     diff2 = 1;
-                Deltas deltas = new Deltas(change.getLines().get(0)+1, change.getLines().get(1)+1, diff, change.getLines().get(2)+1, change.getLines().get(2)+1, change.getLines().get(3)+1, diff2, change.getLines().get(2)+1);
+                Deltas deltas = new Deltas(change.getLines().get(0) + 1, change.getLines().get(1) + 1, diff, change.getLines().get(2) + 1, change.getLines().get(2) + 1, change.getLines().get(3) + 1, diff2, change.getLines().get(2) + 1);
                 n.addDeltas(deltas);
                 n.addLineNumberInserts(change.getLines().get(0));
                 n.addLineNumberInserts(change.getLines().get(1));
@@ -351,7 +351,7 @@ public class GetNodesForChangeVisitor implements TreeVisitor {
             } else {
                 if (change.getPosition() != -1)
                     position = change.getPosition();
-                Deltas deltas = new Deltas(-1, -1, -1, -1, change.getLines().get(0)+1, change.getLines().get(1)+1, lines, position);
+                Deltas deltas = new Deltas(-1, -1, -1, -1, change.getLines().get(0) + 1, change.getLines().get(1) + 1, lines, position);
                 n.addDeltas(deltas);
                 n.addLineNumberDeleted(change.getLines().get(0));
                 n.addLineNumberDeleted(change.getLines().get(1));
@@ -361,6 +361,31 @@ public class GetNodesForChangeVisitor implements TreeVisitor {
             //this is necessary to mark newly added features as changed.
             if (!change.contains(n)) change = null;
             //change is set to null so that no further nodes will be interpreted as changed.
+        } else if (change != null && change.getChangeType().equals("DELETE") && change.getTo() <= n.getContainingPreviousFileLines().size()) {
+
+            int lines = 0;
+            int i = change.getLines().get(0);
+            while (i <= change.getLines().get(1) && i <= n.getContainingPreviousFileLines().size()) {
+                if (i >= n.getLineFrom() && i <= n.getContainingPreviousFileLines().size()) {
+                    lines++;
+                }
+                i++;
+            }
+            int position = -1;
+
+            if (change.getPosition() != -1)
+                position = change.getPosition();
+            Deltas deltas = new Deltas(-1, -1, -1, -1, change.getLines().get(0) + 1, change.getLines().get(1) + 1, lines, position);
+            n.addDeltas(deltas);
+            n.addLineNumberDeleted(change.getLines().get(0));
+            n.addLineNumberDeleted(change.getLines().get(1));
+            n.addLineNumberDeleted(lines);
+
+            this.changedNodes.add(n);
+            //this is necessary to mark newly added features as changed.
+            if (!change.contains(n)) change = null;
+            //change is set to null so that no further nodes will be interpreted as changed.
+
         }
     }
 }
