@@ -3,22 +3,23 @@ import com.opencsv.CSVReaderBuilder;
 import difflib.Delta;
 import difflib.DiffUtils;
 import difflib.Patch;
-import org.eclipse.jgit.api.errors.GitAPIException;
 
 import java.io.*;
 import java.nio.charset.MalformedInputException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 public class ComputeMetrics {
     //directory where you have the folder with the artifacts of the target systyem
-    public final String resultsCSVs_path = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\ChangePropagation\\results\\sqlite\\c4c1a518e5676f3401e7fec3a727d10a66fdc364";
+    public final String resultsCSVs_path = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\automated_evaluation\\test2\\merge";
     //directory where you have the folder with the artifacts of Marlin target systyem
-    public final String systemFolder = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\ChangePropagation\\results\\sqlite";
-    public final String libsshFolder = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\ChangePropagation\\results\\libssh";
-    public final String metricsResultFolder = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\ChangePropagation\\results";
+    public final String systemFolder = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\automated_evaluation\\bugfix\\SQLite";
+    //public final String libsshFolder = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\ChangePropagation\\results\\libssh";
+    public final String metricsResultFolder = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\automated_evaluation\\bugfix\\SQLite";
     private List<String> fileTypes = new LinkedList<String>();
 
     //compare the ground truth variants with the composed variants
@@ -42,13 +43,13 @@ public class ComputeMetrics {
     public void GetCSVInformationTotalTest() throws IOException {
         //set into this list of File the folders with csv files resulted from the comparison of variants of each target project
         File[] folder = {new File(systemFolder),
-                new File(libsshFolder),
+                //new File(libsshFolder),
                 //new File(sqliteFolder)
         };
         //write metrics in a csv file
         String filemetrics = "MetricsEachAndAllSystemsTogether.csv";
         FileWriter csvWriter = new FileWriter(metricsResultFolder + File.separator + filemetrics);
-
+        ArrayList<String> commitsFalse = new ArrayList<>();
         Float totalmeanRuntime = Float.valueOf(0);
         Float totaltotalnumberFiles = Float.valueOf(0), totalmatchesFiles = Float.valueOf(0), totalcheckouttotalLines = Float.valueOf(0), totaloriginaltotalLines = Float.valueOf(0), totalmissingFiles = Float.valueOf(0), totalremainingFiles = Float.valueOf(0), totaltotalVariantsMatch = Float.valueOf(0), totaltruepositiveLines = Float.valueOf(0), totalfalsepositiveLines = Float.valueOf(0), totalfalsenegativeLines = Float.valueOf(0),
                 totaltruepositiveLinesEachFile = Float.valueOf(0), totalfalsepositiveLinesEachFile = Float.valueOf(0), totalfalsenegativeLinesEachFile = Float.valueOf(0), totalnumberTotalFilesEachVariant = Float.valueOf(0), totalmatchFilesEachVariant = Float.valueOf(0), totalcheckouttotalLinesEachFile = Float.valueOf(0), totaloriginaltotalLinesEachFile = Float.valueOf(0), totalnumberCSV = Float.valueOf(0);
@@ -60,87 +61,98 @@ public class ComputeMetrics {
             Boolean variantMatch = true;
             Float numberCSV = Float.valueOf(0);
             for (File file : lista) {
-                for(File variant : file.listFiles()) {
-                    if ((variant.getName().indexOf(".csv") != -1)) {
-                        //runtime in ms
-                        String path = variant.getName().substring(0, variant.getName().indexOf(".csv"));
-                        File f = new File(file + File.separator + "checkout" + File.separator + path + File.separator + "time.txt");
-                        BufferedReader brTest = new BufferedReader(new FileReader(f));
-                        String runtimes = brTest.readLine();
-                        meanRuntime += Float.valueOf(runtimes);
-                        totalmeanRuntime += Float.valueOf(runtimes);
-                        //precision and recall
-                        Reader reader = Files.newBufferedReader(Paths.get(variant.getAbsolutePath()));
-                        CSVReader csvReader = new CSVReaderBuilder(reader).build();
-                        List<String[]> matchesVariants = csvReader.readAll();
+                if (file.isDirectory()) {
+                    for (File variant : file.listFiles()) {
+                        if ((variant.getName().indexOf(".csv") != -1)) {
+                            //runtime in ms
+                            String path = variant.getName().substring(0, variant.getName().indexOf(".csv"));
+                            File f = new File(file + File.separator + "checkout" + File.separator + path + File.separator + "time.txt");
+                            BufferedReader brTest = new BufferedReader(new FileReader(f));
+                            String runtimes = brTest.readLine();
+                            meanRuntime += Float.valueOf(runtimes);
+                            totalmeanRuntime += Float.valueOf(runtimes);
+                            //precision and recall
+                            Reader reader = Files.newBufferedReader(Paths.get(variant.getAbsolutePath()));
+                            CSVReader csvReader = new CSVReaderBuilder(reader).build();
+                            List<String[]> matchesVariants = csvReader.readAll();
 
 
-                        for (int i = 1; i < matchesVariants.size(); i++) {
+                            for (int i = 1; i < matchesVariants.size(); i++) {
 
-                            String[] line = matchesVariants.get(i);
-                            truepositiveLines += Integer.valueOf(line[2]);
-                            falsepositiveLines += Integer.valueOf(line[3]);
-                            falsenegativeLines += Integer.valueOf(line[4]);
-                            truepositiveLinesEachFile = Float.valueOf(Integer.valueOf(line[2]));
-                            falsepositiveLinesEachFile = Float.valueOf(Integer.valueOf(line[3]));
-                            falsenegativeLinesEachFile = Float.valueOf(Integer.valueOf(line[4]));
-                            originaltotalLines += Integer.valueOf(line[5]);
-                            checkouttotalLines += Integer.valueOf(line[6]);
-                            originaltotalLinesEachFile = Float.valueOf(Integer.valueOf(line[5]));
-                            checkouttotalLinesEachFile = Float.valueOf(Integer.valueOf(line[6]));
+                                String[] line = matchesVariants.get(i);
+                                truepositiveLines += Integer.valueOf(line[2]);
+                                falsepositiveLines += Integer.valueOf(line[3]);
+                                falsenegativeLines += Integer.valueOf(line[4]);
+                                truepositiveLinesEachFile = Float.valueOf(Integer.valueOf(line[2]));
+                                falsepositiveLinesEachFile = Float.valueOf(Integer.valueOf(line[3]));
+                                falsenegativeLinesEachFile = Float.valueOf(Integer.valueOf(line[4]));
+                                originaltotalLines += Integer.valueOf(line[5]);
+                                checkouttotalLines += Integer.valueOf(line[6]);
+                                originaltotalLinesEachFile = Float.valueOf(Integer.valueOf(line[5]));
+                                checkouttotalLinesEachFile = Float.valueOf(Integer.valueOf(line[6]));
 
-                            totaltruepositiveLines += truepositiveLines;
-                            totalfalsepositiveLines += falsepositiveLines;
-                            totalfalsenegativeLines += falsenegativeLines;
-                            totaltruepositiveLinesEachFile += totaltruepositiveLinesEachFile;
-                            totalfalsepositiveLinesEachFile += falsepositiveLinesEachFile;
-                            totalfalsenegativeLinesEachFile += falsenegativeLinesEachFile;
-                            totaloriginaltotalLines += originaltotalLines;
-                            totalcheckouttotalLines += checkouttotalLines;
-                            totaloriginaltotalLinesEachFile += originaltotalLinesEachFile;
-                            totalcheckouttotalLinesEachFile += checkouttotalLinesEachFile;
+                                totaltruepositiveLines += truepositiveLines;
+                                totalfalsepositiveLines += falsepositiveLines;
+                                totalfalsenegativeLines += falsenegativeLines;
+                                totaltruepositiveLinesEachFile += totaltruepositiveLinesEachFile;
+                                totalfalsepositiveLinesEachFile += falsepositiveLinesEachFile;
+                                totalfalsenegativeLinesEachFile += falsenegativeLinesEachFile;
+                                totaloriginaltotalLines += originaltotalLines;
+                                totalcheckouttotalLines += checkouttotalLines;
+                                totaloriginaltotalLinesEachFile += originaltotalLinesEachFile;
+                                totalcheckouttotalLinesEachFile += checkouttotalLinesEachFile;
 
-                            if (line[1].equals("true")) {
-                                if (Float.compare(originaltotalLinesEachFile, checkouttotalLinesEachFile) == 0 && Float.compare(truepositiveLinesEachFile, originaltotalLinesEachFile) == 0) {
-                                    matchFilesEachVariant++;
-                                    totalmatchFilesEachVariant++;
-                                    matchesFiles++;
-                                    totalmatchesFiles++;
-                                } else {
+                                if (line[1].equals("true")) {
+                                    if (Float.compare(originaltotalLinesEachFile, checkouttotalLinesEachFile) == 0 && Float.compare(truepositiveLinesEachFile, originaltotalLinesEachFile) == 0) {
+                                        matchFilesEachVariant++;
+                                        totalmatchFilesEachVariant++;
+                                        matchesFiles++;
+                                        totalmatchesFiles++;
+                                    } else {
+                                        missingFiles++;
+                                        totalmissingFiles++;
+                                        variantMatch = false;
+                                        if (!commitsFalse.contains(file.getName()))
+                                            commitsFalse.add(file.getName());
+                                    }
+                                    numberTotalFilesEachVariant += 1;
+                                    totalnumberTotalFilesEachVariant++;
+                                } else if (line[1].equals("not")) {
+                                    variantMatch = false;
                                     missingFiles++;
                                     totalmissingFiles++;
+                                    numberTotalFilesEachVariant += 1;
+                                    totalnumberTotalFilesEachVariant++;
+                                    if (!commitsFalse.contains(file.getName()))
+                                        commitsFalse.add(file.getName());
+                                } else if (line[1].equals("justOnRetrieved")) {
                                     variantMatch = false;
+                                    remainingFiles++;
+                                    totalremainingFiles++;
+                                    if (!commitsFalse.contains(file.getName()))
+                                        commitsFalse.add(file.getName());
+                                } else {
+                                    variantMatch = false;
+                                    missingFiles++;
+                                    totalmissingFiles++;
+                                    if (!commitsFalse.contains(file.getName()))
+                                        commitsFalse.add(file.getName());
                                 }
-                                numberTotalFilesEachVariant += 1;
-                                totalnumberTotalFilesEachVariant++;
-                            } else if (line[1].equals("not")) {
-                                variantMatch = false;
-                                missingFiles++;
-                                totalmissingFiles++;
-                                numberTotalFilesEachVariant += 1;
-                                totalnumberTotalFilesEachVariant++;
-                            } else if (line[1].equals("justOnRetrieved")) {
-                                variantMatch = false;
-                                remainingFiles++;
-                                totalremainingFiles++;
-                            } else {
-                                variantMatch = false;
-                                missingFiles++;
-                                totalmissingFiles++;
                             }
+                            numberCSV++;
+                            totalnumberCSV++;
+
+
+                            if (variantMatch && Float.compare(matchFilesEachVariant, numberTotalFilesEachVariant) == 0) {
+                                totalVariantsMatch++;
+                                totaltotalVariantsMatch++;
+                            }
+
+                            numberTotalFilesEachVariant = Float.valueOf(0);
+                            matchFilesEachVariant = Float.valueOf(0);
+                            variantMatch = true;
                         }
-                        numberCSV++;
-                        totalnumberCSV++;
                     }
-
-                    if (variantMatch && Float.compare(matchFilesEachVariant, numberTotalFilesEachVariant) == 0) {
-                        totalVariantsMatch++;
-                        totaltotalVariantsMatch++;
-                    }
-
-                    numberTotalFilesEachVariant = Float.valueOf(0);
-                    matchFilesEachVariant = Float.valueOf(0);
-                    variantMatch = true;
                 }
             }
 
@@ -172,6 +184,9 @@ public class ComputeMetrics {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }
+        for (String commit: commitsFalse) {
+            System.out.println(commit);
         }
         totalmeanRuntime = (totalmeanRuntime / totalnumberCSV) / 1000;
         Float totalVariantsNotMatch = (totalnumberCSV - totaltotalVariantsMatch);
@@ -487,7 +502,7 @@ public class ComputeMetrics {
                         csvWriter.append("\n");
                     }
                 }
-            } else {
+            } else if(!fcheckout.getName().contains("report_each_commit.csv")) {
                 //compare other type files
                 Boolean existJustCheckoutVariant = true;
                 for (File f : filesOriginal) {

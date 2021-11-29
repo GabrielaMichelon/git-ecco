@@ -751,7 +751,7 @@ public class ChangeAnalysis {
                                         linesFile = changedNode.getContainingFile().getPreviousFileContent();
                                 }
                             } else {
-                                linesFile = deletedNode.getContainingPreviousFileLines();
+                                linesFile = deletedNode.getContainingFileLines();//deletedNode.getContainingPreviousFileLines();
                             }
 
 

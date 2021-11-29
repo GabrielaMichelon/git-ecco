@@ -12,6 +12,7 @@ import at.jku.isse.gitecco.translation.changepropagation.Changes;
 import at.jku.isse.gitecco.translation.changepropagation.DeletedFile;
 import at.jku.isse.gitecco.translation.constraintcomputation.util.ConstraintComputer;
 import at.jku.isse.gitecco.translation.mining.ChangeCharacteristic;
+import at.jku.isse.gitecco.translation.mining.ComputeRQMetrics;
 import at.jku.isse.gitecco.translation.visitor.GetNodesForChangeVisitor;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
@@ -31,34 +32,36 @@ import java.util.*;
 public class ChangeAnalysisAndPropagationTest {
 
     private List<String> fileTypes = new LinkedList<String>();
-    private static String RESULTS_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\automated_evaluation\\results";
-    static String fileReportFeature = "report_each_commit.csv";
-    static String fileStoreConfig = "configurations.csv";
-    static List<String> configurations = new ArrayList<>();
-    private static ArrayList<String> featureNamesList = new ArrayList<String>();
-    private static ArrayList<Feature> featureList = new ArrayList<>();
-    static Map<Feature, Integer> featureVersions = new HashMap<>();
-    static List<String> changedFiles = new ArrayList<>();
-    static List<String> changedFilesNext = new ArrayList<>();
-    static List<String> changedFilesPropagate = new ArrayList<>();
-    static GitCommit gcPrevious = null;
-    static Boolean previous = true;
-    static String feats;
+    private String RESULTS_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\automated_evaluation\\bugfix\\SQLite";
+    String fileReportFeature = "report_each_commit.csv";
+    List<String> configurations = new ArrayList<>();
+    private ArrayList<String> featureNamesList = new ArrayList<String>();
+    private ArrayList<Feature> featureList = new ArrayList<>();
+    Map<Feature, Integer> featureVersions = new HashMap<>();
+    List<String> changedFiles = new ArrayList<>();
+    List<String> changedFilesNext = new ArrayList<>();
+    List<String> changedFilesPropagate = new ArrayList<>();
+    GitCommit gcPrevious = null;
+    Boolean previous = true;
+    String feats;
+    private String changeAnalysisTime = "";
+    private Boolean computeChangeCharacteristics = true;
+    Map<String,Integer> patchesPerCommit = new HashMap<>();
 
     @org.testng.annotations.Test
     public void TestChangePropagation() throws IOException {
         try {
             //csv file containing data
-            String strFile = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\automated_evaluation\\Book1.csv";
-            String repoFeatures = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\ChangePropagation\\sqlite\\features-version-3.9.0.txt";
-            String repoGit = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\ChangePropagation\\test_sqlite\\sqlite";//"C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\ChangePropagation\\sqlite\\sqlite";
+            String strFile = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\automated_evaluation\\SQLite.csv";
+            String repoFeatures = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\automated_evaluation\\bugfix\\SQLite";//"C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\ChangePropagation\\features-libssh-0.9.4.txt";
+            String repoGit = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\ChangePropagation\\sqlite\\sqlite";//"C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\ChangePropagation\\sqlite\\sqlite";// "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\automated_evaluation\\test";
             CSVReader reader = new CSVReader(new FileReader(strFile));
             String[] nextLine;
             int lineNumber = 0;
             try {
                 FileWriter csvWriter = new FileWriter(RESULTS_PATH + File.separator + fileReportFeature);
                 List<List<String>> headerRows = Arrays.asList(
-                        Arrays.asList("CommitHash", "NFeatures", "NFiles", "NLinesAdded", "NLinesRemoved")
+                        Arrays.asList("CommitHash", "NFeatures", "NFiles", "NLinesAdded", "NLinesRemoved", "Runtime")
                 );
                 for (List<String> rowData : headerRows) {
                     csvWriter.append(String.join(",", rowData));
@@ -70,19 +73,34 @@ public class ChangeAnalysisAndPropagationTest {
                     IOException e) {
                 e.printStackTrace();
             }
-           /* while ((nextLine = reader.readNext()) != null) {
+
+            while ((nextLine = reader.readNext()) != null) {
                 if (lineNumber == 0) {
                     lineNumber++;
                 } else {
                     lineNumber++;
                     System.out.println("Line # " + lineNumber);
                     System.out.println(nextLine[1]);
-                    if (!nextLine[6].equals("BASE"))
+                    if (!nextLine[6].equals("BASE")) {
+                        //String[] features = nextLine[6].split(",");
+                        //if (featuresPerCommit.get(Integer.valueOf(features.length)) == null) {
+                        //    featuresPerCommit.put(Integer.valueOf(features.length), 1);
+                        //} else {
+                           // featuresPerCommit.put(Integer.valueOf(features.length), featuresPerCommit.get(Integer.valueOf(features.length)) + 1);
+                        //}
+                        //uncomment
                         identification(repoFeatures, repoGit, nextLine[1], nextLine[6]);
+                    }
                 }
-            }*/
-            identification(repoFeatures, repoGit, "80d5f0b54693ec90a7fe32ad7edd7b47ab472582", "SQLITE_ENABLE_RTREE,BASE");
-            identification(repoFeatures, repoGit, "bed87f1619b0eb86fc399f03aa0e9bc5f6d00672", "SQLITE_ENABLE_RTREE");
+            }
+            System.out.println("Qtde patches:");
+            for (Map.Entry<String, Integer> patch: patchesPerCommit.entrySet()) {
+                System.out.println(patch.getKey()+" "+patch.getValue());
+            }
+
+
+            //identification(repoFeatures, repoGit, "e35940027baebf3d81bd97ee7befacf1e2e079a5", "SQLITE_TEST, SQLITE_ENABLE_STAT4, BASE"); featuretestadd
+            //identification(repoFeatures, repoGit, "188f52d4f3ee73e82d9efebbed5e9cc85ba6977c", "OPENSSL_VERSION_NUMBER, BASE");
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (Exception e) {
@@ -102,7 +120,6 @@ public class ChangeAnalysisAndPropagationTest {
         // Feature featpropagate = new Feature(featpropagatename);
         Map<Map<String, List<String>>, Changes> results = new HashMap<>();
 
-        long measure = System.currentTimeMillis();
         String repoPath = REPO_PATH;
 
         final GitHelper gitHelper = new GitHelper(repoPath, null);
@@ -133,26 +150,36 @@ public class ChangeAnalysisAndPropagationTest {
         if (!featurescheckout.exists())
             featurescheckout.mkdir();
         // if the directory does not exist, create it
-        //if (!changeFolder.exists())
-        //    changeFolder.mkdir();
-        //if (!folder.exists())
-        //   folder.mkdir();
+        if (!changeFolder.exists())
+            changeFolder.mkdir();
+        if (!folder.exists())
+            folder.mkdir();
         //feature identification
-        final File featuresTXT = new File(featuresRepo);
-        if (featuresTXT.exists())
-            addFeatures(featuresRepo);
+        final File featuresTXT = new File(featuresRepo, "features-" + secondcommit + ".txt");
+        if (featuresTXT.exists() && featuresTXT.getName().contains(".txt"))
+            addFeatures(featuresTXT.getAbsolutePath());
         else {
-            if (!idFeatsfolder.exists())
-                idFeatsfolder.mkdir();
+            //if (!idFeatsfolder.exists())
+            //    idFeatsfolder.mkdir();
             identifyFeatures(commitList, secondcommit, idFeatsfolder, featuresRepo);
         }
-        //
+        //uncomment
         initVars(folderRelease);
+
         //for (GitCommit commits : commitList) {
         //ComputeRQMetrics.characteristicsFeature(folder, commits.getNumber(), commits.getTree(), featureNamesList);
+
+        patchesCommit(patchesPerCommit, gitHelper, commitList);
+        //uncomment
         configurations.clear();
+        //ComputeRQMetrics.characteristicsFeature(folder, commitList.get(0).getNumber(), commitList.get(0).getTree(), featureNamesList);
+        //ComputeRQMetrics.characteristicsFeature(folder, commitList.get(1).getNumber(), commitList.get(1).getTree(), featureNamesList);
         characteristicsChange(gitHelper, changeFolder, commitList, featureNamesList, featurespropagate, results, featurescheckout);
+        //System.out.println(changeAnalysisTime);
+        //uncomment
         compare(originalcommitFolder, featurescheckout);
+
+
         //dispose tree if it is not needed -> for memory saving reasons.
         //commits.disposeTree();
         //}
@@ -170,13 +197,14 @@ public class ChangeAnalysisAndPropagationTest {
         return results;
     }
 
-    public static void initVars(String folderRelease) {
+    public void initVars(String folderRelease) {
         changedFiles.clear();
         changedFilesNext.clear();
         gcPrevious = null;
         previous = true;
         configurations.clear();
         featureVersions.clear();
+        changedFilesPropagate.clear();
 
         //csv to report new features and features changed per git commit of the project
         //RQ.2 How many features changed per Git commit?
@@ -199,7 +227,7 @@ public class ChangeAnalysisAndPropagationTest {
          */
     }
 
-    public static void addFeatures(String featuresRepo) {
+    public void addFeatures(String featuresRepo) {
         try {
             BufferedReader br = new BufferedReader(new FileReader(featuresRepo));
             String line = "";
@@ -224,7 +252,7 @@ public class ChangeAnalysisAndPropagationTest {
         }
     }
 
-    public static void identifyFeatures(GitCommitList commitList, String release, File idFeatFolder, String featuresRepo) throws IOException {
+    public void identifyFeatures(GitCommitList commitList, String release, File idFeatFolder, String featuresRepo) throws IOException {
         final List<TraceableFeature> evaluation = Collections.synchronizedList(new ArrayList<>());
         String csvFile = release.substring(release.lastIndexOf("/") + 1);
         int count = 0;
@@ -235,7 +263,7 @@ public class ChangeAnalysisAndPropagationTest {
             if (count == commitList.size() - 1) {
                 //commits.disposeTree();
                 writeToCsv(evaluation, csvFile, idFeatFolder, featuresRepo);
-                getFeatureDeletedTimes(idFeatFolder);
+                //getFeatureDeletedTimes(idFeatFolder);
             } //else
             //commits.disposeTree();
             count++;
@@ -243,23 +271,26 @@ public class ChangeAnalysisAndPropagationTest {
         evaluation.clear();
     }
 
-    private static void writeToCsv(List<TraceableFeature> features, String fileName, File idFeatsFolder, String featuresRepo) throws IOException {
+    private void writeToCsv(List<TraceableFeature> features, String fileName, File idFeatsFolder, String featuresRepo) throws IOException {
 
-        System.out.println("writing to CSV");
-        FileWriter outputfile = null;
-        File csvFile = new File(featuresRepo, "features-" + fileName + ".csv");
+        //System.out.println("writing to CSV");
+        //FileWriter outputfile = null;
+        //File csvFile = new File(featuresRepo, "features-" + fileName + ".csv");
         //second parameter is boolean for appending --> never append
-        outputfile = new FileWriter(csvFile, false);
+        //outputfile = new FileWriter(csvFile, false);
         feats = "{";
 
         // create CSVWriter object file writer object as parameter
         //deprecated but no other way available --> it still works anyways
-        @SuppressWarnings("deprecation") CSVWriter writer = new CSVWriter(outputfile, ',', CSVWriter.NO_QUOTE_CHARACTER);
+        //@SuppressWarnings("deprecation") CSVWriter writer = new CSVWriter(outputfile, ',', CSVWriter.NO_QUOTE_CHARACTER);
 
         //adding header to csv
-        writer.writeNext(new String[]{"Label/FeatureName", "#total", "#external", "#internal", "#transient"});
+        //writer.writeNext(new String[]{"Label/FeatureName", "#total", "#external", "#internal", "#transient"});
 
         PrintWriter writerTXT = new PrintWriter(featuresRepo + File.separator + "features-" + fileName + ".txt", "UTF-8");
+        //String introduced = "";
+        //String removed = "";
+
 
         //write each feature/label with: Name, totalOcc, InternalOcc, externalOcc, transientOcc.
         for (TraceableFeature feature : features) {
@@ -269,7 +300,7 @@ public class ChangeAnalysisAndPropagationTest {
                 featureList.add(feat);
                 featureNamesList.add(feature.getName());
             }
-            writer.writeNext(
+           /* writer.writeNext(
                     new String[]{
                             feature.getName(),
                             feature.getTotalOcc().toString(),
@@ -278,27 +309,52 @@ public class ChangeAnalysisAndPropagationTest {
                             feature.getTransientOcc().toString()
                     });
             FileWriter commitList = null;
-
-            final File featureFile = new File(idFeatsFolder, feature.getName() + ".csv");
-            commitList = new FileWriter(featureFile, false);
-            CSVWriter writerFeature = new CSVWriter(commitList, ',', CSVWriter.NO_QUOTE_CHARACTER);
-            writerFeature.writeNext(new String[]{"commitNumber", "Present"});
-            for (Map.Entry<Long, Boolean> commit : feature.getCommitList().entrySet()) {
-                writerFeature.writeNext(new String[]{String.valueOf(commit.getKey()), String.valueOf(commit.getValue())});
+            */
+            //final File featureFile = new File(idFeatsFolder, feature.getName() + ".csv");
+            //commitList = new FileWriter(featureFile, false);
+            //CSVWriter writerFeature = new CSVWriter(commitList, ',', CSVWriter.NO_QUOTE_CHARACTER);
+            //writerFeature.writeNext(new String[]{"commitNumber", "Present"});
+            /*for (Map.Entry<Long, Boolean> commit : feature.getCommitList().entrySet()) {
+                if (feature.getCommitList().entrySet().size() < 2) {
+                    if (commit.getKey().equals(Long.valueOf(1)) && featureList.contains(feature)) {
+                        System.out.println("Removed: " + feature.getName());
+                        removed += "," + feature.getName();
+                    } else if (featureList.contains(feature)) {
+                        introduced += "," + feature.getName();
+                        System.out.println("Introduced: " + feature.getName());
+                    }
+                }
+                //writerFeature.writeNext(new String[]{String.valueOf(commit.getKey()), String.valueOf(commit.getValue())});
             }
-            writerFeature.close();
+            //writerFeature.close();*/
 
         }
+        //introduced = introduced.replaceFirst(",", "");
+        //removed = removed.replaceFirst(",", "");
 
         writerTXT.println(feats.substring(0, feats.length() - 1) + "}");
         writerTXT.close();
+
+        /*if (!introduced.equals("")) {
+            PrintWriter writerTXT2 = new PrintWriter(featuresRepo + File.separator + "featuresIntroduced-" + fileName + ".txt", "UTF-8");
+            writerTXT2.println(introduced);
+            writerTXT2.close();
+        }
+
+        if (!removed.equals("")) {
+            PrintWriter writerTXT3 = new PrintWriter(featuresRepo + File.separator + "featuresRemoved-" + fileName + ".txt", "UTF-8");
+            writerTXT3.println(removed);
+            writerTXT3.close();
+        }
+        */
+
         System.out.println(feats.substring(0, feats.length() - 1) + "}");
         // closing writer connection
-        writer.close();
+        //writer.close();
     }
 
 
-    public static void getFeatureDeletedTimes(File featureFolder) throws IOException {
+    public void getFeatureDeletedTimes(File featureFolder) throws IOException {
         File[] lista = featureFolder.listFiles();
         int deletedTimes = 0;
         Map<Integer, Integer> deletePerGitCommit = new HashMap<>();
@@ -397,8 +453,42 @@ public class ChangeAnalysisAndPropagationTest {
         }
     }
 
-    //RQ1
-    public static void characteristicsChange(GitHelper gitHelper, File changeFolder, GitCommitList gcs, ArrayList<String> featureNamesList, ArrayList<Feature> featurespropagate, Map<Map<String, List<String>>, Changes> results, File featurescheckout) throws Exception {
+
+    public void patchesCommit(Map<String,Integer> patchesPerCommit, GitHelper gitHelper, GitCommitList gcs) throws Exception {
+
+        GitCommit gc1 = gcs.get(0);
+        GitCommit gc2 = gcs.get(1);
+
+        gcPrevious = new GitCommit(gc2.getCommitName(), gc2.getNumber(), gc1.getCommitName(), gc2.getBranch(), gc2.getRevCommit());
+        gcPrevious.setTree(gc2.getTree());
+        gc2 = gcPrevious;
+
+        GitCommitList gcl = new GitCommitList(gitHelper);
+        gcl.addTreeParent(gcPrevious, gc2.getCommitName());
+
+        for (FileNode nod : gc1.getTree().getChildren()) {
+            if (nod instanceof SourceFileNode) {
+                changedFiles.add(nod.getFilePath());
+            }
+        }
+
+        //retrieve changed nodes
+        for (FileNode child : gc2.getTree().getChildren()) {
+            if (child instanceof SourceFileNode) {
+                try {
+
+                    GitHelper.getPatchesPerCommit(patchesPerCommit, gc2, child, false);
+                } catch (Exception e) {
+                    System.err.println("error while executing the file diff: " + child.getFilePath());
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+
+        //RQ1
+    public void characteristicsChange(GitHelper gitHelper, File changeFolder, GitCommitList gcs, ArrayList<String> featureNamesList, ArrayList<Feature> featurespropagate, Map<Map<String, List<String>>, Changes> results, File featurescheckout) throws Exception {
 
         final File gitFolder = new File(gitHelper.getPath());
         final File eccoFolder = new File(gitFolder.getParent(), "ecco");
@@ -436,6 +526,8 @@ public class ChangeAnalysisAndPropagationTest {
                 changedFiles.add(nod.getFilePath());
             }
         }
+
+        long measure = System.currentTimeMillis();
 
         //retrieve changed nodes
         for (FileNode child : gc2.getTree().getChildren()) {
@@ -648,11 +740,13 @@ public class ChangeAnalysisAndPropagationTest {
 
                     }
                 }
-                //int tanglingDegree = 0;
-                //for (Map.Entry<Feature, Integer> feat : config.entrySet()) {
-                //    if (featureNamesList.contains(feat.getKey().getName()))
-                //        tanglingDegree++;
-                //}
+                int tanglingDegree = 0;
+                if (computeChangeCharacteristics) {
+                    for (Map.Entry<Feature, Integer> feat : config.entrySet()) {
+                        if (featureNamesList.contains(feat.getKey().getName()))
+                            tanglingDegree++;
+                    }
+                }
                 if (!changed.contains(base))
                     config.remove(base);
                 //map with the name of the feature and version and a boolean to set true when it is already incremented in the analysed commit
@@ -687,16 +781,50 @@ public class ChangeAnalysisAndPropagationTest {
                         else
                             eccoConfig += "," + configFeature.getKey().toString();
 
+                        if (computeChangeCharacteristics) {
+                            ChangeCharacteristic changeCharacteristic;
+                            if (featureMap.get(configFeature.getKey()) == null) {
+                                changeCharacteristic = new ChangeCharacteristic();
+                                featureMap.put(configFeature.getKey(), new ChangeCharacteristic());
+                            } else {
+                                changeCharacteristic = featureMap.get(configFeature.getKey());
+                            }
+                            int aux = 0;
+                            if (changedNode.getLineNumberInserts().size() > 0) {
+                                for (int i = 2; i < changedNode.getLineNumberInserts().size(); i += 3) {
+                                    aux += changedNode.getLineNumberInserts().get(i);
+                                }
+                                changeCharacteristic.setLinesOfCodeAdded(changeCharacteristic.getLinesOfCodeAdded() + aux);
+                                changedNode.getLineNumberInserts().removeAll(changedNode.getLineNumberInserts());
+                            }
 
-                       /* ChangeCharacteristic changeCharacteristic;
+                            changeCharacteristic.addTanglingDegree(tanglingDegree);
+                            if (!changeCharacteristic.getScatteringDegreeFiles().contains(file)) {
+                                changeCharacteristic.addScatteringDegreeFiles(file);
+                            }
+                            if (!(changedNode instanceof BaseNode))
+                                changeCharacteristic.setScatteringDegreeIfs(changeCharacteristic.getScatteringDegreeIfs() + 1);
+                            ChangeCharacteristic finalChangeCharacteristic = changeCharacteristic;
+                            featureMap.computeIfAbsent(configFeature.getKey(), v -> finalChangeCharacteristic);
+                            featureMap.computeIfPresent(configFeature.getKey(), (k, v) -> finalChangeCharacteristic);
+                        }
+                    }
+
+                    if (!eccoConfig.contains("BASE")) {
+                        eccoConfig += "," + "BASE.$$";
+                    }
+                    eccoConfig = eccoConfig.replaceFirst(",", "");
+
+                    if (computeChangeCharacteristics) {
+                        ChangeCharacteristic changeCharacteristic;
                         if (featureMap.get(configFeature.getKey()) == null) {
                             changeCharacteristic = new ChangeCharacteristic();
                             featureMap.put(configFeature.getKey(), new ChangeCharacteristic());
                         } else {
                             changeCharacteristic = featureMap.get(configFeature.getKey());
                         }
-                        int aux = 0;*/
-                        /*if (changedNode.getLineNumberInserts().size() > 0) {
+                        int aux = 0;
+                        if (changedNode.getLineNumberInserts().size() > 0) {
                             for (int i = 2; i < changedNode.getLineNumberInserts().size(); i += 3) {
                                 aux += changedNode.getLineNumberInserts().get(i);
                             }
@@ -713,31 +841,25 @@ public class ChangeAnalysisAndPropagationTest {
                         ChangeCharacteristic finalChangeCharacteristic = changeCharacteristic;
                         featureMap.computeIfAbsent(configFeature.getKey(), v -> finalChangeCharacteristic);
                         featureMap.computeIfPresent(configFeature.getKey(), (k, v) -> finalChangeCharacteristic);
-                    }*/
-                    }
-                    if (!eccoConfig.contains("BASE")) {
-                        eccoConfig += "," + "BASE.$$";
-                    }
-                    eccoConfig = eccoConfig.replaceFirst(",", "");
-
-                    if (configurations.contains(eccoConfig)) {
-                        //System.out.println("Config already used to generate a variant: " + eccoConfig);
-                        //don't need to generate variant and commit it again at the same commit of the project git repository
-                    } else {
-                        count++;
-                        //configuration that will be used to generate the variant of this changed node
-                        configsToGenerateVariant.put(config, eccoConfig);
-
-                        configurations.add(eccoConfig);
-                        //folder where the variant is stored
-                        File variantsrc = new File(eccoFolder, eccoConfig);
-                        String outputCSV = variantsrc.getParentFile().getParentFile().getAbsolutePath();
-                        final Path variant_dir = Paths.get(String.valueOf(variantsrc));
-
                     }
                 }
-            }
 
+                if (configurations.contains(eccoConfig)) {
+                    //System.out.println("Config already used to generate a variant: " + eccoConfig);
+                    //don't need to generate variant and commit it again at the same commit of the project git repository
+                } else {
+                    count++;
+                    //configuration that will be used to generate the variant of this changed node
+                    configsToGenerateVariant.put(config, eccoConfig);
+
+                    configurations.add(eccoConfig);
+                    //folder where the variant is stored
+                    File variantsrc = new File(eccoFolder, eccoConfig);
+                    String outputCSV = variantsrc.getParentFile().getParentFile().getAbsolutePath();
+                    final Path variant_dir = Paths.get(String.valueOf(variantsrc));
+
+                }
+            }
         }
 
 
@@ -902,101 +1024,85 @@ public class ChangeAnalysisAndPropagationTest {
                             else
                                 eccoConfig += "," + configFeature.getKey().toString();
 
-                            /*
+
                             //RQ1. deleted lines
-                            ChangeCharacteristic changeCharacteristic = featureMap.get(configFeature.getKey());
-                            if (changeCharacteristic == null)
-                                changeCharacteristic = new ChangeCharacteristic();
-                            int aux = 0;
-                            if (deletedNode.getLineNumberDeleted().size() > 0) {
-                                for (int i = 2; i < deletedNode.getLineNumberDeleted().size(); i += 3) {
-                                    aux += deletedNode.getLineNumberDeleted().get(i);
+                            if (computeChangeCharacteristics) {
+                                ChangeCharacteristic changeCharacteristic = featureMap.get(configFeature.getKey());
+                                if (changeCharacteristic == null)
+                                    changeCharacteristic = new ChangeCharacteristic();
+                                int aux = 0;
+                                if (deletedNode.getLineNumberDeleted().size() > 0) {
+                                    for (int i = 2; i < deletedNode.getLineNumberDeleted().size(); i += 3) {
+                                        aux += deletedNode.getLineNumberDeleted().get(i);
+                                    }
+                                    changeCharacteristic.setLinesOfCodeRemoved(changeCharacteristic.getLinesOfCodeRemoved() + aux);
+                                    deletedNode.getLineNumberDeleted().removeAll(deletedNode.getLineNumberDeleted());
                                 }
-                                changeCharacteristic.setLinesOfCodeRemoved(changeCharacteristic.getLinesOfCodeRemoved() + aux);
-                                deletedNode.getLineNumberDeleted().removeAll(deletedNode.getLineNumberDeleted());
+                                changeCharacteristic.addTanglingDegree(tanglingDegree);
+                                if (!changeCharacteristic.getScatteringDegreeFiles().contains(file)) {
+                                    changeCharacteristic.addScatteringDegreeFiles(file);
+                                }
+                                if (!(deletedNode instanceof BaseNode))
+                                    changeCharacteristic.setScatteringDegreeIfs(changeCharacteristic.getScatteringDegreeIfs() + 1);
+                                ChangeCharacteristic finalChangeCharacteristic = changeCharacteristic;
+                                featureMap.computeIfAbsent(configFeature.getKey(), v -> finalChangeCharacteristic);
+                                featureMap.computeIfPresent(configFeature.getKey(), (k, v) -> finalChangeCharacteristic);
                             }
-                            changeCharacteristic.addTanglingDegree(tanglingDegree);
-                            if (!changeCharacteristic.getScatteringDegreeFiles().contains(file)) {
-                                changeCharacteristic.addScatteringDegreeFiles(file);
-                            }
-                            if (!(deletedNode instanceof BaseNode))
-                                changeCharacteristic.setScatteringDegreeIfs(changeCharacteristic.getScatteringDegreeIfs() + 1);
-                            ChangeCharacteristic finalChangeCharacteristic = changeCharacteristic;
-                            featureMap.computeIfAbsent(configFeature.getKey(), v -> finalChangeCharacteristic);
-                            featureMap.computeIfPresent(configFeature.getKey(), (k, v) -> finalChangeCharacteristic);
-                        }*/
                         }
-                        if (!eccoConfig.contains("BASE")) {
-                            eccoConfig += "," + "BASE.$$";
-                        }
-                        eccoConfig = eccoConfig.replaceFirst(",", "");
+                    }
+                    if (!eccoConfig.contains("BASE")) {
+                        eccoConfig += "," + "BASE.$$";
+                    }
+                    eccoConfig = eccoConfig.replaceFirst(",", "");
 
-                        if (configurations.contains(eccoConfig)) {
-                            //System.out.println("Config already used to generate a variant: " + eccoConfig);
-                            //don't need to generate variant and commit it again at the same commit of the project git repository
-                        } else {
-                            count++;
-                            //configuration that will be used to generate the variant of this changed node
-                            configsToGenerateVariant.put(config, eccoConfig);
+                    if (configurations.contains(eccoConfig)) {
+                        //System.out.println("Config already used to generate a variant: " + eccoConfig);
+                        //don't need to generate variant and commit it again at the same commit of the project git repository
+                    } else {
+                        count++;
+                        //configuration that will be used to generate the variant of this changed node
+                        configsToGenerateVariant.put(config, eccoConfig);
 
-                            configurations.add(eccoConfig);
+                        configurations.add(eccoConfig);
 
 
-                        }
                     }
                 }
             }
+        }
 
 
-            //generate the variant for this config
-            for (Map.Entry<Map<Feature, Integer>, String> variant : configsToGenerateVariant.entrySet()) {
-                String eccoConfig = variant.getValue();
-                //config that will be used to commit the variant generated with this changed node in ecco
-                configsToCommit.add(eccoConfig);
-            }
+        //generate the variant for this config
+        for (Map.Entry<Map<Feature, Integer>, String> variant : configsToGenerateVariant.entrySet()) {
+            String eccoConfig = variant.getValue();
+            //config that will be used to commit the variant generated with this changed node in ecco
+            configsToCommit.add(eccoConfig);
+        }
 
 
-            //appending to the config csv
-            try {
+        for (Map.Entry<Feature, Integer> featureRevision : featureVersions.entrySet()) {
+            System.out.println(featureRevision.getKey() + "." + featureRevision.getValue());
+        }
 
-                FileAppender csvWriter = new FileAppender(new File(changeFolder.getParent(), fileStoreConfig));
-
-                for (String configs : configsToCommit) {
-                    List<List<String>> headerRows = Arrays.asList(
-                            Arrays.asList(Long.toString(gc2.getNumber()), gc2.getCommitName(), configs)
+            /*
+                //append results to the feature report csv
+                try {
+                    FileAppender csvAppender = new FileAppender(new File(changeFolder.getParent(), fileReportFeature));
+                    List<List<String>> contentRows = Arrays.asList(
+                            Arrays.asList(Long.toString(gc2.getNumber()), newFeatures.toString(), countFeaturesChanged.toString())
                     );
-                    for (List<String> rowData : headerRows) {
-                        csvWriter.append(String.join(",", rowData));
+                    for (List<String> rowData : contentRows) {
+                        csvAppender.append(String.join(",", rowData));
                     }
+                    csvAppender.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-                csvWriter.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+                //end append results to the feature report csv
 
-
-            //append results to the feature report csv
-            /*try {
-                FileAppender csvAppender = new FileAppender(new File(changeFolder.getParent(), fileReportFeature));
-                List<List<String>> contentRows = Arrays.asList(
-                        Arrays.asList(Long.toString(gc2.getNumber()), newFeatures.toString(), countFeaturesChanged.toString())
-                );
-                for (List<String> rowData : contentRows) {
-                    csvAppender.append(String.join(",", rowData));
-                }
-                csvAppender.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            //end append results to the feature report csv
-             */
-
-            for (Map.Entry<Feature, Integer> featureRevision : featureVersions.entrySet()) {
-                System.out.println(featureRevision.getKey() + "." + featureRevision.getValue());
-            }
-
-
-            /*for (Map.Entry<Feature, ChangeCharacteristic> changes : featureMap.entrySet()) {
+                */
+        if (computeChangeCharacteristics) {
+            for (Map.Entry<Feature, ChangeCharacteristic> changes : featureMap.entrySet()) {
                 ChangeCharacteristic changeCharacteristic = changes.getValue();
                 Collections.sort(changeCharacteristic.getTanglingDegree());
                 File featureCSV = new File(changeFolder, changes.getKey().getName() + ".csv");
@@ -1031,8 +1137,18 @@ public class ChangeAnalysisAndPropagationTest {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-            }*/
+            }
         }
+
+
+        Long timeAfter = System.currentTimeMillis();
+        measure = timeAfter - measure;
+        changeAnalysisTime += gc2.getCommitName() + "," + measure + "\n";
+        Files.write(Paths.get(featurescheckout + File.separator + "runtime_change_analysis.txt"), String.valueOf(measure).
+
+                getBytes());
+
+        //uncomment
         GitHelper.changePropagation(featurescheckout, gitFolder.getAbsolutePath(), gc1.getCommitName(), gc2.getCommitName(), filesAdded, filesRemoved, filesChanged, RESULTS_PATH);
         changedNodes.clear();
         deletedNodes.clear();
@@ -1082,141 +1198,145 @@ public class ChangeAnalysisAndPropagationTest {
 
         //files that are in checked out and original variant
         for (File f : filesOriginal) {
-            Boolean existJustCheckoutVariant = false;
-            Integer truepositiveLines = 0, falsepositiveLines = 0, falsenegativeLines = 0, originaltotalLines = 0, checkouttotalLines = 0;
-            Boolean matchFiles = false;
-            List<String> original = new ArrayList<>();
-            List<String> revised = new ArrayList<>();
+            System.out.println("TEST PATH files to compare: " + f.getAbsolutePath().substring(f.getAbsolutePath().indexOf(srcOriginal.getName()) + srcOriginal.getName().length() + 1));
+            if (changedFilesPropagate.contains(f.getAbsolutePath().substring(f.getAbsolutePath().indexOf(srcOriginal.getName()) + srcOriginal.getName().length() + 1))) {
+                System.out.println("ENTROU: " + f.getAbsolutePath().substring(f.getAbsolutePath().indexOf(srcOriginal.getName()) + srcOriginal.getName().length() + 1));
+                Boolean existJustCheckoutVariant = false;
+                Integer truepositiveLines = 0, falsepositiveLines = 0, falsenegativeLines = 0, originaltotalLines = 0, checkouttotalLines = 0;
+                Boolean matchFiles = false;
+                List<String> original = new ArrayList<>();
+                List<String> revised = new ArrayList<>();
 
-            String extension = f.getName().substring(f.getName().lastIndexOf('.') + 1);
-            if (fileTypes.contains(extension)) {
-                //compare text of files
-                for (File fcheckout : filesCheckout) {
-                    if (f.toPath().toString().substring(f.toPath().toString().indexOf("original\\") + 9).equals(fcheckout.toPath().toString().substring(fcheckout.toPath().toString().indexOf("checkout\\") + 9))) {
-                        try {
-                            original = Files.readAllLines(f.toPath());
-                        } catch (MalformedInputException e) {
-                            StringBuilder contentBuilder = new StringBuilder();
-                            File filenew = new File(String.valueOf(f.toPath()));
-                            BufferedReader br = new BufferedReader(new FileReader(filenew.getAbsoluteFile()));
-                            String sCurrentLine;
-                            while ((sCurrentLine = br.readLine()) != null) {
-                                original.add(sCurrentLine);
-                            }
-                            br.close();
-                        }
-                        try {
-                            revised = Files.readAllLines(fcheckout.toPath());
-                        } catch (MalformedInputException e) {
-                            StringBuilder contentBuilder = new StringBuilder();
-                            File filenew = new File(String.valueOf(fcheckout.toPath()));
-                            BufferedReader br = new BufferedReader(new FileReader(filenew.getAbsoluteFile()));
-                            String sCurrentLine;
-                            while ((sCurrentLine = br.readLine()) != null) {
-                                revised.add(sCurrentLine);
-                            }
-                            br.close();
-                        }
-
-                        // Compute diff. Get the Patch object. Patch is the container for computed deltas.
-                        Patch<String> patch = null;
-                        patch = DiffUtils.diff(original, revised);
-                        ArrayList<String> insertedLines = new ArrayList<>();
-                        ArrayList<String> deletedLines = new ArrayList<>();
-                        if (patch.getDeltas().size() == 0) {
-                            //files match
-                            matchFiles = true;
-                        } else {
-                            //matchFiles = false;
-                            String del = "", insert = "";
-                            for (Delta delta : patch.getDeltas()) {
-                                Integer difLines = Math.abs(delta.getOriginal().getLines().size() - delta.getRevised().getLines().size());
-                                String line = "";
-                                if (delta.getType().toString().equals("INSERT")) {
-                                    ArrayList<String> arraylines = (ArrayList<String>) delta.getRevised().getLines();
-                                    for (String deltaaux : arraylines) {
-                                        line = deltaaux.trim().replaceAll("\t", "").replaceAll(",", "").replaceAll(" ", "");
-                                        if (!line.equals("")) {
-                                            matchFiles = false;
-                                            falsepositiveLines++;
-                                            insert = line;
-                                            insertedLines.add(insert);
-                                            //falsepositiveLines += difLines;
-                                        }
-                                    }
-                                } else {
-                                    ArrayList<String> arraylines = (ArrayList<String>) delta.getOriginal().getLines();
-                                    for (String deltaaux : arraylines) {
-                                        line = deltaaux.trim().replaceAll("\t", "").replaceAll(",", "").replaceAll(" ", "");
-                                        if (!line.equals("")) {
-                                            matchFiles = false;
-                                            falsenegativeLines++;
-                                            del = line;
-                                            deletedLines.add(del);
-                                            //falsenegativeLines += difLines;
-                                        }
-                                    }
-
-
+                String extension = f.getName().substring(f.getName().lastIndexOf('.') + 1);
+                if (fileTypes.contains(extension)) {
+                    //compare text of files
+                    for (File fcheckout : filesCheckout) {
+                        if (f.toPath().toString().substring(f.toPath().toString().indexOf("original\\") + 9).equals(fcheckout.toPath().toString().substring(fcheckout.toPath().toString().indexOf("checkout\\") + 9))) {
+                            try {
+                                original = Files.readAllLines(f.toPath());
+                            } catch (MalformedInputException e) {
+                                StringBuilder contentBuilder = new StringBuilder();
+                                File filenew = new File(String.valueOf(f.toPath()));
+                                BufferedReader br = new BufferedReader(new FileReader(filenew.getAbsoluteFile()));
+                                String sCurrentLine;
+                                while ((sCurrentLine = br.readLine()) != null) {
+                                    original.add(sCurrentLine);
                                 }
+                                br.close();
                             }
-                        }
-                        ArrayList<String> diffDeleted = new ArrayList<>();
-                        Boolean found = false;
-                        for (String line : deletedLines) {
-                            for (String insertLine : insertedLines) {
-                                if (insertLine.equals(line)) {
-                                    falsepositiveLines--;
-                                    falsenegativeLines--;
-                                    found = true;
-                                    break;
+                            try {
+                                revised = Files.readAllLines(fcheckout.toPath());
+                            } catch (MalformedInputException e) {
+                                StringBuilder contentBuilder = new StringBuilder();
+                                File filenew = new File(String.valueOf(fcheckout.toPath()));
+                                BufferedReader br = new BufferedReader(new FileReader(filenew.getAbsoluteFile()));
+                                String sCurrentLine;
+                                while ((sCurrentLine = br.readLine()) != null) {
+                                    revised.add(sCurrentLine);
                                 }
+                                br.close();
                             }
-                            if (!found) {
-                                diffDeleted.add(line);
+
+                            // Compute diff. Get the Patch object. Patch is the container for computed deltas.
+                            Patch<String> patch = null;
+                            patch = DiffUtils.diff(original, revised);
+                            ArrayList<String> insertedLines = new ArrayList<>();
+                            ArrayList<String> deletedLines = new ArrayList<>();
+                            if (patch.getDeltas().size() == 0) {
+                                //files match
+                                matchFiles = true;
                             } else {
-                                insertedLines.remove(line);
-                                found = false;
-                            }
-                        }
+                                //matchFiles = false;
+                                String del = "", insert = "";
+                                for (Delta delta : patch.getDeltas()) {
+                                    Integer difLines = Math.abs(delta.getOriginal().getLines().size() - delta.getRevised().getLines().size());
+                                    String line = "";
+                                    if (delta.getType().toString().equals("INSERT")) {
+                                        ArrayList<String> arraylines = (ArrayList<String>) delta.getRevised().getLines();
+                                        for (String deltaaux : arraylines) {
+                                            line = deltaaux.trim().replaceAll("\t", "").replaceAll(",", "").replaceAll(" ", "");
+                                            if (!line.equals("")) {
+                                                matchFiles = false;
+                                                falsepositiveLines++;
+                                                insert = line;
+                                                insertedLines.add(insert);
+                                                //falsepositiveLines += difLines;
+                                            }
+                                        }
+                                    } else {
+                                        ArrayList<String> arraylines = (ArrayList<String>) delta.getOriginal().getLines();
+                                        for (String deltaaux : arraylines) {
+                                            line = deltaaux.trim().replaceAll("\t", "").replaceAll(",", "").replaceAll(" ", "");
+                                            if (!line.equals("")) {
+                                                matchFiles = false;
+                                                falsenegativeLines++;
+                                                del = line;
+                                                deletedLines.add(del);
+                                                //falsenegativeLines += difLines;
+                                            }
+                                        }
 
-                        if (falsepositiveLines == 0 && falsenegativeLines == 0)
-                            matchFiles = true;
-                        else {
-                            if (diffDeleted.size() > 0) {
-                                for (String line : diffDeleted) {
-                                    System.out.println("file: " + fcheckout.getAbsolutePath() + " TYPE: DELETE delta: " + line);
+
+                                    }
                                 }
                             }
-                            if (insertedLines.size() > 0) {
-                                for (String line : insertedLines) {
-                                    System.out.println("file: " + fcheckout.getAbsolutePath() + " TYPE: INSERT delta: " + line);
+                            ArrayList<String> diffDeleted = new ArrayList<>();
+                            Boolean found = false;
+                            for (String line : deletedLines) {
+                                for (String insertLine : insertedLines) {
+                                    if (insertLine.equals(line)) {
+                                        falsepositiveLines--;
+                                        falsenegativeLines--;
+                                        found = true;
+                                        break;
+                                    }
+                                }
+                                if (!found) {
+                                    diffDeleted.add(line);
+                                } else {
+                                    insertedLines.remove(line);
+                                    found = false;
                                 }
                             }
+
+                            if (falsepositiveLines == 0 && falsenegativeLines == 0)
+                                matchFiles = true;
+                            else {
+                                if (diffDeleted.size() > 0) {
+                                    for (String line : diffDeleted) {
+                                        System.out.println("file: " + fcheckout.getAbsolutePath() + " TYPE: DELETE delta: " + line);
+                                    }
+                                }
+                                if (insertedLines.size() > 0) {
+                                    for (String line : insertedLines) {
+                                        System.out.println("file: " + fcheckout.getAbsolutePath() + " TYPE: INSERT delta: " + line);
+                                    }
+                                }
+                            }
+
+                            checkouttotalLines = (revised.size() - 1);
+                            originaltotalLines = original.size() - 1;
+                            truepositiveLines = checkouttotalLines - (falsepositiveLines);
+
+                            List<List<String>> resultRows = Arrays.asList(
+                                    Arrays.asList(f.toPath().toString().substring(f.toPath().toString().indexOf("original\\") + 9).replace(",", "and"), matchFiles.toString(), truepositiveLines.toString(), falsepositiveLines.toString(), falsenegativeLines.toString(), originaltotalLines.toString(), checkouttotalLines.toString())
+                            );
+                            for (List<String> rowData : resultRows) {
+                                csvWriter.append(String.join(",", rowData));
+                                csvWriter.append("\n");
+                            }
+                            existJustCheckoutVariant = true;
                         }
 
-                        checkouttotalLines = (revised.size() - 1);
-                        originaltotalLines = original.size() - 1;
-                        truepositiveLines = checkouttotalLines - (falsepositiveLines);
-
+                    }
+                    if (!existJustCheckoutVariant) {
                         List<List<String>> resultRows = Arrays.asList(
-                                Arrays.asList(f.toPath().toString().substring(f.toPath().toString().indexOf("original\\") + 9).replace(",", "and"), matchFiles.toString(), truepositiveLines.toString(), falsepositiveLines.toString(), falsenegativeLines.toString(), originaltotalLines.toString(), checkouttotalLines.toString())
+                                Arrays.asList(f.toPath().toString().substring(f.toPath().toString().indexOf("original\\") + 9).replace(",", "and"), "not", "0", "0", originaltotalLines.toString(), originaltotalLines.toString(), checkouttotalLines.toString())
                         );
                         for (List<String> rowData : resultRows) {
                             csvWriter.append(String.join(",", rowData));
                             csvWriter.append("\n");
                         }
-                        existJustCheckoutVariant = true;
-                    }
-
-                }
-                if (!existJustCheckoutVariant) {
-                    List<List<String>> resultRows = Arrays.asList(
-                            Arrays.asList(f.toPath().toString().substring(f.toPath().toString().indexOf("original\\") + 9).replace(",", "and"), "not", "0", "0", originaltotalLines.toString(), originaltotalLines.toString(), checkouttotalLines.toString())
-                    );
-                    for (List<String> rowData : resultRows) {
-                        csvWriter.append(String.join(",", rowData));
-                        csvWriter.append("\n");
                     }
                 }
             }

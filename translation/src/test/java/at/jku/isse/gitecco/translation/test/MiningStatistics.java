@@ -18,7 +18,7 @@ public class MiningStatistics {
     //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\Ready\\SQLite";
     //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\Ready\\LibSSH\\Mining";
     //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\LOC_fix\\Irssi\\Mining";
-    private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\LOC_fix\\Bison\\Mining";
+    private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\automated_evaluation\\FeatureChangeCharac_LibSSH";
     //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\LOC_fix\\SQLite-ready";
     //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\LOC_fix\\Bison\\Mining";
     //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\Ready\\Irssi\\Mining\\Mining";
@@ -999,9 +999,7 @@ public class MiningStatistics {
                                     sdif = Integer.valueOf(cols[3]);
                                     tdif = Integer.valueOf(cols[5]);
                                     sdfile = Integer.valueOf(cols[4]);
-                                    ;
                                     loca = Integer.valueOf(cols[1]);
-                                    ;
                                     locr = Integer.valueOf(cols[2]);
                                     featureName = f.getName();
                                     commitNumber = Integer.valueOf(cols[0]);

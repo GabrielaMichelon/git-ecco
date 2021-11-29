@@ -5,8 +5,8 @@ import at.jku.isse.gitecco.core.tree.nodes.FileNode;
 import difflib.Delta;
 import difflib.DiffUtils;
 import difflib.Patch;
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.ListBranchCommand;
 import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -16,7 +16,10 @@ import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffFormatter;
 import org.eclipse.jgit.diff.Edit;
 import org.eclipse.jgit.errors.MissingObjectException;
-import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.ObjectReader;
+import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.patch.FileHeader;
 import org.eclipse.jgit.patch.HunkHeader;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -30,7 +33,6 @@ import org.eclipse.jgit.treewalk.EmptyTreeIterator;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.util.io.DisabledOutputStream;
 import org.glassfish.grizzly.http.server.accesslog.FileAppender;
-
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -50,6 +52,7 @@ public class GitHelper {
 
     private static Git git;
     private final String pathUrl;
+    private static String pathUrlAux;
     private final List<String> dirFiles;
     private Long runtimeGitCommit;
 
@@ -75,12 +78,14 @@ public class GitHelper {
     public GitHelper(String url, String path, List<String> dirFiles) throws Exception {
         git = cloneRepo(url, path);
         pathUrl = path;
+        pathUrlAux = path;
         this.dirFiles = dirFiles;
     }
 
     public GitHelper() {
         git = null;
         pathUrl = null;
+        pathUrlAux = null;
         this.dirFiles = null;
     }
 
@@ -158,6 +163,7 @@ public class GitHelper {
     public GitHelper(String path, List<String> dirFiles) throws IOException {
         git = openRepo(path);
         pathUrl = path;
+        pathUrlAux = path;
         this.dirFiles = dirFiles;
     }
 
@@ -378,6 +384,131 @@ public class GitHelper {
         */
         }
         return changes.toArray(new Change[changes.size()]);
+    }
+
+
+    public static void getPatchesPerCommit(Map<String, Integer> patchesPerCommit, GitCommit newCommit, FileNode filePath, Boolean deletedFile) throws Exception {
+
+        List<Change> changes = new ArrayList<Change>();
+
+        if (deletedFile) {
+            if (newCommit.getNumber() != Long.valueOf(0))
+                git.stashCreate().setRef("HEAD").call();
+            git.checkout().setName(newCommit.getDiffCommitName()).call();
+            String filePathRenamed = "";
+            if (filePath.getFilePath().contains("arent"))
+                filePathRenamed = filePath.getFilePath().replace("arent" + File.separator, "");
+            else
+                filePathRenamed = filePath.getFilePath();
+            String newPath = pathUrlAux + File.separator + filePathRenamed;
+            ArrayList<Integer> lines = new ArrayList<>();
+            lines.add(0);
+            lines.add(Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size() - 1);
+            if (filePath.getFileContent().size() == 0) {
+                List<String> linesFile = Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1);
+                filePath.setFileContent(linesFile);
+            }
+            changes.add(new Change(0, Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size(), lines, 1, "DELETE"));
+            git.stashCreate().setRef("HEAD").call();
+            git.checkout().setName(newCommit.getCommitName()).call();
+        } else {
+            //prepare for file path filter.
+            //String filterPath = filePath.substring(pathUrl.length()+1).replace("\\", "/");
+            try {
+                git.stashCreate().setRef("HEAD").call();
+                git.checkout().setName(newCommit.getCommitName()).call();
+            } catch (CheckoutConflictException ex) {
+                System.out.println("aaaaaaaException checkout ----- " + ex);
+            }
+            //System.out.println("Checked out: "+newCommit.getCommitName());
+            List<DiffEntry> diff;
+            diff = git.diff().
+                    setOldTree(prepareTreeParser(git.getRepository(), newCommit.getDiffCommitName())).
+                    setNewTree(prepareTreeParser(git.getRepository(), newCommit.getCommitName())).
+                    //setPathFilter(PathFilter.create(filePath)).
+                            call();
+            //to filter on Suffix use the following instead
+            //setPathFilter(PathSuffixFilter.create(".cpp"))
+            int numberpatches = 0;
+            for (DiffEntry entry : diff) {
+                String newPath = entry.getNewPath().replace("/", "\\");
+                String oldPath = entry.getOldPath().replace("/", "\\");
+                if (filePath.getFilePath().equals(newPath)) {
+                    //System.out.println("file diff: " + newPath);
+                    if (entry.getChangeType().toString().equals("ADD")) {
+                        newPath = pathUrlAux + File.separator + newPath;
+                        ArrayList<Integer> lines = new ArrayList<>();
+                        lines.add(0);
+                        lines.add(Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size() - 1);
+                        if (filePath.getFileContent().size() == 0) {
+                            List<String> linesFile = Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1);
+                            filePath.setFileContent(linesFile);
+                        }
+                        changes.add(new Change(0, Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size(), lines, 1, "INSERT"));
+                    } else if (entry.getChangeType().toString().equals("MODIFY")) {
+                        List<String> actual = new ArrayList<>();
+                        List<String> old = new ArrayList<>();
+                        File filenew = new File(pathUrlAux + File.separator + newPath);
+                        if (filePath.getFileContent().size() == 0) {
+                            List<String> linesFile = Files.readAllLines(Paths.get(filenew.getAbsolutePath()), StandardCharsets.ISO_8859_1);
+                            filePath.setFileContent(linesFile);
+                            git.stashCreate().setRef("HEAD").call();
+                            git.checkout().setName(newCommit.getDiffCommitName()).call();
+                            if (filePath.getPreviousFileContent().size() == 0) {
+                                linesFile = Files.readAllLines(Paths.get(filenew.getAbsolutePath()), StandardCharsets.ISO_8859_1);
+                                filePath.setPreviousFileContent(linesFile);
+                            }
+                            git.stashCreate().setRef("HEAD").call();
+                            git.checkout().setName(newCommit.getCommitName()).call();
+                        }
+                        try {
+                            actual = Files.readAllLines(filenew.toPath());
+                        } catch (MalformedInputException e) {
+                            //StringBuilder contentBuilder = new StringBuilder();
+                            BufferedReader br = new BufferedReader(new FileReader(filenew.getAbsoluteFile()));
+                            String sCurrentLine;
+                            while ((sCurrentLine = br.readLine()) != null) {
+                                actual.add(sCurrentLine);
+                            }
+                            br.close();
+                        }
+                        try {
+                            git.stashCreate().setRef("HEAD").call();
+                            git.checkout().setName(newCommit.getDiffCommitName()).call();
+                        } catch (CheckoutConflictException ex) {
+                            System.out.println("Exception checkout ----- " + ex);
+                        }
+                        File fileold = new File(pathUrlAux + File.separator + oldPath);
+                        try {
+                            old = Files.readAllLines(fileold.toPath());
+                        } catch (MalformedInputException e) {
+                            StringBuilder contentBuilder = new StringBuilder();
+                            BufferedReader br = new BufferedReader(new FileReader(fileold.getAbsoluteFile()));
+                            String sCurrentLine;
+                            while ((sCurrentLine = br.readLine()) != null) {
+                                old.add(sCurrentLine);
+                            }
+                            br.close();
+                        }
+                        git.stashCreate().setRef("HEAD").call();
+                        git.checkout().setName(newCommit.getCommitName()).call();
+                        // Compute diff. Get the Patch object. Patch is the container for computed deltas.
+                        Patch<String> patch = null;
+                        patch = DiffUtils.diff(old, actual);
+                        numberpatches += patch.getDeltas().size();
+                    }
+                }
+
+            }
+            if (numberpatches != 0) {
+                if (patchesPerCommit.get(newCommit.getCommitName()) == null) {
+                    patchesPerCommit.put(newCommit.getCommitName(), numberpatches);
+                } else {
+                    patchesPerCommit.put(newCommit.getCommitName(), patchesPerCommit.get(newCommit.getCommitName()) + numberpatches);
+                }
+            }
+
+        }
     }
 
 
@@ -838,7 +969,6 @@ public class GitHelper {
     }
 
 
-
     public GitCommitList getCommitAndItsPattern(GitCommitList commits, String secondcommit) throws Exception {
         final Repository repository = git.getRepository();
         RevWalk revWalk = new RevWalk(repository);
@@ -1016,23 +1146,23 @@ public class GitHelper {
                 try (RevWalk walk = new RevWalk(repository)) {
                     commitAux = walk.parseCommit(repository.resolve(commit.getName()));
                 }
-                getDiffOfCommit(git, repository,commitAux, commitsDiff);
+                getDiffOfCommit(git, repository, commitAux, commitsDiff);
                 countCherryPicks++;
                 //String branch = getBranchOfCommit(commit.getName());
                 //System.out.println("\nCommit: " + commit.getName()+ "\nCommit: " + commit.getName()+ commit.getFullMessage().replaceAll("\n","")+);// + " Message: " + commit.getFullMessage()
                 //commits.add(new GitCommit(commit.getName(), countTotalCommits, commit.getParent(0).getName(), repository.getBranch(), commit, commit.getFullMessage()));
                 //if(commits.size() > 1)
-                  //  break;
+                //  break;
             }
             //System.out.println("LogCommit: " + commit);
             countTotalCommits++;
         }
-       //for (String msg:commitsMessage) {
-       //     System.out.println(msg+"\n---------------------------------------------------------");
-       // }
+        //for (String msg:commitsMessage) {
+        //     System.out.println(msg+"\n---------------------------------------------------------");
+        // }
 
-        System.out.println("Total number of commits: "+countTotalCommits);
-        System.out.println("Total number of cherrypicked commits: "+countCherryPicks);
+        System.out.println("Total number of commits: " + countTotalCommits);
+        System.out.println("Total number of cherrypicked commits: " + countCherryPicks);
         /*
         //revWalk.setRetainBody(false);
         revWalk.sort(RevSort.REVERSE, true);
@@ -1086,13 +1216,13 @@ public class GitHelper {
 
 
     //Helper gets the diff as a string.
-    private void getDiffOfCommit(Git git,Repository repository,RevCommit newCommit, ArrayList<String> commitsDiff) throws IOException, GitAPIException {
+    private void getDiffOfCommit(Git git, Repository repository, RevCommit newCommit, ArrayList<String> commitsDiff) throws IOException, GitAPIException {
 
         //Get commit that is previous to the current one.
         RevCommit oldCommit = getPrevHash(repository, newCommit);
-        if(oldCommit == null){
+        if (oldCommit == null) {
 
-        }else {
+        } else {
             listDiff(repository, git, oldCommit.getName(), newCommit.getName(), commitsDiff, newCommit);
         }
 
@@ -1106,18 +1236,18 @@ public class GitHelper {
                 .call();
 
         //System.out.println("Found: " + diffs.size() + " changed files");
-        int addedLines=0;
-        int deletedLines=0;
+        int addedLines = 0;
+        int deletedLines = 0;
         for (DiffEntry diff : diffs) {
             //System.out.println("Diff: " + diff.getChangeType() + ": " +
             //        (diff.getOldPath().equals(diff.getNewPath()) ? diff.getNewPath() : diff.getOldPath() + " -> " + diff.getNewPath()));
-           // System.out.println("Showing diff of " + diff.getNewPath());
-            DiffFormatter diffFormatter = new DiffFormatter( DisabledOutputStream.INSTANCE );
-            diffFormatter.setRepository( git.getRepository() );
-            diffFormatter.setContext( 0 );
+            // System.out.println("Showing diff of " + diff.getNewPath());
+            DiffFormatter diffFormatter = new DiffFormatter(DisabledOutputStream.INSTANCE);
+            diffFormatter.setRepository(git.getRepository());
+            diffFormatter.setContext(0);
             FileHeader fileHeader = diffFormatter.toFileHeader(diff);
             List<? extends HunkHeader> hunks = fileHeader.getHunks();
-            for( HunkHeader hunk : hunks ) {
+            for (HunkHeader hunk : hunks) {
                 for (Edit edit : hunk.toEditList()) {
                     if (edit.getType() == Edit.Type.INSERT) {
                         addedLines += edit.getLengthB();
@@ -1131,20 +1261,20 @@ public class GitHelper {
             }
             //try (DiffFormatter formatter = new DiffFormatter(System.out)) {
             //    formatter.setRepository(repository);
-             //   formatter.format(diff);
+            //   formatter.format(diff);
             //}
         }
         String commitorigin = "-";
-        if(commit.getFullMessage().contains("cherry picked from commit ")){
-            commitorigin = commit.getFullMessage().substring(commit.getFullMessage().indexOf("cherry picked from commit ")+26, commit.getFullMessage().indexOf("cherry picked from commit ")+66);
+        if (commit.getFullMessage().contains("cherry picked from commit ")) {
+            commitorigin = commit.getFullMessage().substring(commit.getFullMessage().indexOf("cherry picked from commit ") + 26, commit.getFullMessage().indexOf("cherry picked from commit ") + 66);
         }
-        if(!commitsDiff.contains(commitorigin)) {
+        if (!commitsDiff.contains(commitorigin)) {
             commitsDiff.add(commitorigin);
-            System.out.println(commitorigin+"ßß"+commit.getName()+"ßß"+ commit.getFullMessage().replaceAll("\n","")+"ßß"+diffs.size() +"ßß"+addedLines + "ßß"+ deletedLines);// + " Message: " + commit.getFullMessage()
+            System.out.println(commitorigin + "ßß" + commit.getName() + "ßß" + commit.getFullMessage().replaceAll("\n", "") + "ßß" + diffs.size() + "ßß" + addedLines + "ßß" + deletedLines);// + " Message: " + commit.getFullMessage()
             //System.out.println("Commit: " + newCommit + " Files: " + diffs.size() + " Added: " + addedLines + " Deleted: " + deletedLines);
-        }else{
+        } else {
             System.out.println("DUPLICATED CHERRYPICK: **************");
-            System.out.println(commitorigin+"ßß"+commit.getName()+"ßß"+ commit.getFullMessage().replaceAll("\n","")+"ßß"+diffs.size() +"ßß"+addedLines + "ßß"+ deletedLines);
+            System.out.println(commitorigin + "ßß" + commit.getName() + "ßß" + commit.getFullMessage().replaceAll("\n", "") + "ßß" + diffs.size() + "ßß" + addedLines + "ßß" + deletedLines);
             //System.out.println("Commit: " + newCommit + " Files: " + diffs.size() + " Added: " + addedLines + " Deleted: " + deletedLines);
         }
     }
@@ -1169,7 +1299,7 @@ public class GitHelper {
     }
 
     //Helper function to get the previous commit.
-    public RevCommit getPrevHash(Repository repository, RevCommit commit)  throws  IOException {
+    public RevCommit getPrevHash(Repository repository, RevCommit commit) throws IOException {
 
         try (RevWalk walk = new RevWalk(repository)) {
             // Starting point
@@ -1187,6 +1317,7 @@ public class GitHelper {
         //Reached end and no previous commits.
         return null;
     }
+
     //Helper function to get the tree of the changes in a commit. Written by Rüdiger Herrmann
     private AbstractTreeIterator getCanonicalTreeParser(ObjectId commitId) throws IOException {
         try (RevWalk walk = new RevWalk(git.getRepository())) {
@@ -1362,7 +1493,7 @@ public class GitHelper {
     }
 
 
-    private AbstractTreeIterator prepareTreeParser(Repository repository, String commitName) throws IOException {
+    private static AbstractTreeIterator prepareTreeParser(Repository repository, String commitName) throws IOException {
         if (commitName == null || commitName.equals("NULLCOMMIT")) return new EmptyTreeIterator();
 
         try (RevWalk walk = new RevWalk(repository)) {
@@ -1379,7 +1510,7 @@ public class GitHelper {
         }
     }
 
-    public static void copyFolder(File source, File destination, ArrayList<String> filesRemoved, Map<String, Map<Integer, FileChange>> filesChanged) {
+    public static void copyFolder(File source, String gitDirAux, File destination, ArrayList<String> filesRemoved, Map<String, Map<Integer, FileChange>> filesChanged) {
         if (source.isDirectory()) {
             if (!destination.exists()) {
                 destination.mkdirs();
@@ -1391,10 +1522,19 @@ public class GitHelper {
                 File srcFile = new File(source, file);
                 if (!srcFile.getAbsolutePath().contains(".git")) {
                     File destFile = new File(destination, file);
-                    copyFolder(srcFile, destFile, filesRemoved, filesChanged);
+                    copyFolder(srcFile, gitDirAux, destFile, filesRemoved, filesChanged);
                 }
             }
-        } else if (!filesRemoved.contains(source.getName()) && !filesChanged.keySet().contains(source.getName())) {
+        } else {
+            String sourceFileDir = source.getAbsolutePath().substring(source.getAbsolutePath().lastIndexOf(gitDirAux) + gitDirAux.length()+1);
+            if (!filesRemoved.contains(sourceFileDir) && !filesChanged.keySet().contains(sourceFileDir)) {
+                try {
+                    FileUtils.copyFile(source, destination);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            /*if (!filesRemoved.contains(source.getName()) && !filesChanged.keySet().contains(source.getName())) {
             InputStream in = null;
             OutputStream out = null;
 
@@ -1423,10 +1563,11 @@ public class GitHelper {
                     e1.printStackTrace();
                 }
             }
+        }*/
         }
     }
 
-    public static void copyNewFiles(File source, File destination, ArrayList<String> filesAdded, Map<String, Map<Integer, FileChange>> filesChanged) {
+    public static void copyNewFiles(File source, String gitDirAux, File destination, ArrayList<String> filesAdded, Map<String, Map<Integer, FileChange>> filesChanged) {
         if (source.isDirectory()) {
             String files[] = source.list();
 
@@ -1434,37 +1575,48 @@ public class GitHelper {
                 File srcFile = new File(source, file);
                 if (!srcFile.getAbsolutePath().contains(".git")) {
                     File destFile = new File(destination, file);
-                    copyNewFiles(srcFile, destFile, filesAdded, filesChanged);
+                    copyNewFiles(srcFile, gitDirAux, destFile, filesAdded, filesChanged);
                 }
             }
-        } else if (filesAdded.contains(source.getName()) && !filesChanged.keySet().contains(source.getName())) {
-            InputStream in = null;
-            OutputStream out = null;
-
-            try {
-                in = new FileInputStream(source);
-                out = new FileOutputStream(destination);
-
-                byte[] buffer = new byte[1024];
-
-                int length;
-                while ((length = in.read(buffer)) > 0) {
-                    out.write(buffer, 0, length);
-                }
-                in.close();
-                out.close();
-            } catch (Exception e) {
+        } else {
+            String sourceFileDir = source.getAbsolutePath().substring(source.getAbsolutePath().lastIndexOf(gitDirAux) + gitDirAux.length()+1);
+            if (filesAdded.contains(sourceFileDir) && !filesChanged.keySet().contains(sourceFileDir)) {
                 try {
+                    FileUtils.copyFile(source, destination);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                /*InputStream in = null;
+                OutputStream out = null;
+
+                try {
+                    in = new FileInputStream(source);
+                    File f = new File(destination.getAbsolutePath());
+                    if(!f.canRead()){
+                        f.setReadable(true);
+                    }
+                    out = new FileOutputStream(f);
+                    byte[] buffer = new byte[1024];
+
+                    int length;
+                    while ((length = in.read(buffer)) > 0) {
+                        out.write(buffer, 0, length);
+                    }
                     in.close();
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
-
-                try {
                     out.close();
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
+                } catch (Exception e) {
+                    try {
+                        in.close();
+                    } catch (IOException e1) {
+                        e1.printStackTrace();
+                    }
+
+                    try {
+                        out.close();
+                    } catch (IOException e1) {
+                        e1.printStackTrace();
+                    }
+                }*/
             }
         }
     }
@@ -1486,12 +1638,13 @@ public class GitHelper {
 
         git.stashCreate().setRef("HEAD").call();
         git.checkout().setName(secondCommit).call();
-        copyNewFiles(gitDirectory, mergeDir, filesAdded, filesChanged);
+        String gitDirAux = gitDir.substring(gitDir.lastIndexOf("\\")+1);
+        copyNewFiles(gitDirectory, gitDirAux, mergeDir, filesAdded, filesChanged);
 
         git.stashCreate().setRef("HEAD").call();
         git.checkout().setName(firstCommit).call();
         //Files.copy(gitDirectory, mergeDir, StandardCopyOption.REPLACE_EXISTING);
-        copyFolder(gitDirectory, mergeDir, filesRemoved, filesChanged);
+        copyFolder(gitDirectory, gitDirAux, mergeDir, filesRemoved, filesChanged);
 
         int totalLinesremoved = 0;
         int totalLinesAdded = 0;
@@ -1505,9 +1658,21 @@ public class GitHelper {
             int last = 0;
             int removed = 0;
             int oldPositionInit = 0;
+            int lastremoved = 1000000;
             for (Map.Entry<Integer, FileChange> entry : mapSorted.entrySet()) {
-                System.out.println("File: "+change.getKey());
+                System.out.println("File: " + change.getKey());
                 FileChange fileChange = entry.getValue();
+                if (fileChange.getLines().contains("added: [-1, -1, -1]")) {
+                    String aux = fileChange.getLines().replace("added: [-1, -1, -1]", "added: []");
+                    System.out.println("AUX added: " + aux);
+                    fileChange.setLines(aux);
+                }
+                if (fileChange.getLines().contains("removed: [-1, -1, -1]")) {
+                    String aux = fileChange.getLines().replace("removed: [-1, -1, -1]", "removed: []");
+                    System.out.println("AUX removed: " + aux);
+                    fileChange.setLines(aux);
+                }
+
                 String[] lines = fileChange.getLines().split(",");
                 String linesaddinit = "";
                 String linesaddend = "";
@@ -1519,7 +1684,7 @@ public class GitHelper {
                     linesaddinit = lines[0].substring(lines[0].indexOf("added: [") + 8).replaceAll(" ", "");
                     linesaddend = lines[1].replaceAll(" ", "");
                     linestotaladd = lines[2].substring(0, lines[2].indexOf("]")).replaceAll(" ", "");
-                    totalLinesAdded+=Integer.valueOf(linestotaladd);
+                    totalLinesAdded += Integer.valueOf(linestotaladd);
                     if (!fileChange.getLines().contains("removed: []")) {
                         linesremovedinit = lines[2].substring(lines[2].indexOf("removed: [") + 10).replaceAll(" ", "");
                         linesremovedend = lines[3].replaceAll(" ", "");
@@ -1538,11 +1703,11 @@ public class GitHelper {
                     fileLines = fileChange.getFileLines();
 
                 oldPositionInit = entry.getKey();
-                if(Integer.valueOf(linestotaladd) > Integer.valueOf(linestotalremov)){
-                    last += Integer.valueOf(linestotaladd) - Integer.valueOf(linestotalremov)-1;
-                }else {
-                    last += Integer.valueOf(linestotaladd) - Integer.valueOf(linestotalremov);
-                }
+                //if (Integer.valueOf(linestotaladd) > Integer.valueOf(linestotalremov)) {
+                //    last += Integer.valueOf(linestotaladd) - Integer.valueOf(linestotalremov) - 1;
+                //} else {
+                //    last += Integer.valueOf(linestotaladd) - Integer.valueOf(linestotalremov);
+                //}
                 removed += Integer.valueOf(linestotalremov);
                 while (k <= oldPositionInit) {
                     if (k == oldPositionInit) {
@@ -1552,30 +1717,37 @@ public class GitHelper {
                                 linesToWrite.add(fileLines.get((Integer.valueOf(linesaddinit) - 1 + j)));
                             }
                             k += ((Integer.valueOf(linesremovedend)) - Integer.valueOf(linesremovedinit)) + 1;
+                            lastremoved = Integer.valueOf(linesremovedend) - 1;
                             break;
                         } else if (!linesremovedend.equals("")) {
-                            k += ((Integer.valueOf(linesremovedend) - Integer.valueOf(linesremovedinit)));
+                            if ((Integer.valueOf(linesremovedend) - Integer.valueOf(linesremovedinit) == 0))
+                                k += 1;
+                            else
+                                k += ((Integer.valueOf(linesremovedend) - Integer.valueOf(linesremovedinit))) + 1;
+                            lastremoved = Integer.valueOf(linesremovedend) - 1;
                             break;
                         } else if (!linesaddinit.equals("")) {
                             for (int j = 0; j <= (Integer.valueOf(linesaddend) - Integer.valueOf(linesaddinit)); j++) {
                                 System.out.println("add: " + fileLines.get((Integer.valueOf(linesaddinit) - 1 + j)));
                                 linesToWrite.add(fileLines.get((Integer.valueOf(linesaddinit) - 1 + j)));
                             }
-                            linesToWrite.add(previousLines.get(k - 1));
+                            if (previousLines.size() > (k - 1))
+                                linesToWrite.add(previousLines.get(k - 1));
                             k++;
                             break;
                             //System.out.println(previousLines.get(k));
                         }
                     } else {
                         //System.out.println(previousLines.get(k));
-                        linesToWrite.add(previousLines.get(k - 1));
+                        if (lastremoved != k - 1)
+                            linesToWrite.add(previousLines.get(k - 1));
                         k++;
                     }
                 }
             }
-            if (last == 0)
-                last = 1;
-            k = oldPositionInit + last;
+            //if (last == 0 || last == -1)
+            //    last = 1;
+            //k = oldPositionInit + last;
             while (k <= (previousLines.size())) {
                 linesToWrite.add(previousLines.get(k - 1));
                 k++;
@@ -1588,13 +1760,13 @@ public class GitHelper {
         Files.write(Paths.get(mergeDir + File.separator + "time.txt"), String.valueOf(measure).getBytes());
 
         String[] features = mergeDir.getName().split(",");
-        System.out.println("Total number of features: "+features.length);
-        System.out.println("Total Lines added: "+totalLinesAdded+ " Total Lines removed: "+totalLinesremoved);
-        System.out.println("Number files propagated: "+filesChanged.size());
+        System.out.println("Total number of features: " + features.length);
+        System.out.println("Total Lines added: " + totalLinesAdded + " Total Lines removed: " + totalLinesremoved);
+        System.out.println("Number files propagated: " + filesChanged.size());
         try {
-            FileAppender csvAppender = new FileAppender(new File(resultsRepo,"report_each_commit.csv"));
+            FileAppender csvAppender = new FileAppender(new File(resultsRepo, "report_each_commit.csv"));
             List<List<String>> contentRows = Arrays.asList(
-                    Arrays.asList(secondCommit, String.valueOf(features.length), String.valueOf(filesChanged.size()), String.valueOf(totalLinesAdded), String.valueOf(totalLinesremoved)));
+                    Arrays.asList(secondCommit, String.valueOf(features.length), String.valueOf(filesChanged.size()), String.valueOf(totalLinesAdded), String.valueOf(totalLinesremoved), String.valueOf(measure)));
             for (List<String> rowData : contentRows) {
                 csvAppender.append(String.join(",", rowData));
             }
