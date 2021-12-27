@@ -162,7 +162,7 @@ public class MiningFeatureRevisionsView extends BorderPane {
                 return new SimpleStringProperty("");
             }
         });
-        treeTableColumnCommit.setMinWidth(300);
+        //treeTableColumnCommit.setMinWidth(300);
 
         treeTableColumnFeatures.setCellValueFactory(cellData -> {
             TreeItem<Object> rowItem = cellData.getValue();
@@ -173,7 +173,7 @@ public class MiningFeatureRevisionsView extends BorderPane {
                 return new SimpleStringProperty("");
             }
         });
-        treeTableColumnFeatures.setMinWidth(300);
+        //treeTableColumnFeatures.setMinWidth(300);
 
         getReleasesButton.setOnAction(event -> {
             try {
@@ -196,12 +196,12 @@ public class MiningFeatureRevisionsView extends BorderPane {
 
                 TreeTableColumn<Object, String> treeTableColumnRelease = new TreeTableColumn<>("Release");
                 treeTableColumnRelease.setCellValueFactory(new TreeItemPropertyValueFactory<>("name"));
-                treeTableColumnRelease.setMinWidth(200);
+                //treeTableColumnRelease.setMinWidth(200);
 
 
                 TreeTableColumn<Object, String> treeTableColumnCommitNumber = new TreeTableColumn<>("Commit Number");
                 treeTableColumnCommitNumber.setCellValueFactory(new TreeItemPropertyValueFactory<>("commitNumber"));
-                treeTableColumnCommitNumber.setMinWidth(200);
+                //treeTableColumnCommitNumber.setMinWidth(200);
 
 
                 //this line makes possible check each checkbox

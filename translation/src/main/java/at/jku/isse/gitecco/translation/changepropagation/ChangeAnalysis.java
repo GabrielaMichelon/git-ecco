@@ -11,20 +11,16 @@ import at.jku.isse.gitecco.featureid.type.TraceableFeature;
 import at.jku.isse.gitecco.translation.constraintcomputation.util.ConstraintComputer;
 import at.jku.isse.gitecco.translation.mining.ChangeCharacteristic;
 import at.jku.isse.gitecco.translation.visitor.GetNodesForChangeVisitor;
-import com.google.common.collect.Multimap;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.opencsv.CSVWriter;
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.glassfish.grizzly.http.server.accesslog.FileAppender;
 
 import java.io.*;
-import java.lang.reflect.Array;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class ChangeAnalysis {
     private static boolean EVERYCOMMIT = false;
@@ -74,7 +70,7 @@ public class ChangeAnalysis {
             featuresRepo.replaceAll("\\\\", File.separator);
         }
         FEATURES_TXT = featuresRepo;
-        String[] featspropagate = featpropagatename.replaceAll(" ","").split(",");
+        String[] featspropagate = featpropagatename.replaceAll(" ", "").split(",");
         ArrayList<Feature> featurespropagate = new ArrayList<>();
         for (String feature : featspropagate) {
             Feature featpropagate = new Feature(feature);
@@ -384,6 +380,7 @@ public class ChangeAnalysis {
 
         GetNodesForChangeVisitor visitor = new GetNodesForChangeVisitor();
         ArrayList<ConditionalNode> changedNodes = new ArrayList<>();
+        ArrayList<ConditionalNode> newNodes = new ArrayList<>();
         ArrayList<ConditionalNode> deletedNodes = new ArrayList<>();
         ArrayList<ConditionalNode> propagateChangedNodes = new ArrayList<>();
         ArrayList<ConditionalNode> propagateDeletedNodes = new ArrayList<>();
@@ -403,46 +400,71 @@ public class ChangeAnalysis {
         Map<Change, FileNode> changesDelete = new HashMap<>();
         Map<Change, FileNode> changesInsertAndDelete = new HashMap<>();
 
+
         for (FileNode nod : gc1.getTree().getChildren()) {
             if (nod instanceof SourceFileNode) {
                 changedFiles.add(nod.getFilePath());
             }
         }
 
-        //retrieve changed nodes
-        for (FileNode child : gc2.getTree().getChildren()) {
-            if (child instanceof SourceFileNode) {
+        for (FileNode nod : gc2.getTree().getChildren()) {
+            if (nod instanceof SourceFileNode) {
+                changedFilesNext.add(nod.getFilePath());
+            }
+        }
 
-                Change[] changes = null;
-                try {
-                    changes = gitHelper.getFileDiffsTwoCommits(gc2, child, false);
-                } catch (Exception e) {
-                    System.err.println("error while executing the file diff: " + child.getFilePath());
-                    e.printStackTrace();
+        //changed nodes of common and new files
+        for (String file : changedFilesNext) {
+            if (changedFiles.contains(file)) {//changed files common to both commit 1 and 2
+                FileNode child = gc1.getTree().getChild(file);
+                FileNode childCommit2 = gc2.getTree().getChild(file);
+                if (child instanceof SourceFileNode) {
+                    Change[] changes = null;
+                    try {
+                        changes = gitHelper.getFileDiffs(gc2, child,false, false);
+                    } catch (Exception e) {
+                        System.err.println("error while executing the file diff: " + child.getFilePath());
+                        e.printStackTrace();
+                    }
+                    childCommit2.setPreviousFileContent(child.getPreviousFileContent());
+                    childCommit2.setFileContent(child.getFileContent());
+                    for (Change change : changes) {
+                        visitor.setChange(change);
+                        if(change.getChangeType().equals("CHANGE"))
+                            child.accept(visitor, null);
+                        else
+                            childCommit2.accept(visitor,null);
+                        changedNodes.addAll(visitor.getchangedNodes());
+                    }
                 }
+            } else { //new files from commit2 not in commit1
+                FileNode child = gc2.getTree().getChild(file);
+                if (child instanceof SourceFileNode) {
+                    Change[] changes = null;
+                    try {
+                        changes = gitHelper.getFileDiffs(gc2, child,false, true);
+                    } catch (Exception e) {
+                        System.err.println("error while executing the file diff: " + child.getFilePath());
+                        e.printStackTrace();
+                    }
 
-                for (Change change : changes) {
-                    if (!change.getChangeType().equals("DELETE")) {
+                    for (Change change : changes) {
                         visitor.setChange(change);
                         child.accept(visitor, null);
-                        changedNodes.addAll(visitor.getchangedNodes());
-                    } else if (change.getChangeType().equals("DELETE")) {
-                        changesDelete.put(change, child);
+                        newNodes.addAll(visitor.getchangedNodes());
                     }
                 }
             }
-            previous = false;
-            changedFilesNext.add(child.getFilePath());
         }
 
-        //The deleted nodes are
+        //Deleted nodes in commit2 of files only in commit1
         for (String file : changedFiles) {
             if (!changedFilesNext.contains(file)) {
                 FileNode child = gc1.getTree().getChild(file);
                 if (child instanceof SourceFileNode) {
                     Change[] changes = null;
                     try {
-                        changes = gitHelper.getFileDiffs(gc2, child, true);
+                        changes = gitHelper.getFileDiffs(gc2, child, true, false);
                     } catch (Exception e) {
                         System.err.println("error while executing the file diff: " + child.getFilePath());
                         e.printStackTrace();
@@ -456,6 +478,7 @@ public class ChangeAnalysis {
                 }
             }
         }
+
         for (Map.Entry<Change, FileNode> changeInsert : changesDelete.entrySet()) {
             Change change = changeInsert.getKey();
             FileNode childAux = changeInsert.getValue();
@@ -474,7 +497,7 @@ public class ChangeAnalysis {
         Integer count = 0;
 
         //if there is no changed node then there must be a change in the binary files --> commit base.
-        if ((changedNodes.size() == 0) && (deletedNodes.size() == 0) && (gc2.getTree().getChildren().size() > 0))
+        if ((changedNodes.size() == 0) && (deletedNodes.size() == 0) && (newNodes.size() == 0) && (gc2.getTree().getChildren().size() > 0))
             changedNodes.add(new BaseNode(null, 0));
 
         Boolean baseChanged = false;
@@ -497,6 +520,12 @@ public class ChangeAnalysis {
                 changedNodesAux.add(changedNode);
         }
 
+        ArrayList<ConditionalNode> newNodesAux = new ArrayList<>();
+        for (ConditionalNode changedNode : newNodes) {
+            if (!newNodesAux.contains(changedNode))
+                newNodesAux.add(changedNode);
+        }
+
         ArrayList<ConditionalNode> deletedNodesAux = new ArrayList<>();
         for (ConditionalNode deletedNode : deletedNodes) {
             if (!deletedNodesAux.contains(deletedNode))
@@ -514,7 +543,7 @@ public class ChangeAnalysis {
                 //compute the marked as changed features.
                 changed = constraintComputer.computeChangedFeatures(changedNode, config);
                 for (Feature feature : featurespropagate) {
-                    if (changed.contains(feature)) {
+                    if (changed.contains(feature) && !propagateChangedNodes.contains(changedNode)) {
                         //if (changed.contains(featpropagate)) {
                         propagateChangedNodes.add(changedNode);
                         System.out.println("CHANGED NODE CONTAINS FEATURE: " + feature.getName());
@@ -698,7 +727,163 @@ public class ChangeAnalysis {
 
         }
 
+        //---------
 
+        for (ConditionalNode changedNode : newNodesAux) {
+            //compute the config for the var gen
+            config = constraintComputer.computeConfig(changedNode, gc2.getTree());
+            if (config != null && !config.isEmpty()) {
+                //compute the marked as changed features.
+                changed = constraintComputer.computeChangedFeatures(changedNode, config);
+                for (Feature feature : featurespropagate) {
+                    if (changed.contains(feature) && !propagateChangedNodes.contains(changedNode)) {
+                        propagateChangedNodes.add(changedNode);
+                        System.out.println("CHANGED NODE CONTAINS FEATURE: " + feature.getName());
+                        ArrayList<Integer> linesInsert = new ArrayList<>();
+                        ArrayList<Integer> linesRemoved = new ArrayList<>();
+                        ArrayList<String> featureInteraction = new ArrayList<>();
+                        ArrayList<String> featureMightBeAffected = new ArrayList<>();
+                        if (!changedFiles.contains(changedNode.getContainingFile().getFilePath())) {
+                            System.out.println("NEW FILE: " + changedNode.getContainingFile().getFilePath());
+                            if (!changedFilesPropagate.contains(changedNode.getContainingFile().getFilePath()))
+                                changedFilesPropagate.add(changedNode.getContainingFile().getFilePath());
+                        } else {
+                            if (!changedFilesPropagate.contains(changedNode.getContainingFile().getFilePath()))
+                                changedFilesPropagate.add(changedNode.getContainingFile().getFilePath());
+                            System.out.println("CHANGED FILE: " + changedNode.getContainingFile().getFilePath());
+                        }
+
+                        System.out.println("Feature interactions: ");
+                        for (Feature fea : changed) {
+                            if (!fea.equals(feature)) {
+                                featureInteraction.add(fea.getName());
+                                System.out.println(fea.getName());
+                            }
+                        }
+
+
+                        System.out.println("Feature might be affected: ");
+                        for (Map.Entry<Feature, Integer> fea : config.entrySet()) {
+                            if (!changed.contains(fea.getKey())) {
+                                featureMightBeAffected.add(fea.getKey().getName());
+                                System.out.println(fea.getKey().getName());
+                            }
+                        }
+
+                        List<String> linesFile = changedNode.getContainingFileLines();
+
+                        Boolean mapExist = false;
+                        Changes mapAux = new Changes();
+
+                        for (Map<String, List<String>> map : results.keySet()) {
+                            if (map.get(changedNode.getContainingFile().getFilePath()) != null) {
+                                mapExist = true;
+                                mapAux = results.get(map);
+                            }
+                        }
+
+                        //new file
+                        Map<String, List<String>> mapFile = new HashMap<>();
+                        for (Deltas delta : changedNode.getLineNumberInsertsAndDeletes()) {
+                            ArrayList<Integer> linesInsertArray = new ArrayList<>();
+                            linesInsertArray.add(delta.getLineFromAdd());
+                            linesInsertArray.add(delta.getLineToAdd());
+                            linesInsertArray.add(delta.getTotalLinesAdd());
+                            AddedFile addedFile = new AddedFile(linesInsertArray, featureInteraction, featureMightBeAffected, feature);
+                            mapAux.addAddedFiles(addedFile);
+                        }
+                        mapFile.put(changedNode.getContainingFile().getFilePath(), linesFile);
+                        results.put(mapFile, mapAux);
+                    }
+
+                }
+
+                if (!changed.contains(base))
+                    config.remove(base);
+                //map with the name of the feature and version and a boolean to set true when it is already incremented in the analysed commit
+                String eccoConfig = "";
+                String file = "";
+                if (changedNode.getContainingFile() != null)
+                    file = changedNode.getContainingFile().getFilePath();
+                for (Map.Entry<Feature, Integer> configFeature : config.entrySet()) {
+                    int version = 0;
+                    if (featureNamesList.contains(configFeature.getKey().getName()) && configFeature.getValue() != 0) {
+                        if (featureVersions.containsKey(configFeature.getKey())) {
+                            version = featureVersions.get(configFeature.getKey());
+                        }
+                        if (!alreadyComitted.contains(configFeature.getKey())) {
+                            alreadyComitted.add(configFeature.getKey());
+                            if (changed.contains(configFeature.getKey())) { //|| gcl.size() < 2) {
+                                version++;
+                                if (version == 1)
+                                    newFeatures++;
+                                else
+                                    countFeaturesChanged++;
+                            }
+                            if (version == 0 && !(changed.contains(configFeature.getKey()))) {
+                                newFeatures++;
+                                version = 1;
+                            }
+                            featureVersions.put(configFeature.getKey(), version);
+                        }
+                        if (!configFeature.getKey().toString().equals("BASE"))
+                            eccoConfig += "," + configFeature.getKey().toString() + "." + version;
+                        else
+                            eccoConfig += "," + configFeature.getKey().toString() + ".$$";
+
+                       /* ChangeCharacteristic changeCharacteristic;
+                        if (featureMap.get(configFeature.getKey()) == null) {
+                            changeCharacteristic = new ChangeCharacteristic();
+                            featureMap.put(configFeature.getKey(), new ChangeCharacteristic());
+                        } else {
+                            changeCharacteristic = featureMap.get(configFeature.getKey());
+                        }
+                        int aux = 0;*/
+                        /*if (changedNode.getLineNumberInserts().size() > 0) {
+                            for (int i = 2; i < changedNode.getLineNumberInserts().size(); i += 3) {
+                                aux += changedNode.getLineNumberInserts().get(i);
+                            }
+                            changeCharacteristic.setLinesOfCodeAdded(changeCharacteristic.getLinesOfCodeAdded() + aux);
+                            changedNode.getLineNumberInserts().removeAll(changedNode.getLineNumberInserts());
+                        }
+
+                        changeCharacteristic.addTanglingDegree(tanglingDegree);
+                        if (!changeCharacteristic.getScatteringDegreeFiles().contains(file)) {
+                            changeCharacteristic.addScatteringDegreeFiles(file);
+                        }
+                        if (!(changedNode instanceof BaseNode))
+                            changeCharacteristic.setScatteringDegreeIfs(changeCharacteristic.getScatteringDegreeIfs() + 1);
+                        ChangeCharacteristic finalChangeCharacteristic = changeCharacteristic;
+                        featureMap.computeIfAbsent(configFeature.getKey(), v -> finalChangeCharacteristic);
+                        featureMap.computeIfPresent(configFeature.getKey(), (k, v) -> finalChangeCharacteristic);
+                    }*/
+                    }
+                    if (!eccoConfig.contains("BASE")) {
+                        eccoConfig += "," + "BASE.$$";
+                    }
+                    eccoConfig = eccoConfig.replaceFirst(",", "");
+
+                    if (configurations.contains(eccoConfig)) {
+                        //System.out.println("Config already used to generate a variant: " + eccoConfig);
+                        //don't need to generate variant and commit it again at the same commit of the project git repository
+                    } else {
+                        count++;
+                        //configuration that will be used to generate the variant of this changed node
+                        configsToGenerateVariant.put(config, eccoConfig);
+
+                        configurations.add(eccoConfig);
+                        //folder where the variant is stored
+                        File variantsrc = new File(eccoFolder, eccoConfig);
+                        String outputCSV = variantsrc.getParentFile().getParentFile().getAbsolutePath();
+                        final Path variant_dir = Paths.get(String.valueOf(variantsrc));
+
+                    }
+                }
+            }
+
+        }
+
+        //----------
         if (deletedNodesAux.size() != 0) {
             String file = "";
             for (ConditionalNode deletedNode : deletedNodesAux) {
@@ -982,6 +1167,7 @@ public class ChangeAnalysis {
             }
 
             changedNodes.clear();
+            newNodes.clear();
             deletedNodes.clear();
             deletedNodesAux.clear();
             changedNodesAux.clear();

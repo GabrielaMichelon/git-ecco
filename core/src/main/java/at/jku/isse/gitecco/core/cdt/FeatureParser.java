@@ -31,7 +31,7 @@ public class FeatureParser {
         //var for current Conditional node which gets filled with children etc.
         ConditionalNode currentConditional = srcfilenode.getBaseNode();
 
-        for(IASTPreprocessorStatement pps : ppstatements) {
+        for (IASTPreprocessorStatement pps : ppstatements) {
             /* starting statements*/
             if (pps instanceof IASTPreprocessorIfStatement) {
                 pp = new PPStatement(pps);
@@ -39,7 +39,6 @@ public class FeatureParser {
                 currentConditional.addChild(currentBlock);
                 currentConditional = currentBlock.setIfBlock(new IFCondition(currentBlock, removeDefinedMacro(pp.getCondName())));
                 currentConditional.setLineFrom(pp.getLineStart());
-
             } else if (pps instanceof IASTPreprocessorIfdefStatement) {
                 pp = new PPStatement(pps);
                 currentBlock = new ConditionBlockNode(currentConditional);
@@ -54,12 +53,12 @@ public class FeatureParser {
                 currentConditional = currentBlock.setIfBlock(new IFNDEFCondition(currentBlock, pp.getCondName()));
                 currentConditional.setLineFrom(pp.getLineStart());
 
-            /* ending statements */
+                /* ending statements */
             } else if (pps instanceof IASTPreprocessorElifStatement) {
                 pp = new PPStatement(pps);
                 currentConditional.setLineTo(pp.getLineEnd());
                 currentBlock = currentConditional.getParent();
-                currentConditional = currentBlock.addElseIfBlock(new ELIFCondition(currentBlock,removeDefinedMacro(pp.getCondName())));
+                currentConditional = currentBlock.addElseIfBlock(new ELIFCondition(currentBlock, removeDefinedMacro(pp.getCondName())));
                 currentConditional.setLineFrom(pp.getLineStart());
 
             } else if (pps instanceof IASTPreprocessorElseStatement) {
@@ -75,24 +74,24 @@ public class FeatureParser {
                 currentBlock = currentConditional.getParent();
                 currentConditional = currentBlock.getParent();
 
-            /* define/undef statements: */
+                /* define/undef statements: */
             } else if (pps instanceof IASTPreprocessorMacroDefinition) {
                 IASTPreprocessorMacroDefinition md = (IASTPreprocessorMacroDefinition) pps;
                 currentConditional.addDefineNode(
                         new Define(md.getName().toString(),
-                                   md.getExpansion(),
-                                   md.getFileLocation().getStartingLineNumber(),
+                                md.getExpansion(),
+                                md.getFileLocation().getStartingLineNumber(),
                                 currentConditional)
                 );
             } else if (pps instanceof IASTPreprocessorUndefStatement) {
                 IASTPreprocessorUndefStatement uds = (IASTPreprocessorUndefStatement) pps;
                 currentConditional.addDefineNode(
-                        new Undef(uds.getMacroName().toString(), uds.getFileLocation().getStartingLineNumber(),currentConditional)
+                        new Undef(uds.getMacroName().toString(), uds.getFileLocation().getStartingLineNumber(), currentConditional)
                 );
             } else if (pps instanceof IASTPreprocessorIncludeStatement) {
                 IASTPreprocessorIncludeStatement is = (IASTPreprocessorIncludeStatement) pps;
                 currentConditional.addInclude(
-                        new IncludeNode(is.getName().toString(), is.getFileLocation().getStartingLineNumber(),currentConditional)
+                        new IncludeNode(is.getName().toString(), is.getFileLocation().getStartingLineNumber(), currentConditional)
                 );
             }
         }
@@ -105,10 +104,10 @@ public class FeatureParser {
         Pattern p = Pattern.compile("defined *\\((.*?)\\)");
         Matcher m = p.matcher(s);
 
-        while(m.find())
+        while (m.find())
             s = s.replaceFirst("defined *\\((.*?)\\)", m.group(1));
 
-        return s.replace("defined","").replace("not","!");
+        return s.replace("defined", "").replace("not", "!");
     }
 
     //checks if a string contains space separated number
@@ -116,7 +115,7 @@ public class FeatureParser {
     private boolean hasNumberOcc(String s) {
         String strs[] = s.split(" ");
         for (String str : strs)
-            if(str.matches("^\\d[0-9a-zA-Z]*$")) return true;
+            if (str.matches("^\\d[0-9a-zA-Z]*$")) return true;
         return false;
     }
 }

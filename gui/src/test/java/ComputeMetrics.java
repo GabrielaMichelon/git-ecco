@@ -17,9 +17,9 @@ public class ComputeMetrics {
     //directory where you have the folder with the artifacts of the target systyem
     public final String resultsCSVs_path = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\automated_evaluation\\test2\\merge";
     //directory where you have the folder with the artifacts of Marlin target systyem
-    public final String systemFolder = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\automated_evaluation\\bugfix\\SQLite";
+    public final String systemFolder = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\automated_evaluation\\bugfix\\LibSSH";
     //public final String libsshFolder = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\ChangePropagation\\results\\libssh";
-    public final String metricsResultFolder = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\automated_evaluation\\bugfix\\SQLite";
+    public final String metricsResultFolder = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\automated_evaluation\\bugfix\\LibSSH";
     private List<String> fileTypes = new LinkedList<String>();
 
     //compare the ground truth variants with the composed variants

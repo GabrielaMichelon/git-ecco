@@ -150,7 +150,7 @@ public class ChangeAnalysisView extends BorderPane {
 
         row[0]++;
 
-        Label fistCommitLabel = new Label("First Commit: ");
+        Label fistCommitLabel = new Label("Destination Commit: ");
         gridPane.add(fistCommitLabel, 0, row[0], 1, 1);
 
         firstcommitTextField.setDisable(false);
@@ -158,7 +158,7 @@ public class ChangeAnalysisView extends BorderPane {
 
         row[0]++;
 
-        Label secondCommitLabel = new Label("Second Commit: ");
+        Label secondCommitLabel = new Label("Origin Commit: ");
         gridPane.add(secondCommitLabel, 0, row[0], 1, 1);
 
         secondcommitTextField.setDisable(false);
@@ -181,32 +181,36 @@ public class ChangeAnalysisView extends BorderPane {
         selectCol.setCellValueFactory(new PropertyValueFactory<>("propagateChange"));
         selectCol.setCellFactory(CheckBoxTableCell.forTableColumn(selectCol));
         selectCol.setEditable(true);
-        selectCol.setMinWidth(200);
+        selectCol.widthProperty().addListener((obs, oldVal, newVal) -> {
+            selectCol.setPrefWidth(newVal.doubleValue());
+        });
+        //selectCol.setMinWidth(200);
 
         fileCol.setCellValueFactory(new PropertyValueFactory<>("fileName"));
-        fileCol.setMinWidth(200);
+        //fileCol.setMinWidth(200);
 
         changeCol.setCellValueFactory(new PropertyValueFactory<>("changeType"));
-        changeCol.setMinWidth(200);
+        //changeCol.setMinWidth(200);
 
 
         linesCol.setCellValueFactory(new PropertyValueFactory<>("lines"));
-        linesCol.setMinWidth(400);
+        //linesCol.setMinWidth(400);
 
 
         featiCol.setCellValueFactory(new PropertyValueFactory<>("feati"));
-        featiCol.setMinWidth(200);
+        //featiCol.setMinWidth(200);
 
         feataff.setCellValueFactory(new PropertyValueFactory<>("feata"));
-        feataff.setMinWidth(200);
+        //feataff.setMinWidth(200);
 
         featurechanged.setCellValueFactory(new PropertyValueFactory<>("featureName"));
-        featurechanged.setMinWidth(200);
+        //featurechanged.setMinWidth(200);
 
         colBtn.setCellValueFactory(new PropertyValueFactory<>("btnview"));
-        colBtn.setMinWidth(200);
+        //colBtn.setMinWidth(200);
 
         setTop(toolBar);
+        toolBar.getItems().addAll(selectAllButton, unselectAllButton, propagateChangesButton);
 
         Image image = new Image("image/loading.gif");
         ImageView imageView = new ImageView(image);
@@ -450,17 +454,17 @@ public class ChangeAnalysisView extends BorderPane {
                         count = i;
                         int init = Integer.valueOf(linesremovedinit) - 1;
                         while (count <= Integer.valueOf(linesaddend) - 1) {
-                            while (init < Integer.valueOf(linesremovedend)) {
-                                result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: #ffdce0");
-                                result.appendText((init + 1) + " -\t" + data.getPreviousfileLines().get(init) + "\n");
-                                init++;
-                            }
                             if (count >= (Integer.valueOf(linesaddinit) - 1)) {
+                                while (init < Integer.valueOf(linesremovedend)) {
+                                    result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: #ffdce0");
+                                    result.appendText((init + 1) + " -\t" + data.getPreviousfileLines().get(init) + "\n");
+                                    init++;
+                                }
                                 result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: #dcffe4");
                                 result.appendText((count + 1) + " +\t" + data.getFileLines().get(count) + "\n");
                             } else {
                                 result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: transparent");
-                                result.appendText(count + " \t" + data.getFileLines().get(count) + "\n");
+                                result.appendText((count+1) + " \t" + data.getFileLines().get(count) + "\n");
                             }
                             count++;
                         }
@@ -482,7 +486,9 @@ public class ChangeAnalysisView extends BorderPane {
                         result.appendText((count + 1) + " +\t" + data.getFileLines().get(count) + "\n");
                         count++;
                     }
-                    i = Integer.valueOf(linesaddend) - 1;
+                    i = Integer.valueOf(linesaddend);
+                    result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: transparent");
+                    result.appendText((count + 1) + " \t" + data.getFileLines().get(i) + "\n");
                 } else if (!linesaddinit.equals("") && linesremovedinit.equals("") && i >= (Integer.valueOf(linesaddinit) - 1) && i <= (Integer.valueOf(linesaddend) - 1)) {
                     result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: #dcffe4");
                     result.appendText((i + 1) + " +\t" + data.getFileLines().get(i) + "\n");
@@ -497,18 +503,35 @@ public class ChangeAnalysisView extends BorderPane {
                     result.appendText((i + 1) + " -\t" + data.getPreviousfileLines().get(i) + "\n");
                 } else if (!linesremovedinit.equals("") && i < data.getFileLines().size() - 1 && i > (Integer.valueOf(linesremovedend)-1)) {
                     result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: transparent");
-                    result.appendText((i + 1) + " \t" + data.getPreviousfileLines().get(i) + "\n");
+                    result.appendText((i + 1) + " \t" + data.getFileLines().get(i) + "\n");
                 } else if (!linesremovedinit.equals("") && i < data.getFileLines().size() && i > (Integer.valueOf(linesremovedend))) {
                     //result.setStyle(Integer.valueOf(linesremovedend)+1, "-rtfx-background-color: transparent");
                     result.appendText((i + 1) + " \t" + data.getFileLines().get(i) + "\n");
                 } else if(!linesremovedinit.equals("")){
                     result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: transparent");
-                    result.appendText((i + 1) + " \t" + data.getPreviousfileLines().get(i) + "\n");
+                    result.appendText((i + 1) + " \t" + data.getFileLines().get(i) + "\n");
                 } else {
                     result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: transparent");
                     result.appendText((i + 1) + " \t" + data.getFileLines().get(i) + "\n");
                 }
 
+                i++;
+            }
+        } else if(data.getChangeType().equals("New File")){
+            for (String line : data.getFileLines()) {
+                if (i < data.getFileLines().size() && i>=(Integer.valueOf(linesaddinit)-1) && i<=(Integer.valueOf(linesaddend)-1)) {
+                    result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: #dcffe4");
+                    result.appendText((i + 1) + " +\t" + line + "\n");
+                } else if(i < data.getFileLines().size() ){
+                    result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: transparent");
+                    result.appendText((i + 1) + "\t" + line + "\n");
+                } else if(i>=(Integer.valueOf(linesaddinit)-1) && i<=(Integer.valueOf(linesaddend)-1)){
+                    result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: #dcffe4");
+                    result.appendText((i + 1) + " +\t" + line);
+                }else {
+                    result.setStyle(result.getCurrentParagraph(), "-rtfx-background-color: transparent");
+                    result.appendText((i + 1) + "\t" + line);
+                }
                 i++;
             }
         } else {
@@ -881,8 +904,6 @@ public class ChangeAnalysisView extends BorderPane {
             }
             if (table.getColumns().size() == 0)
                 table.getColumns().addAll(selectCol, fileCol, changeCol, linesCol, featiCol, feataff, featurechanged, colBtn);
-            if (table.getItems().size() == 0)
-                toolBar.getItems().addAll(selectAllButton, unselectAllButton, propagateChangesButton);
             table.setItems(data);
 
             for (FileChange filechange : data) {

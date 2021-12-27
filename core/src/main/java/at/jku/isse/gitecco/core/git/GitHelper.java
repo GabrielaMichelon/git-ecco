@@ -534,6 +534,22 @@ public class GitHelper {
      * All the changes will be returned as an Array.
      *
      * @param newCommit The commit which should be diffed --> also contains the parent to diff with
+     * @param sfn       the source file node which should be examined
+     * @return An Array of Changes which contains all the changes between the commits.
+     * @throws Exception
+     */
+    public Change[] getFileDiffs(GitCommit newCommit, FileNode sfn, Boolean deletedFile, Boolean newFile) throws Exception {
+        if (sfn instanceof BinaryFileNode) throw new IllegalArgumentException("cannot diff a binary file node");
+        return getFileDiffsMethod(newCommit, sfn, deletedFile, newFile);
+    }
+
+
+    /**
+     * Gets the Diff between two Commits specified by their commit names.
+     * The Diff is stored as a <code>Change</code>.
+     * All the changes will be returned as an Array.
+     *
+     * @param newCommit The commit which should be diffed --> also contains the parent to diff with
      * @param filePath  The FilePath for which the Diff should be applied.
      * @return An Array of Changes which contains all the changes between the commits.
      * @throws Exception
@@ -681,31 +697,182 @@ public class GitHelper {
                 }
 
             }
+        }
+        return changes.toArray(new Change[changes.size()]);
+    }
 
+    /**
+     * Gets the Diff between two Commits specified by their commit names.
+     * The Diff is stored as a <code>Change</code>.
+     * All the changes will be returned as an Array.
+     *
+     * @param newCommit The commit which should be diffed --> also contains the parent to diff with
+     * @param filePath  The FilePath for which the Diff should be applied.
+     * @return An Array of Changes which contains all the changes between the commits.
+     * @throws Exception
+     */
+    public Change[] getFileDiffsMethod(GitCommit newCommit, FileNode filePath, Boolean deletedFile, Boolean newFile) throws Exception {
 
-       /* for (DiffEntry entry : diff) {
-            diffStream.reset();
-            try (DiffFormatter formatter = new DiffFormatter(diffStream)) {
-                formatter.setRepository(git.getRepository());
-                formatter.setContext(0);
-                formatter.format(entry);
-            } catch (Exception e) {
-                e.printStackTrace();
+        List<Change> changes = new ArrayList<Change>();
+
+        if (deletedFile) {
+            if (newCommit.getNumber() != Long.valueOf(0))
+                git.stashCreate().setRef("HEAD").call();
+            git.checkout().setName(newCommit.getDiffCommitName()).call();
+            String filepathRenamed = "";
+            if (filePath.getFilePath().contains("arent"))
+                filepathRenamed = filePath.getFilePath().replace("arent" + File.separator, "");
+            else
+                filepathRenamed = filePath.getFilePath();
+            String newPath = pathUrl + File.separator + filepathRenamed;
+            if (filePath.getFileContent().size() == 0) {
+                List<String> linesFile = Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1);
+                filePath.setFileContent(linesFile);
             }
-            if (diffStream.size() > 0) {
-                if (fileDiffParser.parse(diffStream.toString())) {
-                    for (Change r : fileDiffParser.getplusRanges()) {
-                        changes.add(r);
+            ArrayList<Integer> lines = new ArrayList<>();
+            lines.add(0);
+            lines.add(Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size() - 1);
+            changes.add(new Change(0, Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size(), lines, 1, "DELETE"));
+            git.stashCreate().setRef("HEAD").call();
+            git.checkout().setName(newCommit.getCommitName()).call();
+        } else if (newFile) {
+            try {
+                git.stashCreate().setRef("HEAD").call();
+                git.checkout().setName(newCommit.getCommitName()).call();
+            } catch (CheckoutConflictException ex) {
+                System.out.println("Exception checkout Git ----- " + ex);
+            }
+            List<DiffEntry> diff;
+            diff = git.diff().
+                    setOldTree(prepareTreeParser(git.getRepository(), newCommit.getDiffCommitName())).
+                    setNewTree(prepareTreeParser(git.getRepository(), newCommit.getCommitName())).
+                            call();
+
+            for (DiffEntry entry : diff) {
+                String newPath = entry.getNewPath().replace("/", "\\");
+                if (filePath.getFilePath().equals(newPath)) {
+                    if (filePath.getFileContent().size() == 0) {
+                        List<String> linesFile = Files.readAllLines(Paths.get(pathUrl + File.separator + newPath), StandardCharsets.ISO_8859_1);
+                        filePath.setFileContent(linesFile);
+                    }
+                    if (entry.getChangeType().toString().equals("ADD")) {
+                        newPath = pathUrl + File.separator + newPath;
+                        ArrayList<Integer> lines = new ArrayList<>();
+                        lines.add(0);
+                        lines.add(Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size() - 1);
+                        changes.add(new Change(0, Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size(), lines, 1, "INSERT"));
+                    }
+                }
+
+            }
+        } else { //changedFile
+            try {
+                git.stashCreate().setRef("HEAD").call();
+                git.checkout().setName(newCommit.getCommitName()).call();
+            } catch (CheckoutConflictException ex) {
+                System.out.println("Exception checkout Git ----- " + ex);
+            }
+            List<DiffEntry> diff;
+            diff = git.diff().
+                    setOldTree(prepareTreeParser(git.getRepository(), newCommit.getDiffCommitName())).
+                    setNewTree(prepareTreeParser(git.getRepository(), newCommit.getCommitName())).
+                    call();
+
+            for (DiffEntry entry : diff) {
+                String newPath = entry.getNewPath().replace("/", "\\");
+                String oldPath = entry.getOldPath().replace("/", "\\");
+                if (filePath.getFilePath().equals(oldPath)) {
+                    if (filePath.getFileContent().size() == 0) {
+                        List<String> linesFile = Files.readAllLines(Paths.get(pathUrl + File.separator + oldPath), StandardCharsets.ISO_8859_1);
+                        filePath.setFileContent(linesFile);
+                    }
+                    if (entry.getChangeType().toString().equals("MODIFY")) {
+                        List<String> actual = new ArrayList<>();
+                        List<String> old = new ArrayList<>();
+                        File filenew = new File(pathUrl + File.separator + oldPath);
+                        try {
+                            actual = Files.readAllLines(filenew.toPath());
+                        } catch (MalformedInputException e) {
+                            BufferedReader br = new BufferedReader(new FileReader(filenew.getAbsoluteFile()));
+                            String sCurrentLine;
+                            while ((sCurrentLine = br.readLine()) != null) {
+                                actual.add(sCurrentLine);
+                            }
+                            br.close();
+                        }
+                        try {
+                            git.stashCreate().setRef("HEAD").call();
+                            git.checkout().setName(newCommit.getDiffCommitName()).call();
+                        } catch (CheckoutConflictException ex) {
+                            System.out.println("Exception checkout Git ----- " + ex);
+                        }
+                        File fileold = new File(pathUrl + File.separator + newPath);
+                        try {
+                            old = Files.readAllLines(fileold.toPath());
+                        } catch (MalformedInputException e) {
+                            BufferedReader br = new BufferedReader(new FileReader(fileold.getAbsoluteFile()));
+                            String sCurrentLine;
+                            while ((sCurrentLine = br.readLine()) != null) {
+                                old.add(sCurrentLine);
+                            }
+                            br.close();
+                        }
+
+                        if (filePath.getPreviousFileContent().size() == 0) {
+                            git.stashCreate().setRef("HEAD").call();
+                            git.checkout().setName(newCommit.getDiffCommitName()).call();
+                            List<String> linesFile = Files.readAllLines(Paths.get(filenew.getAbsolutePath()), StandardCharsets.ISO_8859_1);
+                            filePath.setPreviousFileContent(linesFile);
+                        }
+                        git.stashCreate().setRef("HEAD").call();
+                        git.checkout().setName(newCommit.getCommitName()).call();
+                        // Compute diff. Get the Patch object. Patch is the container for computed deltas.
+                        Patch<String> patch = null;
+                        patch = DiffUtils.diff(old, actual);
+                        for (Delta delta : patch.getDeltas()) {
+                            String changeType = null;
+                            Integer first = 0, last = 0;
+                            if (delta.getType().toString().equals("DELETE")) {
+                                changeType = delta.getType().toString();
+                                first = delta.getOriginal().getPosition();
+                                last = delta.getOriginal().getPosition() + delta.getOriginal().getLines().size() - 1;
+                                ArrayList<Integer> lines = new ArrayList<>();
+                                lines.add(first);
+                                lines.add(last);
+                                changes.add(new Change(first, last, lines, delta.getOriginal().getPosition() + 1, changeType));
+                            } else if (delta.getType().toString().equals("INSERT")) {
+                                changeType = delta.getType().toString();
+                                first = delta.getRevised().getPosition();
+                                last = delta.getRevised().getPosition() + delta.getRevised().getLines().size();
+                                ArrayList<Integer> lines = new ArrayList<>();
+                                lines.add(first);
+                                lines.add(last - 1);
+                                changes.add(new Change(first, last, lines, delta.getOriginal().getPosition() + 1, changeType));
+                            } else if (delta.getType().toString().equals("CHANGE")) {
+                                first = delta.getRevised().getPosition();
+                                ArrayList<Integer> lines = new ArrayList<>();
+                                last = delta.getRevised().getPosition() + delta.getRevised().getLines().size();
+                                lines.add(first);
+                                lines.add(last - 1);
+                                //changes.add(new Change(first, last, lines, "CHANGE"));
+                                int position = delta.getOriginal().getPosition() + 1;
+                                //changes.add(new Change(first, last, lines, previousLines, "INSERT"));
+                                first = delta.getOriginal().getPosition();
+                                last = delta.getOriginal().getPosition() + delta.getOriginal().getLines().size();
+                                //lines = new ArrayList<>();
+                                lines.add(first);
+                                lines.add(last - 1);
+                                changes.add(new Change(first, last, lines, position, "CHANGE"));
+                                //changes.add(new Change(first, last, lines, "DELETE"));
+                            }
+                        }
+
                     }
                 }
             }
-            fileDiffParser.reset();
         }
-        filePath = pathUrl + "\\" + filePath;
-        if (newCommit.getDiffCommitName().equals("NULLCOMMIT"))
-            changes.add(new Change(0, Files.readAllLines(Paths.get(filePath), StandardCharsets.ISO_8859_1).size()));
-        */
-        }
+
+        //**************
         return changes.toArray(new Change[changes.size()]);
     }
 
@@ -801,7 +968,8 @@ public class GitHelper {
     }
 
 
-    public static void copyCommitFilesToAFolder(String srcpathFiles, File destpathFiles, String commitHash) throws IOException {
+    public static void copyCommitFilesToAFolder(String srcpathFiles, File destpathFiles, String commitHash) throws
+            IOException {
         Path sourcepath = Paths.get(srcpathFiles);
         Path dest = Paths.get(destpathFiles.getAbsolutePath());
         if (destpathFiles.exists()) {
@@ -930,7 +1098,8 @@ public class GitHelper {
      * @throws GitAPIException
      * @throws IOException
      */
-    public GitCommitList getEveryNthCommit(GitCommitList commits, String firstDiff, int startcommit, int endcommit, int n) throws Exception {
+    public GitCommitList getEveryNthCommit(GitCommitList commits, String firstDiff, int startcommit, int endcommit,
+                                           int n) throws Exception {
         final Repository repository = git.getRepository();
         final Collection<Ref> allRefs = repository.getRefDatabase().getRefs();
 
@@ -1011,7 +1180,8 @@ public class GitHelper {
      * @throws GitAPIException
      * @throws IOException
      */
-    public GitCommitList getTwoCommits(GitCommitList commits, String firstcommit, String secondcommit) throws Exception {
+    public GitCommitList getTwoCommits(GitCommitList commits, String firstcommit, String secondcommit) throws
+            Exception {
         final Repository repository = git.getRepository();
         List<Ref> tags = new ArrayList<Ref>(repository.getTags().values());
         RevWalk revWalk = new RevWalk(repository);
@@ -1054,7 +1224,8 @@ public class GitHelper {
      * @throws GitAPIException
      * @throws IOException
      */
-    public GitCommitList getEveryNthCommit3(GitCommitList commits, String firstDiff, int startcommit, int endcommit, int n) throws Exception {
+    public GitCommitList getEveryNthCommit3(GitCommitList commits, String firstDiff, int startcommit, int endcommit,
+                                            int n) throws Exception {
         final Repository repository = git.getRepository();
         final Collection<Ref> allRefs = repository.getRefDatabase().getRefs();
 
@@ -1131,7 +1302,8 @@ public class GitHelper {
      * @throws GitAPIException
      * @throws IOException
      */
-    public GitCommitList getEveryNthCommitMessage(GitCommitList commits, String firstDiff, int startcommit, int endcommit, int n) throws Exception {
+    public GitCommitList getEveryNthCommitMessage(GitCommitList commits, String firstDiff, int startcommit,
+                                                  int endcommit, int n) throws Exception {
         final Repository repository = git.getRepository();
         //List<Ref> tags = new Git(repository).branchList().setListMode(ListBranchCommand.ListMode.ALL).call();//new ArrayList<Ref>(repository.getTags().values());
         //RevWalk revWalk = new RevWalk(repository);
@@ -1216,7 +1388,8 @@ public class GitHelper {
 
 
     //Helper gets the diff as a string.
-    private void getDiffOfCommit(Git git, Repository repository, RevCommit newCommit, ArrayList<String> commitsDiff) throws IOException, GitAPIException {
+    private void getDiffOfCommit(Git git, Repository repository, RevCommit
+            newCommit, ArrayList<String> commitsDiff) throws IOException, GitAPIException {
 
         //Get commit that is previous to the current one.
         RevCommit oldCommit = getPrevHash(repository, newCommit);
@@ -1229,7 +1402,8 @@ public class GitHelper {
 
     }
 
-    private static void listDiff(Repository repository, Git git, String oldCommit, String newCommit, ArrayList<String> commitsDiff, RevCommit commit) throws GitAPIException, IOException {
+    private static void listDiff(Repository repository, Git git, String oldCommit, String
+            newCommit, ArrayList<String> commitsDiff, RevCommit commit) throws GitAPIException, IOException {
         final List<DiffEntry> diffs = git.diff()
                 .setOldTree(prepareTreeParserAux(repository, oldCommit))
                 .setNewTree(prepareTreeParserAux(repository, newCommit))
@@ -1280,7 +1454,8 @@ public class GitHelper {
     }
 
 
-    private static AbstractTreeIterator prepareTreeParserAux(Repository repository, String objectId) throws IOException {
+    private static AbstractTreeIterator prepareTreeParserAux(Repository repository, String objectId) throws
+            IOException {
         // from the commit we can build the tree which allows us to construct the TreeParser
         //noinspection Duplicates
         try (RevWalk walk = new RevWalk(repository)) {
@@ -1339,7 +1514,8 @@ public class GitHelper {
      * @throws GitAPIException
      * @throws IOException
      */
-    public GitCommitList getEveryNthCommit2(GitCommitList commits, String release, String firstDiff, int startcommit, int endcommit, int n) throws Exception {
+    public GitCommitList getEveryNthCommit2(GitCommitList commits, String release, String firstDiff,
+                                            int startcommit, int endcommit, int n) throws Exception {
         final Repository repository = git.getRepository();
         List<Ref> tags = new ArrayList<Ref>(repository.getTags().values());
         RevWalk revWalk = new RevWalk(repository);
@@ -1493,7 +1669,8 @@ public class GitHelper {
     }
 
 
-    private static AbstractTreeIterator prepareTreeParser(Repository repository, String commitName) throws IOException {
+    private static AbstractTreeIterator prepareTreeParser(Repository repository, String commitName) throws
+            IOException {
         if (commitName == null || commitName.equals("NULLCOMMIT")) return new EmptyTreeIterator();
 
         try (RevWalk walk = new RevWalk(repository)) {
@@ -1510,7 +1687,8 @@ public class GitHelper {
         }
     }
 
-    public static void copyFolder(File source, String gitDirAux, File destination, ArrayList<String> filesRemoved, Map<String, Map<Integer, FileChange>> filesChanged) {
+    public static void copyFolder(File source, String gitDirAux, File
+            destination, ArrayList<String> filesRemoved, Map<String, Map<Integer, FileChange>> filesChanged) {
         if (source.isDirectory()) {
             if (!destination.exists()) {
                 destination.mkdirs();
@@ -1526,7 +1704,7 @@ public class GitHelper {
                 }
             }
         } else {
-            String sourceFileDir = source.getAbsolutePath().substring(source.getAbsolutePath().lastIndexOf(gitDirAux) + gitDirAux.length()+1);
+            String sourceFileDir = source.getAbsolutePath().substring(source.getAbsolutePath().lastIndexOf(gitDirAux) + gitDirAux.length() + 1);
             if (!filesRemoved.contains(sourceFileDir) && !filesChanged.keySet().contains(sourceFileDir)) {
                 try {
                     FileUtils.copyFile(source, destination);
@@ -1567,7 +1745,8 @@ public class GitHelper {
         }
     }
 
-    public static void copyNewFiles(File source, String gitDirAux, File destination, ArrayList<String> filesAdded, Map<String, Map<Integer, FileChange>> filesChanged) {
+    public static void copyNewFiles(File source, String gitDirAux, File
+            destination, ArrayList<String> filesAdded, Map<String, Map<Integer, FileChange>> filesChanged) {
         if (source.isDirectory()) {
             String files[] = source.list();
 
@@ -1579,7 +1758,7 @@ public class GitHelper {
                 }
             }
         } else {
-            String sourceFileDir = source.getAbsolutePath().substring(source.getAbsolutePath().lastIndexOf(gitDirAux) + gitDirAux.length()+1);
+            String sourceFileDir = source.getAbsolutePath().substring(source.getAbsolutePath().lastIndexOf(gitDirAux) + gitDirAux.length() + 1);
             if (filesAdded.contains(sourceFileDir) && !filesChanged.keySet().contains(sourceFileDir)) {
                 try {
                     FileUtils.copyFile(source, destination);
@@ -1630,7 +1809,9 @@ public class GitHelper {
      * @return true
      * @throws Exception
      */
-    public static Boolean changePropagation(File mergeDir, String gitDir, String firstCommit, String secondCommit, ArrayList<String> filesAdded, ArrayList<String> filesRemoved, Map<String, Map<Integer, FileChange>> filesChanged, String resultsRepo) throws Exception {
+    public static Boolean changePropagation(File mergeDir, String gitDir, String firstCommit, String
+            secondCommit, ArrayList<String> filesAdded, ArrayList<String> filesRemoved, Map<String, Map<Integer, FileChange>> filesChanged, String
+                                                    resultsRepo) throws Exception {
 
         long measure = System.currentTimeMillis();
         File gitDirectory = new File(gitDir);
@@ -1638,7 +1819,7 @@ public class GitHelper {
 
         git.stashCreate().setRef("HEAD").call();
         git.checkout().setName(secondCommit).call();
-        String gitDirAux = gitDir.substring(gitDir.lastIndexOf("\\")+1);
+        String gitDirAux = gitDir.substring(gitDir.lastIndexOf("\\") + 1);
         copyNewFiles(gitDirectory, gitDirAux, mergeDir, filesAdded, filesChanged);
 
         git.stashCreate().setRef("HEAD").call();

@@ -2,12 +2,12 @@ package at.jku.isse.gitecco.translation.constraintcomputation.util;
 
 
 import at.jku.isse.gitecco.core.solver.ExpressionSolver;
-import at.jku.isse.gitecco.core.tree.nodes.*;
+import at.jku.isse.gitecco.core.tree.nodes.BaseNode;
+import at.jku.isse.gitecco.core.tree.nodes.ConditionalNode;
+import at.jku.isse.gitecco.core.tree.nodes.RootNode;
 import at.jku.isse.gitecco.core.type.Feature;
 import at.jku.isse.gitecco.core.type.FeatureImplication;
 import at.jku.isse.gitecco.translation.visitor.BuildImplicationsVisitor;
-import org.glassfish.grizzly.compression.lzma.impl.Base;
-
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -220,11 +220,20 @@ public class ConstraintComputer {
             ret = new HashSet<>();
             ret.add(new Feature("BASE"));
         }
+        Feature feature = new Feature("BASE");
         //if ret > 1 means it contains a changed node of a feature, so we do not consider BASE, only consider BASE when the changed node does not belong to any feature
         if (ret.size() > 1) {
-            Feature feature = new Feature("BASE");
-            ret.remove(feature);
+            for (Map.Entry<Feature, Integer> feat : config.entrySet()) {
+                if (ret.contains(feat.getKey()) && feat.getValue() == 0) {
+                    ret.remove(feat.getKey());
+                }
+            }
         }
+
+        if (ret.size() < 1) {
+            ret.add(feature);
+        }
+
         return ret;
     }
 }
