@@ -851,8 +851,8 @@ public class ComputeRQMetrics {
                 FileAppender csvAppender = new FileAppender(featureCSV);
                 for (String filefeature : feat.getValue()) {
                     String file = filefeature.substring(0, filefeature.indexOf(":"));
-                    String to = filefeature.substring(filefeature.indexOf(":") + 1, filefeature.indexOf("-"));
-                    String from = filefeature.substring(filefeature.indexOf("-") + 1);
+                    String to = filefeature.substring(filefeature.indexOf(":") + 1, filefeature.lastIndexOf("-"));
+                    String from = filefeature.substring(filefeature.lastIndexOf("-") + 1);
                     List<List<String>> contentRows = Arrays.asList(
                             Arrays.asList(Long.toString(commitNr), file, from, to));
                     for (List<String> rowData : contentRows) {

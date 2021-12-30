@@ -801,4 +801,39 @@ public class GitHelper {
         }
     }
 
+    /**
+     * Method to retrieve the diff of two commits from a repository and put it to a GitCommitList.
+     * starts with a specific commit and ends with another specific commit hash
+     *
+     * @param commits the GitCommitList to which the commits are saved to.
+     * @return The GitCommitList which was passed to the method.
+     * @throws GitAPIException
+     * @throws IOException
+     */
+    public GitCommitList getOneCommit(GitCommitList commits, String firstcommit) throws
+            Exception {
+        final Repository repository = git.getRepository();
+        List<Ref> tags = new ArrayList<Ref>(repository.getTags().values());
+        RevWalk revWalk = new RevWalk(repository);
+        revWalk.setRetainBody(false);
+        revWalk.sort(RevSort.REVERSE, true);
+        revWalk.setRevFilter(RevFilter.NO_MERGES);
+        revWalk.setRetainBody(false);
+        ObjectId id = repository.resolve(firstcommit);
+        RevCommit rc = revWalk.parseCommit(id);
+        String parent;
+
+        //System.out.println(rc.getName());
+        String branch = getBranchOfCommit(rc.getName());
+
+        try {
+            parent = rc.getParent(0).getName();
+        } catch (ArrayIndexOutOfBoundsException e) {
+            parent = "NULLCOMMIT";
+        }
+        commits.add(new GitCommit(rc.getName(), 1, parent, branch, rc));
+
+        return commits;
+    }
+
 }
