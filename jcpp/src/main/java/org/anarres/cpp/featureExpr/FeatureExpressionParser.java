@@ -55,7 +55,7 @@ public class FeatureExpressionParser {
     private void check(int type) {
         if (la.getType() == type) {
             scan();
-        } else if(la.getText().contains("b4_location_if")|| la.getText().contains("<eof>")|| la.getText().contains("b4_api_PREFIX")) {
+        } else if(la.getText().contains("b4_location_if") || la.getText().contains("b4_locations_if") || la.getText().contains("<eof>")|| la.getText().contains("b4_api_PREFIX")) {
             System.out.println("!!!!!!");
         }else {
             error("Expected " + type + " but was: " + la);

@@ -1322,7 +1322,7 @@ public class GitHelper {
                 countCherryPicks++;
                 //String branch = getBranchOfCommit(commit.getName());
                 //System.out.println("\nCommit: " + commit.getName()+ "\nCommit: " + commit.getName()+ commit.getFullMessage().replaceAll("\n","")+);// + " Message: " + commit.getFullMessage()
-                //commits.add(new GitCommit(commit.getName(), countTotalCommits, commit.getParent(0).getName(), repository.getBranch(), commit, commit.getFullMessage()));
+                commits.add(new GitCommit(commit.getName(), countTotalCommits, commit.getParent(0).getName(), repository.getBranch(), commit, commit.getFullMessage()));
                 //if(commits.size() > 1)
                 //  break;
             }

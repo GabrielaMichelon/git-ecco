@@ -32,7 +32,7 @@ import java.util.*;
 public class ChangeAnalysisAndPropagationTest {
 
     private List<String> fileTypes = new LinkedList<String>();
-    private String RESULTS_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\automated_evaluation\\bugfix\\LibSSH";
+    private String RESULTS_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\automated_evaluation\\bugfix\\Bison";
     String fileReportFeature = "report_each_commit.csv";
     List<String> configurations = new ArrayList<>();
     private ArrayList<String> featureNamesList = new ArrayList<String>();
@@ -52,9 +52,9 @@ public class ChangeAnalysisAndPropagationTest {
     public void TestChangePropagation() throws IOException {
         try {
             //csv file containing data
-            String strFile = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\automated_evaluation\\LibSSH.csv";
-            String repoFeatures = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\automated_evaluation\\bugfix\\LibSSH";//"C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\ChangePropagation\\features-libssh-0.9.4.txt";
-            String repoGit = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\ChangePropagation\\libssh";//"C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\ChangePropagation\\sqlite\\sqlite";// "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\automated_evaluation\\test";
+            String strFile = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\automated_evaluation\\Bison.csv";
+            String repoFeatures = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\automated_evaluation\\bugfix\\Bison";//"C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\ChangePropagation\\features-libssh-0.9.4.txt";
+            String repoGit = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\ChangePropagation\\Bison";//"C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\ChangePropagation\\sqlite\\sqlite";// "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\automated_evaluation\\test";
             CSVReader reader = new CSVReader(new FileReader(strFile));
             String[] nextLine;
             int lineNumber = 0;

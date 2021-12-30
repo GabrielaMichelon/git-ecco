@@ -2005,6 +2005,8 @@ public class Preprocessor implements Closeable {
                         return tok;
                     else if(tok.getText().equals("#"))
                         return tok;
+                    else if (tok.getText().equals("\\"))
+                        return tok;
                     else
                         throw new InternalException("Bad token " + tok);
                     // break;

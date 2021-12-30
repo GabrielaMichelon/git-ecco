@@ -161,6 +161,9 @@ public class ExpressionSolver {
             expr = expr.replace("(]) &&", "b4_location_if &&");
         if (expr.contains("]") && !expr.contains("[")) {
             expr = expr.replace("]", "b4_location_if");
+        } if (expr.contains("b4_locations_if")) {
+            expr = expr.replace("[", "");
+            expr = expr.replace("]", "");
         }
         //System.out.println(expr);
         traverse(new FeatureExpressionParser(expr).parse());
