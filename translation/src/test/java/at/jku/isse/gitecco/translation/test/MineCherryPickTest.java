@@ -29,9 +29,9 @@ public class MineCherryPickTest {
 
     private final static boolean EVERYCOMMIT = false;
     private final static int EVERY_NTH_COMMIT = 1;
-    private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\ChangePropagation\\Bison";//"C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\ChangePropagation\\libssh";//"C:\\Users\\gabil\\Desktop\\PHD\\Mining\\CaseStudies\\Irssi\\irssi";//"C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\ChangePropagation\\sqlite\\sqlite";
-    private final static String FEATURES_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\cherrypick-results\\cherry-pick-bison";
-    int commitsAnalyze = 8590;//Marlin 22351,  bison 8590,   curl 28103,  sqlite 25167,  irssi 6503,  libssh 6918
+    private final static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\ChangePropagation\\busybox\\busybox";//"C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\ChangePropagation\\libssh";//"C:\\Users\\gabil\\Desktop\\PHD\\Mining\\CaseStudies\\Irssi\\irssi";//"C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\ChangePropagation\\sqlite\\sqlite";
+    private final static String FEATURES_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\cherrypick-results\\busybox";
+    int commitsAnalyze =  17400;// vim 15059, libuv 4888,  busybox 17400,    Marlin 22351,  bison 8590,   curl 28103,  sqlite 25167,  irssi 6503,  libssh 6918
     GitCommit gcPrevious = null;
     Boolean previous = true;
     List<String> configurations = new ArrayList<>();

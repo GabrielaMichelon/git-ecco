@@ -2,6 +2,8 @@ package at.jku.isse.gitecco.core.git;
 
 import at.jku.isse.gitecco.core.tree.nodes.BinaryFileNode;
 import at.jku.isse.gitecco.core.tree.nodes.FileNode;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.MultimapBuilder;
 import difflib.Delta;
 import difflib.DiffUtils;
 import difflib.Patch;
@@ -746,7 +748,7 @@ public class GitHelper {
             diff = git.diff().
                     setOldTree(prepareTreeParser(git.getRepository(), newCommit.getDiffCommitName())).
                     setNewTree(prepareTreeParser(git.getRepository(), newCommit.getCommitName())).
-                            call();
+                    call();
 
             for (DiffEntry entry : diff) {
                 String newPath = entry.getNewPath().replace("/", "\\");
@@ -1561,6 +1563,44 @@ public class GitHelper {
 
         return commits;
     }
+
+
+    /**
+     * Method to retrieve every tags and each commit hash where each release is finished
+     *
+     * @return The a map with commit hash of each release/tag of the repository.
+     * @throws GitAPIException
+     * @throws IOException
+     */
+    public Multimap<Long,String> getCommitHashTag() throws Exception {
+        final Repository repository = git.getRepository();
+        List<Ref> tags = new ArrayList<Ref>(repository.getTags().values());
+        RevWalk revWalk = new RevWalk(repository);
+        revWalk.setRetainBody(false);
+        revWalk.sort(RevSort.REVERSE, true);
+        revWalk.setRevFilter(RevFilter.NO_MERGES);
+        revWalk.sort(RevSort.COMMIT_TIME_DESC);
+        revWalk.setRetainBody(false);
+
+        Multimap<Long,String> tagsCommits= MultimapBuilder.treeKeys().arrayListValues().build();
+
+        for (Ref ref : tags) {
+            revWalk.markStart(revWalk.parseCommit(ref.getObjectId()));
+            String commitHash = "";
+            long number = 0;
+            for (RevCommit rc : revWalk) {
+                if (number == 0)
+                    commitHash = rc.getName();
+                number++;
+            }
+            tagsCommits.put(number,ref.getName().substring(ref.getName().indexOf("refs/tags/") + 10));
+            tagsCommits.put(number,commitHash);
+            revWalk.dispose();
+        }
+        tags.clear();
+        return tagsCommits;
+    }
+
 
     /**
      * Method to retrieve every tags and each commit number where each release is finished

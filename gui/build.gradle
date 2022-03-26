@@ -20,6 +20,14 @@ dependencies {
 
 }
 
+jar {
+    manifest {
+        attributes(
+                'Main-Class': 'at.jku.isse.gitecco.gui.Gui'
+        )
+    }
+}
+
 
 group 'at.jku.isse.gitecco'
 version '0.1'
