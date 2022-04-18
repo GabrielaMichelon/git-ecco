@@ -165,6 +165,9 @@ public class ExpressionSolver {
             expr = expr.replace("[", "");
             expr = expr.replace("]", "");
         }
+        if (expr.contains("GLIB_CHECK_VERSION(")){
+            expr = "GLIB_CHECK_VERSION";
+        }
         //System.out.println(expr);
         traverse(new FeatureExpressionParser(expr).parse());
         Variable var = stack.pop();
