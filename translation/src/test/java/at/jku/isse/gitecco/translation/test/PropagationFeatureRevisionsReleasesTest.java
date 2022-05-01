@@ -13,6 +13,7 @@ import at.jku.isse.gitecco.translation.constraintcomputation.util.ConstraintComp
 import at.jku.isse.gitecco.translation.mining.ChangeCharacteristic;
 import at.jku.isse.gitecco.translation.visitor.GetNodesForChangeVisitor;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.MultimapBuilder;
 import difflib.Delta;
 import difflib.DiffUtils;
 import difflib.Patch;
@@ -21,16 +22,21 @@ import org.glassfish.grizzly.http.server.accesslog.FileAppender;
 import java.io.*;
 import java.nio.charset.MalformedInputException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class PropagationFeatureRevisionsReleasesTest {
 
-    private static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\ChangePropagation\\sqlite\\sqlite";//Bison irssi\irssi sqlite\sqlite
-    private static String MINING_DATASET = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\LOC_fix\\SQLite-ready"; //"C:\\Users\\gabil\\Desktop\\PHD\\Mining\\LOC_fix\\SQLite-ready";
-    private static String resultsFolder = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\releases-propagation\\dataset\\SQLite2";
-    private static String stopRelease =  "version-3.31.1";//Bison:"v3.5.3"; Irssi: "1.3-dev"; LibSSH: "libssh-0.9.5"; SQLite: "version-3.31.1"
+    private static String REPO_PATH = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\ChangePropagation\\Bison";//Bison irssi\irssi sqlite\sqlite  libssh
+    private static String MINING_DATASET = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\LOC_fix\\Bison\\Mining"; //"C:\\Users\\gabil\\Desktop\\PHD\\Mining\\LOC_fix\\SQLite-ready";
+    private static String resultsFolder = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\releases-propagation\\dataset\\Bison3";
+    private static String stopRelease = "v3.5.3"; //Bison:"v3.5.3"; Irssi: "1.3-dev"; LibSSH: "libssh-0.9.5"; SQLite: "version-3.31.1"
+    private static Path pathFileRandomCombination = Paths.get("C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\releases-propagation\\dataset\\Bison_random_combinations.txt");
     private static Boolean aux = true;
+    private static int numberOfRandomPairsOfReleases = 50;
     private static ArrayList<String> featureNamesListDestinationRelease = new ArrayList<String>();
     private static ArrayList<Feature> featurespropagate = new ArrayList<>();
     private static ArrayList<String> featurespropagateName = new ArrayList<>();
@@ -70,11 +76,32 @@ public class PropagationFeatureRevisionsReleasesTest {
     }
 
 
+    public static List<List<Long>> getRandomPairsOfReleases(List<List<Long>> list, int totalItems) {
+        Random rand = new Random();
+
+        // create a temporary list for storing
+        // selected pairs of releases
+        List<List<Long>> newList = new ArrayList<>();
+        for (int i = 0; i < totalItems; i++) {
+
+            // take a random index between 0 to size
+            // of given List
+            int randomIndex = rand.nextInt(list.size());
+
+            // add element in temporary list
+            newList.add(list.get(randomIndex));
+
+            // Remove selected element from original list
+            list.remove(randomIndex);
+        }
+        return newList;
+    }
+
     public static void identification() throws Exception {
         try {
             FileWriter csvWriter = new FileWriter(resultsFolder + File.separator + "report_each_commit.csv");
             List<List<String>> headerRows = Arrays.asList(
-                    Arrays.asList("DCommitHash", "OCommitHash", "NFeaturesDestination", "NFeaturesOrigin", "Patches", "NFeaturesRevised", "NFeaturesIntroduced", "NFeaturesRemoved", "NFeaturesPropagated", "NFiles", "NLinesAdded", "NLinesRemoved", "RuntimeAnalysis", "RuntimePropagation")
+                    Arrays.asList("DCommitHash", "OCommitHash", "DReleaseName", "OReleaseName", "NumberOfCommitsInBetween", "NFeaturesDestination", "NFeaturesOrigin", "Patches", "NFeaturesRevised", "NFeaturesIntroduced", "NFeaturesRemoved", "NFeaturesPropagated", "NFiles", "NLinesAdded", "NLinesRemoved", "RuntimeAnalysis", "RuntimePropagation")
             );
             for (List<String> rowData : headerRows) {
                 csvWriter.append(String.join(",", rowData));
@@ -95,18 +122,62 @@ public class PropagationFeatureRevisionsReleasesTest {
         GitCommitList commitList = new GitCommitList(gitHelper);
 
         Multimap<Long, String> mapTags = gitHelper.getCommitHashTag();
-        Iterator<Long> keyIt = mapTags.keySet().iterator();
+        Multimap<Long, String> mapReleasesGPCE = MultimapBuilder.treeKeys().arrayListValues().build();
+        Set keySet = mapTags.keySet();
+        Iterator keyIterator = keySet.iterator();
+        while (keyIterator.hasNext()) {
+            Long key = (Long) keyIterator.next();
+            Collection<String> value = mapTags.get(key);
+            String nameRel = value.iterator().next();
+            if (nameRel.equals(stopRelease))
+                break;
+            else
+                mapReleasesGPCE.put(key, nameRel);
+        }
+
+        //Generates all 2-combination of the set of releases (two releases are distinct)
+        /*List<List<Long>> combinations = Generator.combination(mapReleasesGPCE.keySet())
+                .simple(2)
+                .stream() //.forEach(System.out::println);
+                .collect(toList());
+
+        combinations.forEach(System.out::println);
+
+        List<List<Long>> pairsOfReleases = getRandomPairsOfReleases(combinations, numberOfRandomPairsOfReleases);
+        pairsOfReleases.forEach(System.out::println);*/
+
+        List<List<Long>> pairsOfReleases = new ArrayList<>();
+        try (Stream<String> lines = Files.lines(pathFileRandomCombination)) {
+            List<String> line = lines.collect(Collectors.toList());
+            for (String l : line) {
+                Long first = Long.valueOf(l.substring(l.indexOf("[") + 1, l.indexOf(",")));
+                Long second = Long.valueOf(l.substring(l.indexOf(" ") + 1, l.indexOf("]")));
+                List<Long> aux = new ArrayList<>();
+                aux.add(first);
+                aux.add(second);
+                pairsOfReleases.add(aux);
+            }
+        } catch (IOException e) {
+            System.out.println("Failed to load file." + e);
+        }
+
+
+        Collection<String> releaseDestination = mapTags.get(pairsOfReleases.get(0).get(0));
+        Collection<String> releaseOrigin = mapTags.get(pairsOfReleases.get(0).get(1));
 
         Map<Map<String, List<String>>, Changes> results = new HashMap<>();
 
-        long key1 = keyIt.next();
-        long key2 = keyIt.next();
-        List<String> destination = new ArrayList<>(mapTags.get(key1));
-        List<String> origin = new ArrayList<>(mapTags.get(key2));
-        System.out.println(key1 + " Release name: " + destination.get(0) + " Release hash: " + destination.get(1));
-        System.out.println(key2 + " Release name: " + origin.get(0) + " Release hash: " + origin.get(1));
-        gitHelper.getCommitByHash(commitList, destination.get(1), origin.get(1));
-        File releasesFolder = new File(resultsFolder, destination.get(1));
+        Iterator<String> releaseDestinationIt = releaseDestination.iterator();
+        Iterator<String> releaseOriginIt = releaseOrigin.iterator();
+        String nameDestination = releaseDestinationIt.next();
+        String hashDestination = releaseDestinationIt.next();
+        String nameOrigin = releaseOriginIt.next();
+        String hashOrigin = releaseOriginIt.next();
+        System.out.println(pairsOfReleases.get(0).get(0) + " Release name: " + nameDestination + " Release hash: " + hashDestination);
+        System.out.println(pairsOfReleases.get(0).get(1) + " Release name: " + nameOrigin + " Release hash: " + hashOrigin);
+        gitHelper.getCommitByHash(commitList, hashDestination, hashOrigin);
+        String pairreleasespath = "Pair-0-";
+        File releasesFolder = new File(resultsFolder, pairreleasespath+hashDestination);
         if (!releasesFolder.exists())
             releasesFolder.mkdir();
         File checkoutFolder = new File(releasesFolder, "checkout");
@@ -117,15 +188,16 @@ public class PropagationFeatureRevisionsReleasesTest {
         if (!originalFolder.exists())
             originalFolder.mkdir();
         File changeFolder = new File(releasesFolder, "ChangeCharacteristic");
+        Long numberCommits = pairsOfReleases.get(0).get(1) - pairsOfReleases.get(0).get(0);
 
         if (aux) {
-            FEATURES_TXT += destination.get(0) + ".txt";
+            FEATURES_TXT += nameDestination + ".txt";
             featureNamesListDestinationRelease = new ArrayList<>();
-            addFeaturesReleaseDestination(commitList.get(0), destination.get(0));
-            FEATURESPROPRAGATE_TXT += origin.get(0) + ".txt";
+            addFeaturesReleaseDestination(commitList.get(0), nameDestination);
+            FEATURESPROPRAGATE_TXT += nameOrigin + ".txt";
             featurespropagate = new ArrayList<>();
-            addFeaturesPropagate(commitList.get(1), origin.get(0));
-            GitHelper.copyCommitFilesToAFolder(REPO_PATH, originalFolder, origin.get(1));
+            addFeaturesPropagate(commitList.get(1), nameOrigin);
+            GitHelper.copyCommitFilesToAFolder(REPO_PATH, originalFolder, hashOrigin);
             if (computeChangeCharacteristics) {
                 if (!changeFolder.exists())
                     changeFolder.mkdir();
@@ -135,33 +207,39 @@ public class PropagationFeatureRevisionsReleasesTest {
             numberFeaturesRemoved = featureNamesListDestinationRelease.size() - commonFeaturesBetweenReleases.size();
             numberFeaturesIntroduced = featurespropagateName.size() - commonFeaturesBetweenReleases.size();
             featuresRevised = new ArrayList<>();
-            characteristicsChange(gitHelper, commitList.get(0), commitList.get(1), featureNamesListDestinationRelease, featurespropagate, results, checkoutFolder, changeFolder);
+            characteristicsChange(gitHelper, numberCommits, nameDestination, nameOrigin, commitList.get(0), commitList.get(1), featureNamesListDestinationRelease, featurespropagate, results, checkoutFolder, changeFolder);
             compare(originalFolder, checkoutFolder);
         }
 
-        while (keyIt.hasNext()) {
-            key1 = keyIt.next();
-            key2 = keyIt.next();
-            destination = new ArrayList<>(mapTags.get(key1));
-            origin = new ArrayList<>(mapTags.get(key2));
-            if (destination.get(0).equals(stopRelease))
+        int iteratorPairs = 1;
+        int numberpair = 1;
+        while (iteratorPairs < numberOfRandomPairsOfReleases) {
+            releaseDestination = mapTags.get(pairsOfReleases.get(iteratorPairs).get(0));
+            releaseOrigin = mapTags.get(pairsOfReleases.get(iteratorPairs).get(1));
+            releaseDestinationIt = releaseDestination.iterator();
+            releaseOriginIt = releaseOrigin.iterator();
+            nameDestination = releaseDestinationIt.next();
+            hashDestination = releaseDestinationIt.next();
+            nameOrigin = releaseOriginIt.next();
+            hashOrigin = releaseOriginIt.next();
+            if (nameDestination.equals(stopRelease))
                 break;
             //else if (destination.get(1).equals("1c671bad33537dc91c628b982f006a47d1fdce6c"))
-             //   aux = true;
+            //   aux = true;
 
-            System.out.println(key1 + " " + destination.get(0) + " " + destination.get(1));
-            System.out.println(key2 + " " + origin.get(0) + " " + origin.get(1));
+            System.out.println(pairsOfReleases.get(iteratorPairs).get(0) + " " + nameDestination + " " + hashDestination);
+            System.out.println(pairsOfReleases.get(iteratorPairs).get(1) + " " + nameOrigin + " " + hashOrigin);
             if (aux) {
                 commitList = new GitCommitList(gitHelper);
-                gitHelper.getCommitByHash(commitList, destination.get(1), origin.get(1));
-                FEATURES_TXT = pathFeatures + destination.get(0) + ".txt";
+                gitHelper.getCommitByHash(commitList, hashDestination, hashOrigin);
+                FEATURES_TXT = pathFeatures + nameDestination + ".txt";
                 featureNamesListDestinationRelease = new ArrayList<>();
-                addFeaturesReleaseDestination(commitList.get(0), destination.get(0));
-                FEATURESPROPRAGATE_TXT = pathFeatures + destination.get(0) + ".txt";
+                addFeaturesReleaseDestination(commitList.get(0), nameDestination);
+                FEATURESPROPRAGATE_TXT = pathFeatures + nameDestination + ".txt";
                 featurespropagate = new ArrayList<>();
-                addFeaturesPropagate(commitList.get(1), origin.get(0));
+                addFeaturesPropagate(commitList.get(1), nameOrigin);
                 results = new HashMap<>();
-                releasesFolder = new File(resultsFolder, origin.get(1));
+                releasesFolder = new File(resultsFolder, "Pair-"+numberpair+"-"+hashDestination);
                 if (!releasesFolder.exists())
                     releasesFolder.mkdir();
                 checkoutFolder = new File(releasesFolder, "checkout");
@@ -171,7 +249,7 @@ public class PropagationFeatureRevisionsReleasesTest {
                 // if the directory does not exist, create it
                 if (!originalFolder.exists())
                     originalFolder.mkdir();
-                GitHelper.copyCommitFilesToAFolder(REPO_PATH, originalFolder, destination.get(1));
+                GitHelper.copyCommitFilesToAFolder(REPO_PATH, originalFolder, hashOrigin);
                 changeFolder = new File(releasesFolder, "ChangeCharacteristic");
                 if (computeChangeCharacteristics) {
                     if (!changeFolder.exists())
@@ -184,9 +262,12 @@ public class PropagationFeatureRevisionsReleasesTest {
                 numberFeaturesRemoved = featureNamesListDestinationRelease.size() - commonFeaturesBetweenReleases.size();
                 numberFeaturesIntroduced = featurespropagateName.size() - commonFeaturesBetweenReleases.size();
                 featuresRevised = new ArrayList<>();
-                characteristicsChange(gitHelper, commitList.get(0), commitList.get(1), featureNamesListDestinationRelease, featurespropagate, results, checkoutFolder, changeFolder);
+                numberCommits = pairsOfReleases.get(iteratorPairs).get(1) - pairsOfReleases.get(iteratorPairs).get(0);
+                characteristicsChange(gitHelper, numberCommits, nameDestination, nameOrigin, commitList.get(0), commitList.get(1), featureNamesListDestinationRelease, featurespropagate, results, checkoutFolder, changeFolder);
                 compare(originalFolder, checkoutFolder);
             }
+            iteratorPairs++;
+            numberpair++;
         }
     }
 
@@ -387,10 +468,9 @@ public class PropagationFeatureRevisionsReleasesTest {
         changedFilesPropagate.clear();
     }
 
-    public static void characteristicsChange(GitHelper gitHelper, GitCommit gc1, GitCommit gc2, ArrayList<String> featureNamesList, ArrayList<Feature> featurespropagate, Map<Map<String, List<String>>, Changes> results, File checkoutFolder, File changeFolder) throws Exception {
+    public static void characteristicsChange(GitHelper gitHelper, Long numberCommits, String nameDestination, String nameOrigin, GitCommit gc1, GitCommit gc2, ArrayList<String> featureNamesList, ArrayList<Feature> featurespropagate, Map<Map<String, List<String>>, Changes> results, File checkoutFolder, File changeFolder) throws Exception {
 
         final File gitFolder = new File(gitHelper.getPath());
-        final File eccoFolder = new File(gitFolder.getParent(), "ecco");
 
         Integer countFeaturesChanged = 0; //COUNT PER GIT COMMIT
         Integer newFeatures = 0; //COUNT PER GIT COMMIT
@@ -407,8 +487,6 @@ public class PropagationFeatureRevisionsReleasesTest {
         Map<Feature, ChangeCharacteristic> featureMap = new HashMap<>();
         Changes mapAux = new Changes();
         int patches = 0;
-
-        int nrChunksInsert, nrChunksRemove;
 
         gcPrevious = new GitCommit(gc2.getCommitName(), gc2.getNumber(), gc1.getCommitName(), gc2.getBranch(), gc2.getRevCommit());
         gcPrevious.setTree(gc2.getTree());
@@ -516,6 +594,7 @@ public class PropagationFeatureRevisionsReleasesTest {
                 changedNodesAux.add(changedNode);
         }
 
+        System.out.println("Number of changed nodes: " + changedNodesAux.size());
         ArrayList<ConditionalNode> deletedNodesAux = new ArrayList<>();
         for (ConditionalNode deletedNode : deletedNodes) {
             if (!deletedNodesAux.contains(deletedNode))
@@ -660,13 +739,32 @@ public class PropagationFeatureRevisionsReleasesTest {
                                     changeCharacteristic = featureMap.get(feature);
                                 }
                                 int aux = 0;
-                                if (changedNode.getLineNumberInserts().size() > 0) {
+                               /* if (changedNode.getLineNumberInserts().size() > 0) {
                                     for (int i = 2; i < changedNode.getLineNumberInserts().size(); i += 3) {
                                         aux += changedNode.getLineNumberInserts().get(i);
                                     }
                                     changeCharacteristic.setLinesOfCodeAdded(changeCharacteristic.getLinesOfCodeAdded() + aux);
                                     changedNode.getLineNumberInserts().removeAll(changedNode.getLineNumberInserts());
                                 }
+
+                                if (changedNode.getLineNumberDeleted().size() > 0) {
+                                    for (int i = 2; i < changedNode.getLineNumberDeleted().size(); i += 3) {
+                                        aux += changedNode.getLineNumberDeleted().get(i);
+                                    }
+                                    changeCharacteristic.setLinesOfCodeRemoved(changeCharacteristic.getLinesOfCodeRemoved() + aux);
+                                    changedNode.getLineNumberDeleted().removeAll(changedNode.getLineNumberDeleted());
+                                }*/
+
+                                int totalLinesAdded = 0;
+                                int totallinesRemoved = 0;
+                                for (Deltas delta : changedNode.getLineNumberInsertsAndDeletes()) {
+                                    if (delta.getTotalLinesAdd() != -1)
+                                        totalLinesAdded += delta.getTotalLinesAdd();
+                                    if (delta.getTotalLinesRemov() != -1)
+                                        totallinesRemoved += delta.getTotalLinesRemov();
+                                }
+                                changeCharacteristic.setLinesOfCodeAdded(changeCharacteristic.getLinesOfCodeAdded() + totalLinesAdded);
+                                changeCharacteristic.setLinesOfCodeRemoved(changeCharacteristic.getLinesOfCodeRemoved() + totallinesRemoved);
 
                                 changeCharacteristic.addTanglingDegree(tanglingDegree);
                                 if (!changeCharacteristic.getScatteringDegreeFiles().contains(file)) {
@@ -825,13 +923,21 @@ public class PropagationFeatureRevisionsReleasesTest {
                                 if (changeCharacteristic == null)
                                     changeCharacteristic = new ChangeCharacteristic();
                                 int aux = 0;
-                                if (deletedNode.getLineNumberDeleted().size() > 0) {
+                                /*if (deletedNode.getLineNumberDeleted().size() > 0) {
                                     for (int i = 2; i < deletedNode.getLineNumberDeleted().size(); i += 3) {
                                         aux += deletedNode.getLineNumberDeleted().get(i);
                                     }
                                     changeCharacteristic.setLinesOfCodeRemoved(changeCharacteristic.getLinesOfCodeRemoved() + aux);
                                     deletedNode.getLineNumberDeleted().removeAll(deletedNode.getLineNumberDeleted());
+                                }*/
+                                int totalLinesAdded = 0;
+                                int totallinesRemoved = 0;
+                                for (Deltas delta : deletedNode.getLineNumberInsertsAndDeletes()) {
+                                    if (delta.getTotalLinesRemov() != -1)
+                                        totallinesRemoved += delta.getTotalLinesRemov();
                                 }
+                                changeCharacteristic.setLinesOfCodeRemoved(changeCharacteristic.getLinesOfCodeRemoved() + totallinesRemoved);
+
                                 changeCharacteristic.addTanglingDegree(tanglingDegree);
                                 if (!changeCharacteristic.getScatteringDegreeFiles().contains(file)) {
                                     changeCharacteristic.addScatteringDegreeFiles(file);
@@ -895,7 +1001,7 @@ public class PropagationFeatureRevisionsReleasesTest {
 
                 getBytes());
         //uncomment
-        GitHelper.changePropagation(checkoutFolder, gitFolder.getAbsolutePath(), gc1.getCommitName(), gc2.getCommitName(), patches, filesAdded, filesRemoved, filesChanged, resultsFolder, featureNamesList.size(), featurespropagate.size(), featuresRevised.size(), numberFeaturesIntroduced, numberFeaturesRemoved, featuresRevised.size() + numberFeaturesIntroduced + numberFeaturesRemoved, measure);
+        GitHelper.changePropagation(checkoutFolder, gitFolder.getAbsolutePath(), numberCommits, nameDestination, nameOrigin, gc1.getCommitName(), gc2.getCommitName(), patches, filesAdded, filesRemoved, filesChanged, resultsFolder, featureNamesList.size(), featurespropagate.size(), featuresRevised.size(), numberFeaturesIntroduced, numberFeaturesRemoved, featuresRevised.size() + numberFeaturesIntroduced + numberFeaturesRemoved, measure);
         changedNodes.clear();
         deletedNodes.clear();
         deletedNodesAux.clear();

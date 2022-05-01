@@ -7,7 +7,7 @@ import org.anarres.cpp.featureExpr.*;
 import org.chocosolver.solver.Model;
 import org.chocosolver.solver.Solution;
 import org.chocosolver.solver.constraints.nary.cnf.LogOp;
-import org.chocosolver.solver.expression.discrete.relational.ReExpression;
+import org.chocosolver.solver.exception.SolverException;
 import org.chocosolver.solver.variables.BoolVar;
 import org.chocosolver.solver.variables.IntVar;
 import org.chocosolver.solver.variables.Variable;
@@ -105,7 +105,11 @@ public class ExpressionSolver {
         Solution solution = model.getSolver().findSolution();
         if (solution != null) {
             for (IntVar var : vars) {
-                assignments.put(new Feature(var.getName()), solution.getIntVal(var));
+                try {
+                    assignments.put(new Feature(var.getName()), solution.getIntVal(var));
+                } catch (SolverException se) {
+                    System.out.println("var name: " + var.getName() + " exception:" + se);
+                }
             }
         } else {
             //System.err.println("DEAD CODE: No solution found for " + expr);
@@ -161,11 +165,12 @@ public class ExpressionSolver {
             expr = expr.replace("(]) &&", "b4_location_if &&");
         if (expr.contains("]") && !expr.contains("[")) {
             expr = expr.replace("]", "b4_location_if");
-        } if (expr.contains("b4_locations_if")) {
+        }
+        if (expr.contains("b4_locations_if")) {
             expr = expr.replace("[", "");
             expr = expr.replace("]", "");
         }
-        if (expr.contains("GLIB_CHECK_VERSION(")){
+        if (expr.contains("GLIB_CHECK_VERSION(")) {
             expr = "GLIB_CHECK_VERSION";
         }
         //System.out.println(expr);

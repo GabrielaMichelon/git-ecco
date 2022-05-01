@@ -14,7 +14,7 @@ import java.util.List;
 
 public class MetricsTest {
 
-    public static String resultsCSVs_path = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\releases-propagation\\dataset\\SQLite2";
+    public static String resultsCSVs_path = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\releases-propagation\\dataset\\LibSSH4";
 
     public static void main(String[] args) throws Exception {
         File folder = new File(resultsCSVs_path);

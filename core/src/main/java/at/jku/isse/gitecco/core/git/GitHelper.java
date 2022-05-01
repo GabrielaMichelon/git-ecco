@@ -216,6 +216,7 @@ public class GitHelper {
         if (deletedFile) {
             if (newCommit.getNumber() != Long.valueOf(0))
                 git.stashCreate().call();//setRef("HEAD").call();
+            git.stashDrop().setAll(true).call();
             git.checkout().setName(newCommit.getDiffCommitName()).call();
             String filePathRenamed = "";
             if (filePath.getFilePath().contains("arent"))
@@ -232,12 +233,14 @@ public class GitHelper {
             }
             changes.add(new Change(0, Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size(), lines, 1, "DELETE"));
             git.stashCreate().call();//setRef("HEAD").call();
+            git.stashDrop().setAll(true).call();
             git.checkout().setName(newCommit.getCommitName()).call();
         } else {
             //prepare for file path filter.
             //String filterPath = filePath.substring(pathUrl.length()+1).replace("\\", "/");
             try {
                 git.stashCreate().call();//setRef("HEAD").call();
+                git.stashDrop().setAll(true).call();
                 git.checkout().setName(newCommit.getCommitName()).call();
             } catch (CheckoutConflictException ex) {
                 System.out.println("aaaaaaaException checkout ----- " + ex);
@@ -275,12 +278,15 @@ public class GitHelper {
                             List<String> linesFile = Files.readAllLines(Paths.get(filenew.getAbsolutePath()), StandardCharsets.ISO_8859_1);
                             filePath.setFileContent(linesFile);
                             git.stashCreate().call();//setRef("HEAD").call();
+                            git.stashDrop().setAll(true).call();
                             git.checkout().setName(newCommit.getDiffCommitName()).call();
                             if (filePath.getPreviousFileContent().size() == 0) {
                                 linesFile = Files.readAllLines(Paths.get(filenew.getAbsolutePath()), StandardCharsets.ISO_8859_1);
                                 filePath.setPreviousFileContent(linesFile);
                             }
                             git.stashCreate().call();//setRef("HEAD").call();
+                            git.stashDrop().setAll(true).call();
+                            //git.reset().setMode(ResetCommand.ResetType.HARD).call();
                             git.checkout().setName(newCommit.getCommitName()).call();
                         }
                         try {
@@ -296,6 +302,7 @@ public class GitHelper {
                         }
                         try {
                             git.stashCreate().call();//setRef("HEAD").call();
+                            git.stashDrop().setAll(true).call();
                             git.checkout().setName(newCommit.getDiffCommitName()).call();
                         } catch (CheckoutConflictException ex) {
                             System.out.println("Exception checkout ----- " + ex);
@@ -313,6 +320,7 @@ public class GitHelper {
                             br.close();
                         }
                         git.stashCreate().call();//setRef("HEAD").call();
+                        git.stashDrop().setAll(true).call();
                         git.checkout().setName(newCommit.getCommitName()).call();
                         // Compute diff. Get the Patch object. Patch is the container for computed deltas.
                         Patch<String> patch = null;
@@ -396,6 +404,7 @@ public class GitHelper {
         if (deletedFile) {
             if (newCommit.getNumber() != Long.valueOf(0))
                 git.stashCreate().call();//setRef("HEAD").call();
+            git.stashDrop().setAll(true).call();
             git.checkout().setName(newCommit.getDiffCommitName()).call();
             String filePathRenamed = "";
             if (filePath.getFilePath().contains("arent"))
@@ -412,12 +421,14 @@ public class GitHelper {
             }
             changes.add(new Change(0, Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size(), lines, 1, "DELETE"));
             git.stashCreate().call();//setRef("HEAD").call();
+            git.stashDrop().setAll(true).call();
             git.checkout().setName(newCommit.getCommitName()).call();
         } else {
             //prepare for file path filter.
             //String filterPath = filePath.substring(pathUrl.length()+1).replace("\\", "/");
             try {
                 git.stashCreate().call();//setRef("HEAD").call();
+                git.stashDrop().setAll(true).call();
                 git.checkout().setName(newCommit.getCommitName()).call();
             } catch (CheckoutConflictException ex) {
                 System.out.println("aaaaaaaException checkout ----- " + ex);
@@ -455,12 +466,14 @@ public class GitHelper {
                             List<String> linesFile = Files.readAllLines(Paths.get(filenew.getAbsolutePath()), StandardCharsets.ISO_8859_1);
                             filePath.setFileContent(linesFile);
                             git.stashCreate().call();//setRef("HEAD").call();
+                            git.stashDrop().setAll(true).call();
                             git.checkout().setName(newCommit.getDiffCommitName()).call();
                             if (filePath.getPreviousFileContent().size() == 0) {
                                 linesFile = Files.readAllLines(Paths.get(filenew.getAbsolutePath()), StandardCharsets.ISO_8859_1);
                                 filePath.setPreviousFileContent(linesFile);
                             }
                             git.stashCreate().call();//setRef("HEAD").call();
+                            git.stashDrop().setAll(true).call();
                             git.checkout().setName(newCommit.getCommitName()).call();
                         }
                         try {
@@ -476,6 +489,7 @@ public class GitHelper {
                         }
                         try {
                             git.stashCreate().call();//setRef("HEAD").call();
+                            git.stashDrop().setAll(true).call();
                             git.checkout().setName(newCommit.getDiffCommitName()).call();
                         } catch (CheckoutConflictException ex) {
                             System.out.println("Exception checkout ----- " + ex);
@@ -493,6 +507,7 @@ public class GitHelper {
                             br.close();
                         }
                         git.stashCreate().call();//setRef("HEAD").call();
+                        git.stashDrop().setAll(true).call();
                         git.checkout().setName(newCommit.getCommitName()).call();
                         // Compute diff. Get the Patch object. Patch is the container for computed deltas.
                         Patch<String> patch = null;
@@ -563,6 +578,7 @@ public class GitHelper {
         if (deletedFile) {
             if (newCommit.getNumber() != Long.valueOf(0))
                 git.stashCreate().call();//setRef("HEAD").call();
+            git.stashDrop().setAll(true).call();
             git.checkout().setName(newCommit.getDiffCommitName()).call();
             String filepathRenamed = "";
             if (filePath.getFilePath().contains("arent"))
@@ -579,12 +595,14 @@ public class GitHelper {
             lines.add(Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size() - 1);
             changes.add(new Change(0, Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size(), lines, 1, "DELETE"));
             git.stashCreate().call();//setRef("HEAD").call();
+            git.stashDrop().setAll(true).call();
             git.checkout().setName(newCommit.getCommitName()).call();
         } else {
             //prepare for file path filter.
             //String filterPath = filePath.substring(pathUrl.length()+1).replace("\\", "/");
             try {
                 git.stashCreate().call();//setRef("HEAD").call();
+                git.stashDrop().setAll(true).call();
                 git.checkout().setName(newCommit.getCommitName()).call();
             } catch (CheckoutConflictException ex) {
                 System.out.println("aaaaaaaException checkout ----- " + ex);
@@ -636,6 +654,7 @@ public class GitHelper {
                         }
                         try {
                             git.stashCreate().call();//setRef("HEAD").call();
+                            git.stashDrop().setAll(true).call();
                             git.checkout().setName(newCommit.getDiffCommitName()).call();
                         } catch (CheckoutConflictException ex) {
                             System.out.println("Exception checkout ----- " + ex);
@@ -653,6 +672,7 @@ public class GitHelper {
                             br.close();
                         }
                         git.stashCreate().call();//setRef("HEAD").call();
+                        git.stashDrop().setAll(true).call();
                         git.checkout().setName(newCommit.getCommitName()).call();
                         // Compute diff. Get the Patch object. Patch is the container for computed deltas.
                         Patch<String> patch = null;
@@ -720,6 +740,7 @@ public class GitHelper {
         if (deletedFile) {
             if (newCommit.getNumber() != Long.valueOf(0))
                 git.stashCreate().call();//setRef("HEAD").call();
+            git.stashDrop().setAll(true).call();
             git.checkout().setName(newCommit.getDiffCommitName()).call();
             String filepathRenamed = "";
             if (filePath.getFilePath().contains("arent"))
@@ -736,10 +757,12 @@ public class GitHelper {
             lines.add(Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size() - 1);
             changes.add(new Change(0, Files.readAllLines(Paths.get(newPath), StandardCharsets.ISO_8859_1).size(), lines, 1, "DELETE"));
             git.stashCreate().call();//setRef("HEAD").call();
+            git.stashDrop().setAll(true).call();
             git.checkout().setName(newCommit.getCommitName()).call();
         } else if (newFile) {
             try {
                 git.stashCreate().call();//setRef("HEAD").call();
+                git.stashDrop().setAll(true).call();
                 git.checkout().setName(newCommit.getCommitName()).call();
             } catch (CheckoutConflictException ex) {
                 System.out.println("Exception checkout Git ----- " + ex);
@@ -770,6 +793,7 @@ public class GitHelper {
         } else { //changedFile
             try {
                 git.stashCreate().call();//setRef("HEAD").call();
+                git.stashDrop().setAll(true).call();
                 git.checkout().setName(newCommit.getCommitName()).call();
             } catch (CheckoutConflictException ex) {
                 System.out.println("Exception checkout Git ----- " + ex);
@@ -804,6 +828,7 @@ public class GitHelper {
                         }
                         try {
                             git.stashCreate().call();//setRef("HEAD").call();
+                            git.stashDrop().setAll(true).call();
                             git.checkout().setName(newCommit.getDiffCommitName()).call();
                         } catch (CheckoutConflictException ex) {
                             System.out.println("Exception checkout Git ----- " + ex);
@@ -822,11 +847,13 @@ public class GitHelper {
 
                         if (filePath.getPreviousFileContent().size() == 0) {
                             git.stashCreate().call();//setRef("HEAD").call();
+                            git.stashDrop().setAll(true).call();
                             git.checkout().setName(newCommit.getDiffCommitName()).call();
                             List<String> linesFile = Files.readAllLines(Paths.get(filenew.getAbsolutePath()), StandardCharsets.ISO_8859_1);
                             filePath.setPreviousFileContent(linesFile);
                         }
                         git.stashCreate().call();//setRef("HEAD").call();
+                        git.stashDrop().setAll(true).call();
                         git.checkout().setName(newCommit.getCommitName()).call();
                         // Compute diff. Get the Patch object. Patch is the container for computed deltas.
                         Patch<String> patch = null;
@@ -926,7 +953,11 @@ public class GitHelper {
             git.clean().setForce(true).call();
             git.reset().setMode(ResetCommand.ResetType.HARD).call();
             try {
-                git.stashCreate().call();//setRef("HEAD").call();
+                git.stashCreate()
+                        .call();
+                git.stashDrop().setAll(true).call();
+                //git.stashCreate().call();//setRef("HEAD").call();
+                //git.reset().setMode(ResetCommand.ResetType.HARD).call();
                 git.checkout().setName(name).call();
             } catch (CheckoutConflictException e) {
                 System.out.println(" EXCECPTION CHECKOUT. " + e);
@@ -991,6 +1022,10 @@ public class GitHelper {
         //checkout of the specif commit of the original git project to copy the files that we need to simulate the GIT commit with the variant
         File srcPath = new File(srcpathFiles);
         try {
+            //git.reset().setMode(ResetCommand.ResetType.HARD).call();
+            RevCommit stash = git.stashCreate()
+                    .call();
+            git.stashDrop().setAll(true).call();
             Ref git = Git.open(srcPath)
                     .checkout()
                     .setName(commitHash)
@@ -1138,7 +1173,6 @@ public class GitHelper {
 
         return commits;
     }
-
 
 
     public GitCommitList getCommitByHash(GitCommitList commits, String destinationCommit, String originCommit) throws Exception {
@@ -1605,7 +1639,7 @@ public class GitHelper {
      * @throws GitAPIException
      * @throws IOException
      */
-    public Multimap<Long,String> getCommitHashTag() throws Exception {
+    public Multimap<Long, String> getCommitHashTag() throws Exception {
         final Repository repository = git.getRepository();
         List<Ref> tags = new ArrayList<Ref>(repository.getTags().values());
         RevWalk revWalk = new RevWalk(repository);
@@ -1615,7 +1649,7 @@ public class GitHelper {
         revWalk.sort(RevSort.COMMIT_TIME_DESC);
         revWalk.setRetainBody(false);
 
-        Multimap<Long,String> tagsCommits= MultimapBuilder.treeKeys().arrayListValues().build();
+        Multimap<Long, String> tagsCommits = MultimapBuilder.treeKeys().arrayListValues().build();
 
         for (Ref ref : tags) {
             revWalk.markStart(revWalk.parseCommit(ref.getObjectId()));
@@ -1626,8 +1660,8 @@ public class GitHelper {
                     commitHash = rc.getName();
                 number++;
             }
-            tagsCommits.put(number,ref.getName().substring(ref.getName().indexOf("refs/tags/") + 10));
-            tagsCommits.put(number,commitHash);
+            tagsCommits.put(number, ref.getName().substring(ref.getName().indexOf("refs/tags/") + 10));
+            tagsCommits.put(number, commitHash);
             revWalk.dispose();
         }
         tags.clear();
@@ -1874,7 +1908,6 @@ public class GitHelper {
     }
 
 
-
     /**
      * Propagate the changes of a feature between two Commits chosen by the user.
      * All the changes will be in a folder with the files resulted from the merge of changes.
@@ -1884,7 +1917,7 @@ public class GitHelper {
      * @return true
      * @throws Exception
      */
-    public static Boolean changePropagation(File mergeDir, String gitDir, String firstCommit, String
+    public static Boolean changePropagation(File mergeDir, String gitDir, Long numberCommits, String nameDestination, String nameOrigin, String firstCommit, String
             secondCommit, int patches, ArrayList<String> filesAdded, ArrayList<String> filesRemoved, Map<String, Map<Integer, FileChange>> filesChanged, String
                                                     resultsRepo, int numberFeaturesDestination, int numberFeaturesOrigin, int numberFeaturesRevised, int numberFeaturesIntroduced, int numberFeaturesRemoved, int numberFeaturesPropagated, Long measureChangeAnalysis) throws Exception {
 
@@ -1893,11 +1926,13 @@ public class GitHelper {
         Map<String, ArrayList<String>> filesToWrite = new HashMap<>();
 
         git.stashCreate().call();//setRef("HEAD").call();
+        git.stashDrop().setAll(true).call();
         git.checkout().setName(secondCommit).call();
         String gitDirAux = gitDir.substring(gitDir.lastIndexOf("\\") + 1);
         copyNewFiles(gitDirectory, gitDirAux, mergeDir, filesAdded, filesChanged);
 
         git.stashCreate().call();//setRef("HEAD").call();
+        git.stashDrop().setAll(true).call();
         git.checkout().setName(firstCommit).call();
         //Files.copy(gitDirectory, mergeDir, StandardCopyOption.REPLACE_EXISTING);
         copyFolder(gitDirectory, gitDirAux, mergeDir, filesRemoved, filesChanged);
@@ -2017,17 +2052,17 @@ public class GitHelper {
 
         //String[] features = mergeDir.getName().split(",");
         //System.out.println("Total number of features: " + features.length);
-        System.out.println("Total number of features Destination: "+numberFeaturesDestination);
-        System.out.println("Total number of features Origin: "+numberFeaturesOrigin);
-        System.out.println("Total number of features Revised: "+numberFeaturesRevised);
-        System.out.println("Total number of features Introduced: "+numberFeaturesIntroduced);
-        System.out.println("Total number of features Propagated: "+numberFeaturesPropagated);
+        System.out.println("Total number of features Destination: " + numberFeaturesDestination);
+        System.out.println("Total number of features Origin: " + numberFeaturesOrigin);
+        System.out.println("Total number of features Revised: " + numberFeaturesRevised);
+        System.out.println("Total number of features Introduced: " + numberFeaturesIntroduced);
+        System.out.println("Total number of features Propagated: " + numberFeaturesPropagated);
         System.out.println("Total Lines added: " + totalLinesAdded + " Total Lines removed: " + totalLinesremoved);
         System.out.println("Number files propagated: " + filesChanged.size());
         try {
             FileAppender csvAppender = new FileAppender(new File(resultsRepo, "report_each_commit.csv"));
             List<List<String>> contentRows = Arrays.asList(
-                    Arrays.asList(firstCommit, secondCommit, String.valueOf(numberFeaturesDestination), String.valueOf(numberFeaturesOrigin), String.valueOf(patches), String.valueOf(numberFeaturesRevised), String.valueOf(numberFeaturesIntroduced), String.valueOf(numberFeaturesRemoved), String.valueOf(numberFeaturesPropagated),
+                    Arrays.asList(firstCommit, secondCommit, nameDestination, nameOrigin, String.valueOf(numberCommits), String.valueOf(numberFeaturesDestination), String.valueOf(numberFeaturesOrigin), String.valueOf(patches), String.valueOf(numberFeaturesRevised), String.valueOf(numberFeaturesIntroduced), String.valueOf(numberFeaturesRemoved), String.valueOf(numberFeaturesPropagated),
                             String.valueOf(filesChanged.size()), String.valueOf(totalLinesAdded), String.valueOf(totalLinesremoved), String.valueOf(measureChangeAnalysis), String.valueOf(measure)));
             for (List<String> rowData : contentRows) {
                 csvAppender.append(String.join(",", rowData));
@@ -2059,11 +2094,13 @@ public class GitHelper {
         Map<String, ArrayList<String>> filesToWrite = new HashMap<>();
 
         git.stashCreate().call();//setRef("HEAD").call();
+        git.stashDrop().setAll(true).call();
         git.checkout().setName(secondCommit).call();
         String gitDirAux = gitDir.substring(gitDir.lastIndexOf("\\") + 1);
         copyNewFiles(gitDirectory, gitDirAux, mergeDir, filesAdded, filesChanged);
 
         git.stashCreate().call();//setRef("HEAD").call();
+        git.stashDrop().setAll(true).call();
         git.checkout().setName(firstCommit).call();
         //Files.copy(gitDirectory, mergeDir, StandardCopyOption.REPLACE_EXISTING);
         copyFolder(gitDirectory, gitDirAux, mergeDir, filesRemoved, filesChanged);

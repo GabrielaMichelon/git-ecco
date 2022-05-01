@@ -18,7 +18,7 @@ public class MiningStatistics {
     //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\Ready\\SQLite";
     //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\Ready\\LibSSH\\Mining";
     //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\LOC_fix\\Irssi\\Mining";
-    private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\automated_evaluation\\FeatureChangeCharac_LibSSH";
+    private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\ChangeAnalysis_Propagation\\releases-propagation\\dataset\\SQLite";
     //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\LOC_fix\\SQLite-ready";
     //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\LOC_fix\\Bison\\Mining";
     //private final String releasePath = "C:\\Users\\gabil\\Desktop\\PHD\\Mining\\Ready\\Irssi\\Mining\\Mining";
@@ -950,14 +950,15 @@ public class MiningStatistics {
                 }
             }
         }
+        System.out.println("-----------SD IF");
         printMaps(sdif);
-        System.out.println("-----------");
+        System.out.println("----------- SD FILE");
         printMaps(sdfile);
-        System.out.println("-----------");
+        System.out.println("----------- TD");
         printMaps(tdif);
-        System.out.println("-----------");
+        System.out.println("-----------LOC ADD");
         printMaps(locADD);
-        System.out.println("-----------");
+        System.out.println("-----------LOC DEL");
         printMaps(lofDel);
     }
 
